@@ -94,9 +94,8 @@ int GameCtrl::run() {
     try {
         init();
         if (runTest) {
-            testCreateFood();
-            //testGraphSearch();
-            //testMaze();
+            //testCreateFood();
+            testGraphSearch();
         }
         while (true) {}
         return 0;
@@ -386,8 +385,4 @@ void GameCtrl::testGraphSearch() {
         }
     }
     exitGame(res);
-}
-
-void GameCtrl::testMaze() {
-    map->createMaze(Pos(1, 1));
 }

@@ -124,17 +124,6 @@ public:
     */
     void findMaxPath(const Pos &from, const Pos &to, std::list<Direction> &path);
 
-    /*
-    Create a maze on the map.
-    Precondition:
-    1. The rows number and columns number of the
-       map must be both odd number.
-    2. Minimum size is 5*5.
-
-    @param start the start position of the maze
-    */
-    void createMaze(const Pos &start);
-
 private:
     content_type content;
 
@@ -176,14 +165,6 @@ private:
                         const Pos &to,
                         Map::hash_table &closeList,
                         std::list<Direction> &path);
-
-    /*
-    Use DFS to break the walls in a maze.
-
-    @param n current position
-    @param closeList stores the positions that have been visited
-    */
-    void dfsBreakWalls(const Pos &n, Map::hash_table &closeList);
 
     /*
     Construct the path between two positions.
