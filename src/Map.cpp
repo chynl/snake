@@ -181,27 +181,45 @@ void Map::init() {
     }
 }
 
-void Map::findMinPath(const Pos &from, const Pos &to, list<Direc> &path) {
+void Map::findMinPath(const Pos &from, const Pos &to, const Direc &initDirec, list<Direc> &path) {
     if (!isInside(from) || !isInside(to)) {
         return;
     }
+
+    // Prepare work for searching
     init();
     path.clear();
-    queue<Pos> openList;
     getPoint(from).setDist(0);
+    queue<Pos> openList;
     openList.push(from);
+
+    // Start BFS
     while (!openList.empty()) {
+
+        // Get current search point
         Pos curPos = openList.front();
         Point curPoint = getPoint(curPos);
         openList.pop();
         showVisitPosIfNeed(curPos);
+
+        // Check if the goal is found
         if (curPos == to) {
             constructPath(from, to, path);
             showPathIfNeed(from, path);
             break;
         }
+
+        // Arrange the order of traversing to make the result path as straight as possible
+        Direc bestDirec = (curPos == from ? initDirec : curPoint.getParent().getDirectionTo(curPos));
         auto adjPositions = curPos.getAllAdjPos();
-        randomChange(adjPositions);  // Ensure randomly traversing
+        for (unsigned i = 0; i < adjPositions.size(); ++i) {
+            if (bestDirec == curPos.getDirectionTo(adjPositions[i])) {
+                std::swap(adjPositions[0], adjPositions[i]);
+                break;
+            }
+        }
+
+        // Traverse adjacent positions
         for (const auto &adjPos : adjPositions) {
             Point &adjPoint = getPoint(adjPos);
             if (isEmpty(adjPos) && adjPoint.getDist() == INF) {

@@ -101,14 +101,15 @@ public:
     static Point::value_type estimateDist(const Pos &from, const Pos &to);
 
     /*
-    Find the shortest path between two positions.
+    Find a shortest path as straight as possible between two positions.
     Notice that only EMPTY points are searched by the algorithm.
 
     @param from the start position
     @param to the end position
+    @param initDirec aimming to get a path starting at this direction
     @param path the result will be stored in this field.
     */
-    void findMinPath(const Pos &from, const Pos &to, std::list<Direc> &path);
+    void findMinPath(const Pos &from, const Pos &to, const Direc &initDirec, std::list<Direc> &path);
 
     /*
     Find the longest path between two positions.

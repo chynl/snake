@@ -362,6 +362,7 @@ void GameCtrl::autoMove() {
 void GameCtrl::testCreateFood() {
     while (1) {
         map->createRandFood();
+        sleepByFPS();
     }
 }
 
@@ -375,13 +376,13 @@ void GameCtrl::testGraphSearch() {
 
     // Add walls for testing
     for (int i = 4; i < 16; ++i) {
-        map->getPoint(Pos(i, 10)).setType(Point::Type::WALL);
+        map->getPoint(Pos(i, 9)).setType(Point::Type::WALL);   // vertical
+        map->getPoint(Pos(4, i)).setType(Point::Type::WALL);   // horizontal #1
+        map->getPoint(Pos(15, i)).setType(Point::Type::WALL);  // horizontal #2
     }
    
-    //Pos from(9, 2), to(9, 17);
-    Pos from(2, 2), to(17, 17);
-
-    map->findMinPath(from, to, path);
+    Pos from(6, 7), to(14, 13);
+    map->findMinPath(from, to, Direc::NONE, path);
     //map->findMaxPath(from, to, path);
 
     string res = "Path from " + from.toString() + " to " + to.toString()
