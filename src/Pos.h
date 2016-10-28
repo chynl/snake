@@ -4,7 +4,8 @@
 #include <vector>
 #include <string>
 
-enum Direction {
+// Move direction
+enum Direc {
     NONE,
     LEFT,
     UP,
@@ -34,11 +35,6 @@ public:
     friend bool operator!=(const Pos &a, const Pos &b);
 
     /*
-    Hash function for a position.
-    */
-    static unsigned hash(const Pos &p);
-
-    /*
     Get the direction from this position to another.
 
     @param p the other point
@@ -46,7 +42,7 @@ public:
             If the two points are not adjacent or are
             the same, return NONE.
     */
-    Direction getDirectionTo(const Pos &p) const;
+    Direc getDirectionTo(const Pos &p) const;
 
     /*
     Get the adjacent position in a given direction.
@@ -54,7 +50,7 @@ public:
     @param d the given direction
     @return the adjacent position in the given direction
     */
-    Pos getAdjPos(const Direction &d) const;
+    Pos getAdjPos(const Direc &d) const;
 
     /*
     Get all adjacent positions.

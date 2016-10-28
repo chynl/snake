@@ -21,7 +21,7 @@ public:
     /*
     Move the snake according to a given path.
     */
-    void move(const std::list<Direction> &path);
+    void move(const std::list<Direc> &path);
 
     /*
     Check whether the snake is dead.
@@ -47,16 +47,16 @@ public:
     void decideNext();
 
     // Getters and setters
-    void setDirection(const Direction &d);
+    void setDirection(const Direc &d);
     void setHeadType(const Point::Type &type);
     void setBodyType(const Point::Type &type);
     void setTailType(const Point::Type &type);
     void setMap(std::shared_ptr<Map> m);
-    Direction getDirection() const;
+    Direc getDirection() const;
 
 private:
     bool dead = false;
-    Direction direc = NONE;
+    Direc direc = NONE;
 
     std::list<Pos> body;
     std::shared_ptr<Map> map;
@@ -70,9 +70,9 @@ private:
 
     @param path the result will be stored in this field.
     */
-    void findMinPathToFood(std::list<Direction> &path);
-    void findMinPathToTail(std::list<Direction> &path);
-    void findMaxPathToTail(std::list<Direction> &path);
+    void findMinPathToFood(std::list<Direc> &path);
+    void findMinPathToTail(std::list<Direc> &path);
+    void findMaxPathToTail(std::list<Direc> &path);
 
     /*
     Find a path from the snake's head to the goal point.
@@ -82,7 +82,7 @@ private:
     @param to the goal point
     @param path the result will be stored in this field.
     */
-    void findPathTo(const int type, const Pos &to, std::list<Direction> &path);
+    void findPathTo(const int type, const Pos &to, std::list<Direc> &path);
 
     /*
     Remove the snake tail.

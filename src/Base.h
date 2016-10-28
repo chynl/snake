@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+const int INF = 2147483647;
+
 /*
 Convert an integer to a string.
 */

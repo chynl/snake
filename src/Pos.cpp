@@ -37,11 +37,6 @@ bool operator!=(const Pos &a, const Pos &b) {
     return !(a == b);
 }
 
-unsigned Pos::hash(const Pos &p) {
-    std::hash<attr_type> h;
-    return h(p.x) ^ h(p.y);
-}
-
 std::vector<Pos> Pos::getAllAdjPos() const {
     std::vector<Pos> res(4);
     int dx[] = {0, -1, 0, 1};
@@ -53,7 +48,7 @@ std::vector<Pos> Pos::getAllAdjPos() const {
     return res;
 }
 
-Direction Pos::getDirectionTo(const Pos &p) const  {
+Direc Pos::getDirectionTo(const Pos &p) const  {
     int dx = p.x - x;
     int dy = p.y - y;
     if (dx == 0 && dy == -1) {
@@ -69,7 +64,7 @@ Direction Pos::getDirectionTo(const Pos &p) const  {
     }
 }
 
-Pos Pos::getAdjPos(const Direction &d) const {
+Pos Pos::getAdjPos(const Direc &d) const {
     int dx = 0, dy = 0;
     switch (d) {
         case LEFT:
