@@ -142,7 +142,7 @@ Point::value_type Map::estimateDist(const Pos &from, const Pos &to) {
 
 void Map::showPosSearchDetail(const Pos &p, const point_type &t) {
     getPoint(p).setType(t);
-    GameCtrl::getInstance()->sleepFor(10);
+    GameCtrl::getInstance()->sleepFor(detailInterval);
 }
 
 void Map::showVisitPosIfNeed(const Pos &n) {
@@ -231,27 +231,28 @@ void Map::findMinPath(const Pos &from, const Pos &to, const Direc &initDirec, li
     }
 }
 
-void Map::findMaxPath(const Pos &from, const Pos &to, list<Direc> &path) {
+void Map::findMaxPath(const Pos &from, const Pos &to, const Direc &initDirec, list<Direc> &path) {
     if (!isInside(from) || !isInside(to)) {
         return;
     }
     init();
     path.clear();
-    findMax(from, from, to, path);
+    findMax(from, initDirec, from, to, path);
     showPathIfNeed(from, path);
 }
 
-void Map::findMax(const Pos &n, const Pos &from, const Pos &to, list<Direc> &path) {
+void Map::findMax(const Pos &curPos, const Direc &curDirec, const Pos &from, const Pos &to, list<Direc> &path) {
     if (!path.empty()) {  // A solution is found
         return;
     }
-    getPoint(n).setVisit(true);
-    showVisitPosIfNeed(n);
-    if (n == to) {
+    getPoint(curPos).setVisit(true);
+    showVisitPosIfNeed(curPos);
+    if (curPos == to) {  // Check if the goal is found
         constructPath(from, to, path);
     } else {
+
         // Compute estimated distance of adjacent points
-        auto adjPositions = n.getAllAdjPos();
+        auto adjPositions = curPos.getAllAdjPos();
         if (adjPositions.empty()) {
             return;
         }
@@ -261,14 +262,25 @@ void Map::findMax(const Pos &n, const Pos &from, const Pos &to, list<Direc> &pat
                 adjPoint.setDist(estimateDist(pos, to));
             }
         }
-        // Traverse from the farthest point
+
+        // Arrange the order of traversing to make the result path as straight as possible
         std::sort(adjPositions.begin(), adjPositions.end(), [&](const Pos &a, const Pos &b) {
             return getPoint(a).getDist() > getPoint(b).getDist();
         });
-        for (const auto &adj : adjPositions) {
-            if (isEmpty(adj) && !getPoint(adj).isVisit()) {
-                getPoint(adj).setParent(n);
-                findMax(adj, from, to, path);
+        auto maxDist = getPoint(adjPositions[0]).getDist();
+        for (unsigned i = 0; i < adjPositions.size(); ++i) {
+            if (getPoint(adjPositions[i]).getDist() == maxDist
+                && curDirec == curPos.getDirectionTo(adjPositions[i])) {
+                std::swap(adjPositions[0], adjPositions[i]);
+                break;
+            }
+        }
+
+        // Traverse adjacent positions
+        for (const auto &adjPos : adjPositions) {
+            if (isEmpty(adjPos) && !getPoint(adjPos).isVisit()) {
+                getPoint(adjPos).setParent(curPos);
+                findMax(adjPos, curPos.getDirectionTo(adjPos), from, to, path);
             }
         }
     }

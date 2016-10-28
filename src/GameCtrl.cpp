@@ -10,7 +10,7 @@ using std::string;
 using std::list;
 
 const string GameCtrl::MSG_BAD_ALLOC = "Oops! Not enough memory to run the game! Press any key to continue...";
-const string GameCtrl::MSG_LOSE = "Sorry! You lose! Press any key to continue...";
+const string GameCtrl::MSG_LOSE = "Oops! You lose! Press any key to continue...";
 const string GameCtrl::MSG_WIN = "Congratulations! You Win! Press any key to continue...";
 const string GameCtrl::MSG_ESC = "Game ended! Press any key to continue...";
 const string GameCtrl::MAP_INFO_FILENAME = "movements.txt";
@@ -367,8 +367,8 @@ void GameCtrl::testCreateFood() {
 }
 
 void GameCtrl::testGraphSearch() {
-    if (mapRowCnt < 20 || mapColCnt < 20) {
-        throw std::range_error("GameCtrl.testGraphSearch(): Requires minimum map size 20*20.");
+    if (mapRowCnt != 20 || mapColCnt != 20) {
+        throw std::range_error("GameCtrl.testGraphSearch(): Require map size 20*20.");
     }
 
     list<Direc> path;
@@ -383,8 +383,9 @@ void GameCtrl::testGraphSearch() {
    
     Pos from(6, 7), to(14, 13);
     map->findMinPath(from, to, Direc::NONE, path);
-    //map->findMaxPath(from, to, path);
+    //map->findMaxPath(from, to, Direc::NONE, path);
 
+    // Print result path info
     string res = "Path from " + from.toString() + " to " + to.toString()
         + " of length " + intToStr(path.size()) + ":\n";
     for (const auto &d : path) {

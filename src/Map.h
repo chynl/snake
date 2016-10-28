@@ -112,14 +112,15 @@ public:
     void findMinPath(const Pos &from, const Pos &to, const Direc &initDirec, std::list<Direc> &path);
 
     /*
-    Find the longest path between two positions.
+    Find a longest path as straight as possible between two positions.
     Notice that only EMPTY points are searched by the algorithm.
 
     @param from the start position
     @param to the end position
+    @param initDirec aimming to get a path starting at this direction
     @param path the result will be stored in this field.
     */
-    void findMaxPath(const Pos &from, const Pos &to, std::list<Direc> &path);
+    void findMaxPath(const Pos &from, const Pos &to, const Direc &initDirec, std::list<Direc> &path);
 
 private:
     content_type content;
@@ -128,20 +129,19 @@ private:
 
     bool showSearchDetails = false;
 
+    // Interval time when showing searched point
+    static const long detailInterval = 10;
+
     /*
     Initialize map content before searching.
     */
     void init();
 
     /*
-    Use DFS to find the longest path.
-
-    @param n current position
-    @param from the start position
-    @param to the end position
-    @param path the result will be stored in this field
+    Recursive method called in findMaxPath().
     */
-    void findMax(const Pos &n, const Pos &from, const Pos &to, std::list<Direc> &path);
+    void findMax(const Pos &curPos, const Direc &curDirec,
+                 const Pos &from, const Pos &to, std::list<Direc> &path);
 
     /*
     Construct the path between two positions.

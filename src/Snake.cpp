@@ -118,7 +118,7 @@ void Snake::findPathTo(const int type, const Pos &to, std::list<Direc> &path) {
     if (type == 0) {
         map->findMinPath(getHead(), to, direc, path);
     } else if (type == 1) {
-        map->findMaxPath(getHead(), to, path);
+        map->findMaxPath(getHead(), to, direc, path);
     }
     map->getPoint(to).setType(originType);
 }
