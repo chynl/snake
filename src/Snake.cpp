@@ -33,7 +33,7 @@ bool Snake::addBody(const Pos &p) {
     }
 }
 
-void Snake::setDirection(const Direction &d) {
+void Snake::setDirection(const Direc &d) {
     direc = d;
 }
 
@@ -49,7 +49,7 @@ void Snake::setTailType(const Point::Type &type) {
     tailType = type;
 }
 
-Direction Snake::getDirection() const {
+Direc Snake::getDirection() const {
     return direc;
 }
 
@@ -88,7 +88,7 @@ void Snake::move() {
     Pos newHead = getHead().getAdjPos(direc);
     body.push_front(newHead);
 
-    if (map->isUnsafe(newHead)) {
+    if (!map->isSafe(newHead)) {
         dead = true;
     } else {
         if (map->getPoint(newHead).getType() != Point::Type::FOOD) {
@@ -101,14 +101,14 @@ void Snake::move() {
     map->getPoint(newHead).setType(headType);
 }
 
-void Snake::move(const std::list<Direction> &path) {
+void Snake::move(const std::list<Direc> &path) {
     for (const auto &d : path) {
         setDirection(d);
         move();
     }
 }
 
-void Snake::findPathTo(const int type, const Pos &to, std::list<Direction> &path) {
+void Snake::findPathTo(const int type, const Pos &to, std::list<Direc> &path) {
     // To search the path to goal, first set the goal grid type to EMPTY
     // and then start searching because the original type of the goal
     // grid may be a FOOD or another type which is ignored by the search algorithm.
@@ -116,22 +116,22 @@ void Snake::findPathTo(const int type, const Pos &to, std::list<Direction> &path
     auto originType = map->getPoint(to).getType();
     map->getPoint(to).setType(Point::Type::EMPTY);
     if (type == 0) {
-        map->findMinPath(getHead(), to, path);
+        map->findMinPath(getHead(), to, direc, path);
     } else if (type == 1) {
-        map->findMaxPath(getHead(), to, path);
+        map->findMaxPath(getHead(), to, direc, path);
     }
     map->getPoint(to).setType(originType);
 }
 
-void Snake::findMinPathToFood(std::list<Direction> &path) {
+void Snake::findMinPathToFood(std::list<Direc> &path) {
     findPathTo(0, map->getFood(), path);
 }
 
-void Snake::findMinPathToTail(std::list<Direction> &path) {
+void Snake::findMinPathToTail(std::list<Direc> &path) {
     findPathTo(0, getTail(), path);
 }
 
-void Snake::findMaxPathToTail(std::list<Direction> &path) {
+void Snake::findMaxPathToTail(std::list<Direc> &path) {
     findPathTo(1, getTail(), path);
 }
 
@@ -148,7 +148,7 @@ void Snake::decideNext() {
     shared_ptr<Map> tmpMap = std::make_shared<Map>(*map);
     tmpSnake.setMap(tmpMap);
 
-    list<Direction> pathToFood, pathToTail;
+    list<Direc> pathToFood, pathToTail;
 
     // Step1:
     // If a path to food is found, move the temp snake to eat the food and to 
@@ -190,8 +190,8 @@ void Snake::decideNext() {
     int maxDist = -1;
     auto adjPoints = head.getAllAdjPos();
     for (const auto &p : adjPoints) {
-        if (!map->isUnsafe(p)) {
-            int d = Map::heuristic(p, map->getFood());
+        if (map->isSafe(p)) {
+            int d = Map::estimateDist(p, map->getFood());
             if (d > maxDist) {
                 maxDist = d;
                 direc = head.getDirectionTo(p);

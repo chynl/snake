@@ -14,54 +14,26 @@ void Point::setType(Type type_) {
     type = type_;
 }
 
-void Point::setG(const value_type g_) {
-    g = g_;
-}
-
-void Point::setH(const value_type h_) {
-    h = h_;
+void Point::setDist(const value_type dist_) {
+    dist = dist_;
 }
 
 void Point::setParent(const Pos &p_) {
     parent = p_;
 }
 
-void Point::setPos(const Pos &p) {
-    pos = p;
+void Point::setVisit(const bool v) {
+    visit = v;
 }
 
-Point::value_type Point::getG() const {
-    return g;
-}
-
-Point::value_type Point::getH() const {
-    return h;
-}
-
-Point::value_type Point::getF() const {
-    return g + h;
+Point::value_type Point::getDist() const {
+    return dist;
 }
 
 Pos Point::getParent() const {
     return parent;
 }
 
-Pos Point::getPos() const {
-    return pos;
-}
-
-bool operator<(const Point &a, const Point &b) {
-    return a.getF() < b.getF();
-}
-
-bool operator>(const Point &a, const Point &b) {
-    return a.getF() > b.getF();
-}
-
-bool operator<=(const Point &a, const Point &b) {
-    return a.getF() <= b.getF();
-}
-
-bool operator>=(const Point &a, const Point &b) {
-    return a.getF() >= b.getF();
+bool Point::isVisit() const {
+    return visit;
 }

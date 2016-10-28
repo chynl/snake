@@ -2,37 +2,30 @@
 #include "GameCtrl.h"
 #include "Console.h"
 #include <algorithm>
+#include <queue>
 
 using std::vector;
 using std::string;
 using std::list;
+using std::queue;
 
 Map::Map(const size_type &rowCnt_, const size_type &colCnt_)
     : content(rowCnt_, vector<Point>(colCnt_)) {
-    init();
-}
-
-Map::~Map() {
-}
-
-void Map::init() {
+    // Add boundary walls
     auto rows = getRowCount(), cols = getColCount();
-    for (size_type i = 0; i < rows; ++i) {
-        for (size_type j = 0; j < cols; ++j) {
-            content[i][j].setPos(Pos(i, j));
-        }
-    }
-    // Add boundaries
     for (size_type i = 0; i < rows; ++i) {
         if (i == 0 || i == rows - 1) {  // The first and last row
             for (size_type j = 0; j < cols; ++j) {
-                content[i][j].setType(Point::Type::WALL);
+                content[i][j].setType(point_type::WALL);
             }
         } else {  // Rows in the middle
-            content[i][0].setType(Point::Type::WALL);
-            content[i][cols - 1].setType(Point::Type::WALL);
+            content[i][0].setType(point_type::WALL);
+            content[i][cols - 1].setType(point_type::WALL);
         }
     }
+}
+
+Map::~Map() {
 }
 
 Point& Map::getPoint(const Pos &p) {
@@ -43,33 +36,28 @@ const Point& Map::getPoint(const Pos &p) const {
     return content[p.getX()][p.getY()];
 }
 
-bool Map::isUnsafe(const Pos &p) const {
-    return getPoint(p).getType() == Point::Type::WALL
-        || getPoint(p).getType() == Point::Type::SNAKEHEAD
-        || getPoint(p).getType() == Point::Type::SNAKEBODY
-        || getPoint(p).getType() == Point::Type::SNAKETAIL;
-}
-
-bool Map::isUnsearch(const Pos &p) const {
-    return getPoint(p).getType() == Point::Type::WALL
-        || getPoint(p).getType() == Point::Type::SNAKEHEAD
-        || getPoint(p).getType() == Point::Type::SNAKEBODY
-        || getPoint(p).getType() == Point::Type::SNAKETAIL
-        || getPoint(p).getType() == Point::Type::FOOD;
-}
-
 bool Map::isInside(const Pos &p) const {
     return p.getX() > 0 && p.getY() > 0
         && p.getX() < (Pos::attr_type)getRowCount() - 1
         && p.getY() < (Pos::attr_type)getColCount() - 1;
 }
 
+bool Map::isSafe(const Pos &p) const {
+    return isInside(p) 
+        && (getPoint(p).getType() == point_type::EMPTY
+        || getPoint(p).getType() == point_type::FOOD);
+}
+
 bool Map::isHead(const Pos &p) const {
-    return isInside(p) && content[p.getX()][p.getY()].getType() == Point::Type::SNAKEHEAD;
+    return isInside(p) && content[p.getX()][p.getY()].getType() == point_type::SNAKE_HEAD;
 }
 
 bool Map::isTail(const Pos &p) const {
-    return isInside(p) && content[p.getX()][p.getY()].getType() == Point::Type::SNAKETAIL;
+    return isInside(p) && content[p.getX()][p.getY()].getType() == point_type::SNAKE_TAIL;
+}
+
+bool Map::isEmpty(const Pos &p) const {
+    return isInside(p) && content[p.getX()][p.getY()].getType() == point_type::EMPTY;
 }
 
 bool Map::isAllBody() const {
@@ -77,9 +65,9 @@ bool Map::isAllBody() const {
     for (size_type i = 1; i < rows - 1; ++i) {
         for (size_type j = 1; j < cols - 1; ++j) {
             auto type = content[i][j].getType();
-            if (!(type == Point::Type::SNAKEHEAD
-                || type == Point::Type::SNAKEBODY
-                || type == Point::Type::SNAKETAIL)) {
+            if (!(type == point_type::SNAKE_HEAD
+                || type == point_type::SNAKE_BODY
+                || type == point_type::SNAKE_TAIL)) {
                 return false;
             }
         }
@@ -93,7 +81,7 @@ void Map::getEmptyPoints(vector<Pos> &res) const {
     for (size_type i = 1; i < rows - 1; ++i) {
         for (size_type j = 1; j < cols - 1; ++j) {
             if (content[i][j].getType()
-                == Point::Type::EMPTY) {
+                == point_type::EMPTY) {
                 res.push_back(Pos(i, j));
             }
         }
@@ -106,16 +94,22 @@ void Map::createRandFood() {
     if (!emptyPoints.empty()) {
         createFood(emptyPoints[random(0, emptyPoints.size() - 1)]);
     }
+    // Test code to create food at a given order.
+    //static vector<Pos> tmp = {Pos(2, 3), Pos(3, 3), Pos(3, 2), Pos(2, 2), Pos(2, 1), Pos(3, 1)};
+    //static int cnt = 0;
+    //if (cnt >= 0 && cnt <= 5) {
+    //    createFood(tmp[cnt++]);
+    //}
 }
 
 void Map::createFood(const Pos &pos) {
     food = pos;
-    content[food.getX()][food.getY()].setType(Point::Type::FOOD);
+    content[food.getX()][food.getY()].setType(point_type::FOOD);
 }
 
 void Map::removeFood() {
     if (food != Pos::INVALID) {
-        content[food.getX()][food.getY()].setType(Point::Type::EMPTY);
+        content[food.getX()][food.getY()].setType(point_type::EMPTY);
         food = Pos::INVALID;
     }
 }
@@ -140,36 +134,35 @@ void Map::setShowSearchDetails(const bool &b) {
     showSearchDetails = b;
 }
 
-Point::value_type Map::heuristic(const Pos &from, const Pos &to) {
-    return getManhattenDist(from, to);
-}
-
-unsigned Map::getManhattenDist(const Pos &from, const Pos &to) {
+Point::value_type Map::estimateDist(const Pos &from, const Pos &to) {
     auto dx = abs(from.getX() - to.getX());
     auto dy = abs(from.getY() - to.getY());
     return dx + dy;
 }
 
-void Map::showVisitedNodeIfNeeded(const Pos &n, const Point::Type &type) {
+void Map::showPosSearchDetail(const Pos &p, const point_type &t) {
+    getPoint(p).setType(t);
+    GameCtrl::getInstance()->sleepFor(detailInterval);
+}
+
+void Map::showVisitPosIfNeed(const Pos &n) {
     if (showSearchDetails) {
-        getPoint(n).setType(type);
-        GameCtrl::getInstance()->sleepFor(10);
+        showPosSearchDetail(n, point_type::TEST_VISIT);
     }
 }
 
-void Map::showPathIfNeeded(const Pos &start, const list<Direction> &path) {
+void Map::showPathIfNeed(const Pos &start, const list<Direc> &path) {
     if (showSearchDetails) {
         auto tmp = start;
         for (const auto &d : path) {
-            showVisitedNodeIfNeeded(tmp, Point::Type::SNAKEHEAD);
+            showPosSearchDetail(tmp, point_type::TEST_PATH);
             tmp = tmp.getAdjPos(d);
         }
-        showVisitedNodeIfNeeded(tmp, Point::Type::SNAKEHEAD);
+        showPosSearchDetail(tmp, point_type::TEST_PATH);
     }
 }
 
-void Map::constructPath(const Pos &from, const Pos &to, list<Direction> &path) {
-    path.clear();
+void Map::constructPath(const Pos &from, const Pos &to, list<Direc> &path) const {
     Pos tmp = to, parent;
     while (tmp != Pos::INVALID && tmp != from) {
         parent = getPoint(tmp).getParent();
@@ -178,149 +171,117 @@ void Map::constructPath(const Pos &from, const Pos &to, list<Direction> &path) {
     }
 }
 
-void Map::findMinPath(const Pos &from, const Pos &to, list<Direction> &path) {
+void Map::init() {
+    auto rows = getRowCount(), cols = getColCount();
+    for (size_type i = 1; i < rows - 1; ++i) {
+        for (size_type j = 1; j < cols - 1; ++j) {
+            content[i][j].setDist(INF);
+            content[i][j].setVisit(false);
+        }
+    }
+}
+
+void Map::findMinPath(const Pos &from, const Pos &to, const Direc &initDirec, list<Direc> &path) {
     if (!isInside(from) || !isInside(to)) {
         return;
     }
 
-    // Initialize g value
-    auto rows = getRowCount(), cols = getColCount();
-    for (size_type i = 0; i < rows; ++i) {
-        for (size_type j = 0; j < cols; ++j) {
-            content[i][j].setG(GameCtrl::INF);
-        }
-    }
+    // Prepare work for searching
+    init();
+    path.clear();
+    getPoint(from).setDist(0);
+    queue<Pos> openList;
+    openList.push(from);
 
-    min_heap openList;
-    hash_table closeList(2 * rows * cols, Pos::hash);
-
-    // Create local variables in the loop to save allocation time
-    Point curPoint;
-    Pos curPos;
-
-    // Add first search node
-    Point &start = getPoint(from);
-    start.setG(0);
-    start.setH(heuristic(start.getPos(), to));
-    openList.push(start);
-
+    // Start BFS
     while (!openList.empty()) {
 
-        // Loop until the open list is empty or finding
-        // a node that is not in the close list.
-        do {
-            curPoint = openList.top();
-            curPos = curPoint.getPos();
-            openList.pop();
-        } while (!openList.empty() && closeList.find(curPos) != closeList.end());
+        // Get current search point
+        Pos curPos = openList.front();
+        Point curPoint = getPoint(curPos);
+        openList.pop();
+        showVisitPosIfNeed(curPos);
 
-        // If all the nodes on the map is in the close list,
-        // then there is no available path between the two
-        // nodes.
-        if (openList.empty() && closeList.find(curPos) != closeList.end()) {
-            break;
-        }
-
-        showVisitedNodeIfNeeded(curPos, Point::Type::SNAKEBODY);
-
+        // Check if the goal is found
         if (curPos == to) {
             constructPath(from, to, path);
-            showPathIfNeeded(from, path);
+            showPathIfNeed(from, path);
             break;
         }
 
-        closeList.insert(curPos);
-        auto adjPoints = curPos.getAllAdjPos();
-        randomChange(adjPoints);  // Ensure randomly traversing
-        for (const auto &adjPoint : adjPoints) {
-            if (!isUnsearch(adjPoint) && closeList.find(adjPoint) == closeList.end()) {
-                Point &adjGrid = getPoint(adjPoint);
-                if (curPoint.getG() + 1 < adjGrid.getG()) {
-                    adjGrid.setParent(curPos);
-                    adjGrid.setG(curPoint.getG() + 1);
-                    adjGrid.setH(heuristic(adjGrid.getPos(), to));
-                    openList.push(adjGrid);
-                }
+        // Arrange the order of traversing to make the result path as straight as possible
+        Direc bestDirec = (curPos == from ? initDirec : curPoint.getParent().getDirectionTo(curPos));
+        auto adjPositions = curPos.getAllAdjPos();
+        for (unsigned i = 0; i < adjPositions.size(); ++i) {
+            if (bestDirec == curPos.getDirectionTo(adjPositions[i])) {
+                std::swap(adjPositions[0], adjPositions[i]);
+                break;
+            }
+        }
+
+        // Traverse adjacent positions
+        for (const auto &adjPos : adjPositions) {
+            Point &adjPoint = getPoint(adjPos);
+            if (isEmpty(adjPos) && adjPoint.getDist() == INF) {
+                adjPoint.setParent(curPos);
+                adjPoint.setDist(curPoint.getDist() + 1);
+                openList.push(adjPos);
             }
         }
     }
 }
 
-void Map::findMaxPath(const Pos &from, const Pos &to, list<Direction> &path) {
+void Map::findMaxPath(const Pos &from, const Pos &to, const Direc &initDirec, list<Direc> &path) {
     if (!isInside(from) || !isInside(to)) {
         return;
     }
-    hash_table closeList(2 * getRowCount() * getColCount(), Pos::hash);
-    dfsFindLongest(from, from, to, closeList, path);
-    showPathIfNeeded(from, path);
+    init();
+    path.clear();
+    findMax(from, initDirec, from, to, path);
+    showPathIfNeed(from, path);
 }
 
-void Map::dfsFindLongest(const Pos &n,
-                         const Pos &from,
-                         const Pos &to,
-                         Map::hash_table &closeList,
-                         list<Direction> &path) {
-    closeList.insert(n);
-    showVisitedNodeIfNeeded(n, Point::Type::SNAKEBODY);
-    if (n == to) {
+void Map::findMax(const Pos &curPos, const Direc &curDirec, const Pos &from, const Pos &to, list<Direc> &path) {
+    if (!path.empty()) {  // A solution is found
+        return;
+    }
+    getPoint(curPos).setVisit(true);
+    showVisitPosIfNeed(curPos);
+    if (curPos == to) {  // Check if the goal is found
         constructPath(from, to, path);
     } else {
-        // Start traversing with the farthest point.
-        auto adjPoints = n.getAllAdjPos();
-        std::sort(adjPoints.begin(), adjPoints.end(),
-                  [&](const Pos &a, const Pos &b) { return heuristic(a, to) > heuristic(b, to); });
-        for (const auto &adj : adjPoints) {
-            if (!isUnsearch(adj) && closeList.find(adj) == closeList.end()) {
-                getPoint(adj).setParent(n);
-                dfsFindLongest(adj, from, to, closeList, path);
+
+        // Compute estimated distance of adjacent points
+        auto adjPositions = curPos.getAllAdjPos();
+        if (adjPositions.empty()) {
+            return;
+        }
+        for (const auto &pos : adjPositions) {
+            Point &adjPoint = getPoint(pos);
+            if (adjPoint.getDist() == INF) {
+                adjPoint.setDist(estimateDist(pos, to));
+            }
+        }
+
+        // Arrange the order of traversing to make the result path as straight as possible
+        std::sort(adjPositions.begin(), adjPositions.end(), [&](const Pos &a, const Pos &b) {
+            return getPoint(a).getDist() > getPoint(b).getDist();
+        });
+        auto maxDist = getPoint(adjPositions[0]).getDist();
+        for (unsigned i = 0; i < adjPositions.size(); ++i) {
+            if (getPoint(adjPositions[i]).getDist() == maxDist
+                && curDirec == curPos.getDirectionTo(adjPositions[i])) {
+                std::swap(adjPositions[0], adjPositions[i]);
+                break;
+            }
+        }
+
+        // Traverse adjacent positions
+        for (const auto &adjPos : adjPositions) {
+            if (isEmpty(adjPos) && !getPoint(adjPos).isVisit()) {
+                getPoint(adjPos).setParent(curPos);
+                findMax(adjPos, curPos.getDirectionTo(adjPos), from, to, path);
             }
         }
     }
 }
-
-void Map::createMaze(const Pos &start) {
-    if (!isInside(start)) {
-        throw std::range_error("Map.generateMaze(): The start point is not inside the map.");
-    }
-
-    auto rows = getRowCount(), cols = getColCount();
-    if (rows % 2 == 0 || cols % 2 == 0) {
-        throw std::range_error("Map.generateMaze(): The size of the map must be (odd number)*(odd number).");
-    }
-
-    if (rows < 5 || cols < 5) {
-        throw std::range_error("Map.generateMaze(): Require minimum map size: 5*5");
-    }
-
-    // Build all walls
-    for (size_type i = 2; i < rows - 1; i += 2) {
-        for (size_type j = 1; j < cols - 1; ++j) {
-            content[i][j].setType(Point::Type::WALL);
-        }
-    }
-    for (size_type i = 1; i < rows; i += 2) {
-        for (size_type j = 2; j < cols - 1; j += 2) {
-            content[i][j].setType(Point::Type::WALL);
-        }
-    }
-
-    // Break some walls to create maze
-    hash_table closeList(2 * rows *cols, Pos::hash);
-    dfsBreakWalls(start, closeList);
-}
-
-void Map::dfsBreakWalls(const Pos &n, Map::hash_table &closeList) {
-    closeList.insert(n);
-    auto adjWalls = n.getAllAdjPos();
-    randomChange(adjWalls);
-    for (const auto &wall : adjWalls) {
-        Direction direc = n.getDirectionTo(wall);
-        Pos p = wall.getAdjPos(direc);
-        if (isInside(p) && !isUnsearch(p)
-            && closeList.find(p) == closeList.end()) {
-            getPoint(wall).setType(Point::Type::EMPTY);  // Break one wall
-            dfsBreakWalls(p, closeList);
-        }
-    }
-}
-

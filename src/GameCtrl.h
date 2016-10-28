@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Snake.h"
+#include "Console.h"
 #include <thread>
 #include <mutex>
 
@@ -14,7 +15,6 @@ public:
     static const std::string MSG_WIN;
     static const std::string MSG_ESC;
     static const std::string MAP_INFO_FILENAME;
-    static const Point::value_type INF;
 
     ~GameCtrl();
 
@@ -65,7 +65,7 @@ public:
 private:
     Map::size_type mapRowCnt = 10;
     Map::size_type mapColCnt = 10;
-    double fps = 59.0;
+    double fps = 60.0;
     long moveInterval = 30;
     bool enableAI = true;
     bool runTest = false;
@@ -132,6 +132,14 @@ private:
     void drawMapContent() const;
 
     /*
+    Draw a point in testing program.
+
+    @param p the point to draw
+    @param the color of the point
+    */
+    void drawTestPoint(const Point &p, const ConsoleColor &consoleColor) const;
+
+    /*
     Callback for keyboard thread.
     Execute keyboard instructions.
     */
@@ -143,7 +151,7 @@ private:
     @param s the snake to move
     @param d the direction to move
     */
-    void keyboardMove(Snake &s, const Direction &d);
+    void keyboardMove(Snake &s, const Direc &d);
 
     /*
     Callback for food thread.
@@ -166,9 +174,4 @@ private:
     Test graph search algorithms.
     */
     void testGraphSearch();
-
-    /*
-    Test maze algorithms.
-    */
-    void testMaze();
 };

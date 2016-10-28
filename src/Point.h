@@ -13,36 +13,30 @@ public:
         EMPTY,
         WALL,
         FOOD,
-        SNAKEBODY,
-        SNAKEHEAD,
-        SNAKETAIL,
+        SNAKE_BODY,
+        SNAKE_HEAD,
+        SNAKE_TAIL,
+        TEST_VISIT,
+        TEST_PATH
     };
 
     Point();
     ~Point();
 
     void setType(Type type_);
-    void setG(const value_type g_);
-    void setH(const value_type h_);
+    void setDist(const value_type dist_);
     void setParent(const Pos &p_);
-    void setPos(const Pos &p);
+    void setVisit(const bool v);
     Type getType() const;
-    value_type getG() const;
-    value_type getH() const;
+    value_type getDist() const;
     Pos getParent() const;
-    Pos getPos() const;
-    value_type getF() const;  // f = g + h
-
-    // Operators comparing by f value
-    friend bool operator<(const Point &a, const Point &b);
-    friend bool operator>(const Point &a, const Point &b);
-    friend bool operator<=(const Point &a, const Point &b);
-    friend bool operator>=(const Point &a, const Point &b);
+    bool isVisit() const;
 
 private:
     Type type = EMPTY;
-    value_type g = 0;
-    value_type h = 0;
+
+    // Fields for grpah seaching algorithm
+    bool visit = false;
+    value_type dist = INF;
     Pos parent = Pos::INVALID;
-    Pos pos = Pos::INVALID;
 };

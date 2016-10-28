@@ -2,9 +2,6 @@
 
 #include "Point.h"
 #include <list>
-#include <queue>
-#include <unordered_set>
-#include <functional>
 
 /*
 Game map.
@@ -13,8 +10,7 @@ class Map {
 public:
     typedef std::vector<std::vector<Point>> content_type;
     typedef content_type::size_type size_type;
-    typedef std::unordered_set<Pos, decltype(Pos::hash)*> hash_table;
-    typedef std::priority_queue<Point, std::vector<Point>, std::greater<Point>> min_heap;
+    typedef Point::Type point_type;
 
     Map(const size_type &rowCnt_, const size_type &colCnt_);
     ~Map();
@@ -26,24 +22,22 @@ public:
     const Point& getPoint(const Pos &p) const;
 
     /*
-    Check if the position is unsafe.
-    */
-    bool isUnsafe(const Pos &p) const;
-
-    /*
-    Check if the position is inside the map.
+    Check whether the position is inside the map,
+    namely not on the boundary.
     */
     bool isInside(const Pos &p) const;
 
     /*
-    Check if the point at the position is a snake's head.
+    Check the type at one position.
     */
     bool isHead(const Pos &p) const;
+    bool isTail(const Pos &p) const;
+    bool isEmpty(const Pos &p) const;
 
     /*
-    Check if the point at the position is a snake's tail.
+    Check whether the position is safe.
     */
-    bool isTail(const Pos &p) const;
+    bool isSafe(const Pos &p) const;
 
     /*
     Check whether the map is filled with snake body.
@@ -98,42 +92,35 @@ public:
     void setShowSearchDetails(const bool &b);
 
     /*
-    Compute the heuristic value between two positions.
+    Estimate the distance between two positions. (Manhatten distance)
 
     @param from the start position
     @param to the end position
-    @return the heuristic value
+    @return the estimated distance
     */
-    static Point::value_type heuristic(const Pos &from, const Pos &to);
+    static Point::value_type estimateDist(const Pos &from, const Pos &to);
 
     /*
-    Find the shortest path between two positions. (BFS + A* search)
+    Find a shortest path as straight as possible between two positions.
+    Notice that only EMPTY points are searched by the algorithm.
 
     @param from the start position
     @param to the end position
+    @param initDirec aimming to get a path starting at this direction
     @param path the result will be stored in this field.
     */
-    void findMinPath(const Pos &from, const Pos &to, std::list<Direction> &path);
+    void findMinPath(const Pos &from, const Pos &to, const Direc &initDirec, std::list<Direc> &path);
 
     /*
-    Find the longest path between two positions. (DFS + A* search)
+    Find a longest path as straight as possible between two positions.
+    Notice that only EMPTY points are searched by the algorithm.
 
     @param from the start position
     @param to the end position
+    @param initDirec aimming to get a path starting at this direction
     @param path the result will be stored in this field.
     */
-    void findMaxPath(const Pos &from, const Pos &to, std::list<Direction> &path);
-
-    /*
-    Create a maze on the map.
-    Precondition:
-    1. The rows number and columns number of the
-       map must be both odd number.
-    2. Minimum size is 5*5.
-
-    @param start the start position of the maze
-    */
-    void createMaze(const Pos &start);
+    void findMaxPath(const Pos &from, const Pos &to, const Direc &initDirec, std::list<Direc> &path);
 
 private:
     content_type content;
@@ -142,48 +129,19 @@ private:
 
     bool showSearchDetails = false;
 
+    // Interval time when showing searched point
+    static const long detailInterval = 10;
+
     /*
-    Initialize.
+    Initialize map content before searching.
     */
     void init();
 
     /*
-    Check if the position does not need to
-    be visited in the searching algorithm.
+    Recursive method called in findMaxPath().
     */
-    bool isUnsearch(const Pos &p) const;
-
-    /*
-    Calculate the manhatten distance between two positions.
-
-    @param from the start position
-    @param to the end position
-    @return the manhatten distance
-    */
-    static unsigned getManhattenDist(const Pos &from, const Pos &to);
-
-    /*
-    Use DFS to find the longest(approximately) path.
-
-    @param n current position
-    @param from the start position
-    @param to the end position
-    @param closeList stores the positions that have been visited
-    @param path the result will be stored in this field
-    */
-    void dfsFindLongest(const Pos &n,
-                        const Pos &from,
-                        const Pos &to,
-                        Map::hash_table &closeList,
-                        std::list<Direction> &path);
-
-    /*
-    Use DFS to break the walls in a maze.
-
-    @param n current position
-    @param closeList stores the positions that have been visited
-    */
-    void dfsBreakWalls(const Pos &n, Map::hash_table &closeList);
+    void findMax(const Pos &curPos, const Direc &curDirec,
+                 const Pos &from, const Pos &to, std::list<Direc> &path);
 
     /*
     Construct the path between two positions.
@@ -192,25 +150,28 @@ private:
     @param to the end position
     @param path the result will be stored in this field.
     */
-    void constructPath(const Pos &from, const Pos &to, std::list<Direction> &path);
+    void constructPath(const Pos &from, const Pos &to, std::list<Direc> &path) const;
 
     /*
-    Show a visited node on the map. This method is designed for
-    showing search details. It first checks if showSearchDetails
-    field is true.
+    Show the details of a searched position.
 
-    @param n the point of the node
-    @param type the new type of the grid at the point n
+    @param p the position
+    @param t the type to be set to the point on the position
     */
-    void showVisitedNodeIfNeeded(const Pos &n, const Point::Type &type);
+    void showPosSearchDetail(const Pos &p, const point_type &t);
 
     /*
-    Show the path on the map. This method is designed for
-    showing search details. It first checks if showSearchDetails
-    field is true.
+    Show a visited position on the map if the field 'showSearchDetails' is true.
+
+    @param n the position of the node
+    */
+    void showVisitPosIfNeed(const Pos &n);
+
+    /*
+    Show a solution path on the map if the field 'showSearchDetails' is true.
 
     @param start the start point
     @param path the path to show
     */
-    void showPathIfNeeded(const Pos &start, const std::list<Direction> &path);
+    void showPathIfNeed(const Pos &start, const std::list<Direc> &path);
 };
