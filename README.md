@@ -78,6 +78,7 @@ Some possible solutions:
 |:-:|----------|:------------:|---------|
 |1|~~Do not create food at the points whose adjacent points contain a snake's head and a snake's tail.~~|No|Although effective, this is a tricky solution since it modifies the game rules instead of the AI algorithm itself. Thus there is no need to implement it.|
 |2|Make the search path contain as few corners as possible, namely as straight as possible.|Yes|Effective. If the path is as straight as possible, there will be much less scattered empty points on the map, which makes it easier for the snake to eat as much food as possible.|
+|3|When searching for the shortest path to food, take into account the fact that the snake frees squares as it moves.|No|Waiting for implementation.|
 
 **You could contribute by commenting or implementing the solutions above or by adding new possible solutions.**
 
