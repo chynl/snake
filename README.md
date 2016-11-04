@@ -1,3 +1,5 @@
+[:uk: English](./README.md) / [:cn: 中文](./README-CN.md)
+
 # Snake-AI
 
 A snake game AI written in c/c++.
