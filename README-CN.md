@@ -84,6 +84,6 @@ $ make run
 
 **为了参与此项目，你可以评论或者实现上述的解决方案，或者添加你认为可行的解决方案。**
 
-## 开源许可证
+## License
 
-请参见[LICENSE](./LICENSE.md)。
+See the [LICENSE](./LICENSE) file for license rights and limitations.
