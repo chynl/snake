@@ -1,4 +1,4 @@
-[:uk: English](./README.md) / [:cn: 中文](./README-CN.md)
+[:uk: English](./README.md) / :cn: 中文
 
 # Snake-AI
 
