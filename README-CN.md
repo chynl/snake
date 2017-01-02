@@ -12,16 +12,20 @@ AI的目的是让蛇尽可能的吃更多的食物，直到吃满整个地图。
 
 ![AI演示图](img/AI.gif)
 
-## 使用方法
+## 编译与运行
 
-编译与运行：
+### Linux
 
-```bash
-$ make
-$ make run
-```
+* GNU Make & g++
 
-为了解详细使用方法, 请查看主函数[main()](./src/main.cpp)
+    ```bash
+    $ make
+    $ make run
+    ```
+
+### Windows
+
+* Visual Studio
 
 ## 键盘控制
 

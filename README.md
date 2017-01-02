@@ -12,16 +12,20 @@ To contribute, please see [todos](#todos).
 
 ![Image of Snake AI](img/AI.gif)
 
-## Getting Started
+## Build
 
-Compile and run
+### Linux
 
-```bash
-$ make
-$ make run
-```
+* GNU Make & g++
 
-For usage, see function [main()](./src/main.cpp)
+    ```bash
+    $ make
+    $ make run
+    ```
+
+### Windows
+
+* Visual Studio
 
 ## Keyboard Control
 
