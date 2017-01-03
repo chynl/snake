@@ -2,6 +2,8 @@
 
 # Snake
 
+[![Build Status](https://travis-ci.org/stevennL/Snake.svg?branch=master)](https://travis-ci.org/stevennL/Snake)
+
 贪吃蛇游戏的人工智能算法实现。
 
 AI的目的是让蛇尽可能的吃更多的食物，直到吃满整个地图。

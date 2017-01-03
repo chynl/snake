@@ -2,6 +2,8 @@
 
 # Snake
 
+[![Build Status](https://travis-ci.org/stevennL/Snake.svg?branch=master)](https://travis-ci.org/stevennL/Snake)
+
 AI of snake game.
 
 The goal is to eat all the food and make the map filled with the snake's bodies. 
