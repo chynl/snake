@@ -47,7 +47,7 @@ The AI's goal is to direct the snake to eat the food and fill the map with its b
 
     1. Compute the shortest path ***P1*** from snake ***S1***'s head to the food.
 
-    2. Direct a virtual snake, ***S2***(the same as ***S1***), to eat the food along path ***P1***.
+    2. Direct a virtual snake, ***S2*** (the same as ***S1***), to eat the food along path ***P1***.
 
     3. Compute the longest path ***P2*** from snake ***S2***'s head to its tail. If ***P2*** exists, let ***D*** be the first direction in path ***P1***. Otherwise go to step 4.
 
@@ -67,7 +67,7 @@ The AI's goal is to direct the snake to eat the food and fill the map with its b
   
 * [Map.findMaxPath()](./src/Map.cpp): compute the longest path between two positions
 
-    The algorithm is based on DFS and the greedy algorithm. Each time the adjacent positions are traversed, the position that is the farthest(estimated by Manhatten distance) from the destination will be traversed first. In addition, in order to make the result path as straight as possible, if two positions have the same distance to the destination, the position at the current searching direction will be traversed first. Since this is an NP-hard problem, this method is only approximate.
+    The algorithm is based on DFS and the greedy algorithm. Each time the adjacent positions are traversed, the position that is the farthest from the destination (estimated by the Manhatten distance) will be traversed first. In addition, in order to make the result path as straight as possible, if two positions have the same distance to the destination, the position at the current searching direction will be traversed first. Since this is an NP-hard problem, this method is only approximate.
 
     Here is a vivid description of how it works:
     
