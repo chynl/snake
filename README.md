@@ -24,7 +24,7 @@ The AI's goal is to direct the snake to eat the food and fill the map with its b
     $ cmake ..
     ```
 
-3. In the `build` directory, you will find:
+3. The `build` directory has:
 
     * A Makefile for Linux
     * A Visual Studio project for Windows
@@ -45,7 +45,7 @@ The AI's goal is to direct the snake to eat the food and fill the map with its b
 
 * [Snake.decideNext()](./src/Snake.cpp): compute the next move direction ***D*** of the snake ***S1***
 
-    1. Compute the shortest path ***P1*** from snake ***S1***'s head to food.
+    1. Compute the shortest path ***P1*** from snake ***S1***'s head to the food.
 
     2. Direct a virtual snake, ***S2***(the same as ***S1***), to eat the food along path ***P1***.
 
