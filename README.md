@@ -6,7 +6,7 @@
 
 AI of snake game.
 
-The goal is to eat all the food and make the map filled with the snake's bodies. 
+We hope the snake to eat food and make the map filled with its bodies **as soon as possible**, so it **should not** always follow a fixed zigzag pattern to eat food.
 
 ## Demo
 
