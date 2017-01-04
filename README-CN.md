@@ -2,7 +2,7 @@
 
 # Snake
 
-[![Build Status](https://travis-ci.org/stevennL/Snake.svg?branch=master)](https://travis-ci.org/stevennL/Snake)
+[![Build Status](https://travis-ci.org/stevennL/Snake.svg?branch=master)](https://travis-ci.org/stevennL/Snake) [![Build status](https://ci.appveyor.com/api/projects/status/bryir507227d0i1q?svg=true)](https://ci.appveyor.com/project/stevennL/snake)
 
 贪吃蛇游戏的人工智能算法实现。
 
