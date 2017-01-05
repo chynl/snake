@@ -2,11 +2,15 @@
 
 # Snake
 
-[![Build Status](https://travis-ci.org/stevennL/Snake.svg?branch=master)](https://travis-ci.org/stevennL/Snake) [![Build status](https://ci.appveyor.com/api/projects/status/bryir507227d0i1q?svg=true)](https://ci.appveyor.com/project/stevennL/snake)
-
 贪吃蛇游戏的人工智能算法实现。
 
-我们希望这条蛇**尽快的**吃掉食物从而使它的身子铺满整个地图，因此它不应该总是按照一个特定的路径行走。
+我们希望这条蛇**尽快的**吃掉食物从而使它的身子铺满整个地图，因此它不应该总是按照一个特定的路径（比如“之”字形）行走。
+
+## Build 状态
+
+| Linux | Windows |
+|:-----:|:-------:|
+|[![Build Status](https://travis-ci.org/stevennL/Snake.svg?branch=master)](https://travis-ci.org/stevennL/Snake)|[![Build Status](https://ci.appveyor.com/api/projects/status/bryir507227d0i1q?svg=true)](https://ci.appveyor.com/project/stevennL/snake)|
 
 ## 效果展示
 
@@ -32,7 +36,7 @@
 
 ## 键盘控制
 
-| Key | Feature |
+| 按键 | 功能 |
 |:---:|:-------:|
 |W|上移|
 |A|左移|
@@ -43,7 +47,7 @@
 
 ## AI策略
 
-* 函数[Snake.decideNext()](./src/Snake.cpp): 计算蛇***S1***的下一个移动方向***D***
+* 函数[Snake.decideNext()](./src/Snake.cpp#L138): 计算蛇***S1***的下一个移动方向***D***
 
     1. 计算从蛇***S1***的头部到达食物的最短路径***P1***。
 
@@ -55,7 +59,7 @@
 
     5. 将移动方向***D***设置为离食物最远的方向。
 
-* 函数[Map.findMinPath()](./src/Map.cpp): 计算两个位置间的最短路径
+* 函数[Map.findMinPath()](./src/Map.cpp#L184): 计算两个位置间的最短路径
 
     算法建立在BFS的基础上。为了使路径尽可能直，每次遍历邻接点时，在当前搜索方向上的位置会被优先遍历。
 
@@ -65,7 +69,7 @@
 
     （绿色区域为搜索算法扫描到的区域，红色区域为最后计算出的最短路径，每个位置上的数字表示了从起始位置开始到该位置的最短距离）
   
-* 函数[Map.findMaxPath()](./src/Map.cpp): 计算两个位置间的最长路径
+* 函数[Map.findMaxPath()](./src/Map.cpp#L234): 计算两个位置间的最长路径
 
     算法建立在DFS与贪心算法的基础上。每次遍历邻接点时，离目标位置最远（使用曼哈顿距离估计）的位置将会被优先遍历到。另外，为了使路径尽可能直，如果两个位置到目标位置的距离相等，在当前搜索方向上的位置将被优先遍历到。这个问题是一个NP完全问题，此算法得出的结果路径只是一个近似最长路径。
 

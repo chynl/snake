@@ -2,11 +2,15 @@
 
 # Snake
 
-[![Build Status](https://travis-ci.org/stevennL/Snake.svg?branch=master)](https://travis-ci.org/stevennL/Snake) [![Build status](https://ci.appveyor.com/api/projects/status/bryir507227d0i1q?svg=true)](https://ci.appveyor.com/project/stevennL/snake)
-
 AI version of the snake game.
 
 The AI's goal is to direct the snake to eat the food and fill the map with its body **as quickly as possible**, so it **should not** just follow a fixed zigzag pattern.
+
+## Build Status
+
+| Linux | Windows |
+|:-----:|:-------:|
+|[![Build Status](https://travis-ci.org/stevennL/Snake.svg?branch=master)](https://travis-ci.org/stevennL/Snake)|[![Build Status](https://ci.appveyor.com/api/projects/status/bryir507227d0i1q?svg=true)](https://ci.appveyor.com/project/stevennL/snake)|
 
 ## Demo
 
@@ -43,7 +47,7 @@ The AI's goal is to direct the snake to eat the food and fill the map with its b
 
 ## AI Strategy
 
-* [Snake.decideNext()](./src/Snake.cpp): compute the next move direction ***D*** of the snake ***S1***
+* [Snake.decideNext()](./src/Snake.cpp#L138): compute the next move direction ***D*** of the snake ***S1***
 
     1. Compute the shortest path ***P1*** from snake ***S1***'s head to the food.
 
@@ -55,7 +59,7 @@ The AI's goal is to direct the snake to eat the food and fill the map with its b
 
     5. Let ***D*** be the direction that moves the snake along the longest path to the food.
 
-* [Map.findMinPath()](./src/Map.cpp): compute the shortest path between two positions
+* [Map.findMinPath()](./src/Map.cpp#L184): compute the shortest path between two positions
 
     The algorithm is based on BFS. In order to make the result path as straight as possible, each time the adjacent positions are traversed, the position at the current searching direction will be traversed first.
 
@@ -65,7 +69,7 @@ The AI's goal is to direct the snake to eat the food and fill the map with its b
 
     (The green area is scanned when searching and the red area is the **shortest** path. Each number on the point denotes its **minimum** distance to the starting point.)
   
-* [Map.findMaxPath()](./src/Map.cpp): compute the longest path between two positions
+* [Map.findMaxPath()](./src/Map.cpp#L234): compute the longest path between two positions
 
     The algorithm is based on DFS and the greedy algorithm. Each time the adjacent positions are traversed, the position that is the farthest from the destination (estimated by the Manhatten distance) will be traversed first. In addition, in order to make the result path as straight as possible, if two positions have the same distance to the destination, the position at the current searching direction will be traversed first. Since this is an NP-hard problem, this method is only approximate.
 
