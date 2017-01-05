@@ -96,7 +96,9 @@ int GameCtrl::run() {
             //testCreateFood();
             testGraphSearch();
         }
-        while (true) {}
+        while (true) {
+            sleepByFPS();
+        }
         return 0;
     } catch (const std::exception &e) { 
         exitGameWithError(e.what());
@@ -338,6 +340,7 @@ void GameCtrl::createFood() {
             if (!map->hasFood()) {
                 map->createRandFood();
             }
+            sleepByFPS();
         }
     } catch (const std::exception &e) {
         exitGameWithError(e.what());
