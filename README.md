@@ -81,6 +81,10 @@ The AI's goal is to direct the snake to eat the food and fill the map with its b
 
     (The green area is scanned when searching and the red area is the **longest** path. Each number on the point denotes its **estimated** distance to the destination.)
 
+## Discuss
+
+There are some discussions at [reddit](https://www.reddit.com/r/programming/comments/5ly972/ai_algorithm_of_snake_game_share_opinions_if_you/).
+
 ## License
 
 See the [LICENSE](./LICENSE) file for license rights and limitations.
