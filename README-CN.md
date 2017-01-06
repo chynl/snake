@@ -81,6 +81,10 @@
 
     （绿色区域为搜索算法扫描到的区域，红色区域为最后计算出的最长路径，每个位置上的数字表示了从该位置开始到目标位置的估计距离）
 
+## 讨论
+
+在[reddit](https://www.reddit.com/r/programming/comments/5ly972/ai_algorithm_of_snake_game_share_opinions_if_you/)上有关于这个项目的一些讨论。
+
 ## License
 
 See the [LICENSE](./LICENSE) file for license rights and limitations.
