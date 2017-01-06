@@ -18,7 +18,7 @@
 
 ## 安装
 
-1. 安装 [CMake](https://cmake.org/)。
+1. 安装 [CMake](https://cmake.org/download/)。
 
 2. 输入以下命令build这个项目:
 
@@ -28,11 +28,13 @@
     $ cmake ..
     ```
 
-3. 在build目录中，你可以找到：
+3. 根据你的操作系统，以下内容将会在`build`目录中生成：
 
-    * 运行于Linux平台的Makefile
-    * 运行于Windows平台的Visual Studio项目
-    * 运行于OS X平台的Xcode项目
+    | Linux | OS X | Windows |
+    |:-----:|:----:|:-------:|
+    |Makefile|Makefile|Visual Studio Project|
+
+（注意到你可以在第2步使用命令`cmake -G "a generator" ..`来指定一个[generator](https://cmake.org/cmake/help/v3.7/manual/cmake-generators.7.html)。）
 
 ## 键盘控制
 

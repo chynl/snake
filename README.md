@@ -18,7 +18,7 @@ The AI's goal is to direct the snake to eat the food and fill the map with its b
 
 ## Installation
 
-1. Install [CMake](https://cmake.org/).
+1. Install [CMake](https://cmake.org/download/).
 
 2. Build this project using the commands below:
 
@@ -28,11 +28,13 @@ The AI's goal is to direct the snake to eat the food and fill the map with its b
     $ cmake ..
     ```
 
-3. The `build` directory has:
+3. Contents below will be generated in the `build` directory based on your operating system:
 
-    * A Makefile for Linux
-    * A Visual Studio project for Windows
-    * An Xcode project for OS X
+    | Linux | OS X | Windows |
+    |:-----:|:----:|:-------:|
+    |Makefile|Makefile|Visual Studio Project|
+
+(Note that you could use command `cmake -G "a generator" ..` in step 2 to specify a [generator](https://cmake.org/cmake/help/v3.7/manual/cmake-generators.7.html).)
 
 ## Keyboard Controls
 
