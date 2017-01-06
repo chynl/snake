@@ -10,10 +10,10 @@
 using std::string;
 using std::list;
 
-const string GameCtrl::MSG_BAD_ALLOC = "Oops! Not enough memory to run the game! Press any key to continue...";
-const string GameCtrl::MSG_LOSE = "Oops! You lose! Press any key to continue...";
-const string GameCtrl::MSG_WIN = "Congratulations! You Win! Press any key to continue...";
-const string GameCtrl::MSG_ESC = "Game ended! Press any key to continue...";
+const string GameCtrl::MSG_BAD_ALLOC = "Oops! Not enough memory to run the game! ";
+const string GameCtrl::MSG_LOSE = "Oops! You lose! ";
+const string GameCtrl::MSG_WIN = "Congratulations! You Win! ";
+const string GameCtrl::MSG_ESC = "Game ended! ";
 const string GameCtrl::MAP_INFO_FILENAME = "movements.txt";
 
 GameCtrl::GameCtrl() {}
@@ -51,14 +51,12 @@ void GameCtrl::exitGame(const std::string &msg) {
     // Print message
     Console::setCursor(0, mapRowCnt + 1);
     Console::writeWithColor(msg + "\n", ConsoleColor(WHITE, BLACK, true, false));
-    Console::getch();
-
     mutexExit.unlock();
     exit(0);
 }
 
 void GameCtrl::exitGameWithError(const std::string &err) {
-    exitGame("Exception: " + err + "\nPress any key to continue...");
+    exitGame("Exception: " + err + "\n");
 }
 
 void GameCtrl::setMapRow(const Map::size_type &n) {
@@ -96,7 +94,9 @@ int GameCtrl::run() {
             //testCreateFood();
             testGraphSearch();
         }
-        while (true) {}
+        while (true) {
+            sleepByFPS();
+        }
         return 0;
     } catch (const std::exception &e) { 
         exitGameWithError(e.what());
@@ -338,6 +338,7 @@ void GameCtrl::createFood() {
             if (!map->hasFood()) {
                 map->createRandFood();
             }
+            sleepByFPS();
         }
     } catch (const std::exception &e) {
         exitGameWithError(e.what());
