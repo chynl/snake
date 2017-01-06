@@ -2,7 +2,6 @@
 
 #include "Snake.h"
 #include "Console.h"
-#include <cstdlib>
 #include <thread>
 #include <mutex>
 

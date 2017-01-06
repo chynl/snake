@@ -2,6 +2,7 @@
 #include <exception>
 #include <cstdio>
 #include <chrono>
+#include <cstdlib>
 #ifdef _WIN32
 #include <Windows.h>
 #endif
