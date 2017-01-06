@@ -1,6 +1,7 @@
 #include "Console.h"
 #include <cstdio>
-#ifdef __linux__
+#include <cstdlib>
+#ifdef LINUX_OR_APPLE
 #include <termios.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -84,7 +85,7 @@ void Console::resetColor(const WORD &attr) {
 #endif
 
 void Console::setCursor(const int &x, const int &y) {
-#ifdef __linux__ 
+#ifdef LINUX_OR_APPLE
     printf("\033[%d;%dH", y + 1, x);  // Param: row and col
 #elif _WIN32
     HANDLE hout = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -98,7 +99,7 @@ void Console::setCursor(const int &x, const int &y) {
 }
 
 void Console::clear() {
-#ifdef __linux__ 
+#ifdef LINUX_OR_APPLE
     system("clear");
 #elif _WIN32
     system("cls");
@@ -112,7 +113,7 @@ void Console::write(const std::string &str) {
 }
 
 void Console::writeWithColor(const std::string &str, const ConsoleColor &consoleColor) {
-#ifdef __linux__
+#ifdef LINUX_OR_APPLE
     int fore = -1, back = -1;
     switch (consoleColor.backColor) {
         case WHITE:
@@ -167,7 +168,7 @@ void Console::writeWithColor(const std::string &str, const ConsoleColor &console
 }
 
 char Console::getch() {
-#ifdef __linux__
+#ifdef LINUX_OR_APPLE
     struct termios oldattr, newattr;
     int ch;
     tcgetattr(STDIN_FILENO, &oldattr);
@@ -185,7 +186,7 @@ char Console::getch() {
 }
 
 int Console::kbhit() {
-#ifdef __linux__
+#ifdef LINUX_OR_APPLE
     struct termios oldt, newt;
     int ch;
     int oldf;

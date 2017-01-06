@@ -5,6 +5,10 @@
 #include <Windows.h>
 #endif
 
+#if defined(__linux__) || defined(__APPLE__)
+#define LINUX_OR_APPLE
+#endif
+
 enum ConsoleColorType {
     BLACK,
     RED,
