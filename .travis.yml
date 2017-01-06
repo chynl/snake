@@ -12,6 +12,7 @@ compiler:
 branches:
   only:
     - master
+    - dev
 
 before_install:
   - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test 
