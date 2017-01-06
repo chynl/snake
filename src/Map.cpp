@@ -3,6 +3,7 @@
 #include "Console.h"
 #include <algorithm>
 #include <queue>
+#include <cmath>
 
 using std::vector;
 using std::string;
@@ -135,8 +136,8 @@ void Map::setShowSearchDetails(const bool &b) {
 }
 
 Point::value_type Map::estimateDist(const Pos &from, const Pos &to) {
-    auto dx = abs(from.getX() - to.getX());
-    auto dy = abs(from.getY() - to.getY());
+    auto dx = fabs(from.getX() - to.getX());
+    auto dy = fabs(from.getY() - to.getY());
     return dx + dy;
 }
 
