@@ -1,4 +1,5 @@
-#pragma once
+#ifndef S_GAMECTRL_H_
+#define S_GAMECTRL_H_
 
 #include "Snake.h"
 #include "Console.h"
@@ -175,3 +176,5 @@ private:
     */
     void testGraphSearch();
 };
+
+#endif

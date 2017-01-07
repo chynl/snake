@@ -1,4 +1,5 @@
-#pragma once
+#ifndef S_POINT_H_
+#define S_POINT_H_
 
 #include "Pos.h"
 
@@ -40,3 +41,5 @@ private:
     value_type dist = INF;
     Pos parent = Pos::INVALID;
 };
+
+#endif
