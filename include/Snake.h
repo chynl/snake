@@ -1,4 +1,5 @@
-#pragma once
+#ifndef S_SNAKE_H_
+#define S_SNAKE_H_
 
 #include "Map.h"
 #include <memory>
@@ -99,3 +100,5 @@ private:
     */
     const Pos& getTail() const;
 };
+
+#endif

@@ -1,6 +1,5 @@
-#pragma once
-#ifndef BASE_H
-#define BASE_H
+#ifndef S_BASE_H_
+#define S_BASE_H_
 
 #include <string>
 #include <vector>

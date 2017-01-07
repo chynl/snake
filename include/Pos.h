@@ -1,4 +1,5 @@
-#pragma once
+#ifndef S_POS_H_
+#define S_POS_H_
 
 #include "Base.h"
 #include <vector>
@@ -66,3 +67,5 @@ private:
     attr_type x;
     attr_type y;
 };
+
+#endif

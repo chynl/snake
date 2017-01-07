@@ -1,4 +1,5 @@
-#pragma once
+#ifndef S_MAP_H_
+#define S_MAP_H_
 
 #include "Point.h"
 #include <list>
@@ -175,3 +176,5 @@ private:
     */
     void showPathIfNeed(const Pos &start, const std::list<Direc> &path);
 };
+
+#endif

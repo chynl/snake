@@ -1,4 +1,5 @@
-#pragma once
+#ifndef S_CONSOLE_H_
+#define S_CONSOLE_H_
 
 #include <string>
 #if defined(WIN32) || defined(_WIN32)
@@ -102,3 +103,5 @@ private:
     static void resetColor(const WORD &attr);
 #endif
 };
+
+#endif
