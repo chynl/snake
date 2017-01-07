@@ -47,6 +47,8 @@ The AI's goal is to direct the snake to eat the food and fill the map with its b
 |Space|pause/resume the snake|
 |Esc|exit game|
 
+**Tips:** When the snake is running, you could press the `Space` key to pause the snake and then press the `W/A/S/D` key to move the snake step by step. Anytime if you want the snake to start running again, just press `Space` key again.
+
 ## AI Strategy
 
 * [Snake.decideNext()](./src/Snake.cpp#L138): compute the next move direction ***D*** of the snake ***S1***
