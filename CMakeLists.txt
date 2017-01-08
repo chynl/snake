@@ -7,9 +7,12 @@ if(POLICY CMP0054)
   cmake_policy(SET CMP0054 NEW)
 endif()
 
-project(Snake CXX)
-set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
+set(PROJ_NAME Snake)
+set(PROJ_EXEC_NAME snake)
 
+project(${PROJ_NAME} CXX)
+
+set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(CMAKE_BUILD_TYPE Debug)
 
 # Disable in-source build
@@ -37,7 +40,8 @@ file(GLOB_RECURSE INCS "${PROJECT_SOURCE_DIR}/include/*.h")
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
 file(GLOB_RECURSE SRCS "${PROJECT_SOURCE_DIR}/src/*.cpp")
-add_executable(snake ${SRCS} ${INCS})
+add_executable(${PROJ_EXEC_NAME} ${SRCS} ${INCS})
+
 if(NOT WIN32)
-    target_link_libraries(snake pthread)
+    target_link_libraries(${PROJ_EXEC_NAME} pthread)
 endif(NOT WIN32)
