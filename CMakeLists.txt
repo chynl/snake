@@ -1,4 +1,5 @@
 cmake_minimum_required (VERSION 2.8)
+
 if(POLICY CMP0025)
   cmake_policy(SET CMP0025 NEW)
 endif()
@@ -6,10 +7,10 @@ if(POLICY CMP0054)
   cmake_policy(SET CMP0054 NEW)
 endif()
 
-set(CMAKE_BUILD_TYPE Debug)
-
 project(Snake CXX)
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
+
+set(CMAKE_BUILD_TYPE Debug)
 
 # Disable in-source build
 if("${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}")
@@ -32,10 +33,11 @@ elseif (CMAKE_CXX_COMPILER_ID} MATCHES "MSVC")
     # No config
 endif()
 
+file(GLOB_RECURSE INCS "${PROJECT_SOURCE_DIR}/include/*.h")
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
-aux_source_directory(${PROJECT_SOURCE_DIR}/src DIR_SRC)
-add_executable(snake ${DIR_SRC})
+file(GLOB_RECURSE SRCS "${PROJECT_SOURCE_DIR}/src/*.cpp")
+add_executable(snake ${SRCS} ${INCS})
 if(NOT WIN32)
     target_link_libraries(snake pthread)
 endif(NOT WIN32)
