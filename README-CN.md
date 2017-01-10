@@ -20,7 +20,7 @@
 
 1. 安装 [CMake](https://cmake.org/download/)。
 
-2. 输入以下命令build这个项目:
+2. 输入以下命令得到用于build这个项目的文件:
 
     ```bash
     $ mkdir build
@@ -28,13 +28,11 @@
     $ cmake ..
     ```
 
-3. 根据你的操作系统，以下内容将会在`build`目录中生成：
+3. 一些文件将会根据你的操作系统在`build`目录中生成，利用这些文件可以build这个项目：
 
     | Linux | OS X | Windows |
     |:-----:|:----:|:-------:|
     |Makefile|Makefile|Visual Studio Project|
-
-（注意到你可以在第2步使用命令`cmake -G "a generator" ..`来指定一个[generator](https://cmake.org/cmake/help/v3.7/manual/cmake-generators.7.html)。）
 
 ## 键盘控制
 

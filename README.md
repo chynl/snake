@@ -20,7 +20,7 @@ The AI's goal is to direct the snake to eat the food and fill the map with its b
 
 1. Install [CMake](https://cmake.org/download/).
 
-2. Build this project using the commands below:
+2. Generate build files using the commands below:
 
     ```bash
     $ mkdir build
@@ -28,13 +28,11 @@ The AI's goal is to direct the snake to eat the food and fill the map with its b
     $ cmake ..
     ```
 
-3. Contents below will be generated in the `build` directory based on your operating system:
+3. Build files will be generated in the `build` directory based on your operating system. Use them to build this project:
 
     | Linux | OS X | Windows |
     |:-----:|:----:|:-------:|
     |Makefile|Makefile|Visual Studio Project|
-
-(Note that you could use command `cmake -G "a generator" ..` in step 2 to specify a [generator](https://cmake.org/cmake/help/v3.7/manual/cmake-generators.7.html).)
 
 ## Keyboard Controls
 
