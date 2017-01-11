@@ -24,7 +24,7 @@ environment:
 
 before_build:
   - mkdir build && cd build
-  - cmake -G "Visual Studio %VS_VERSION%" ..
+  - cmake -G "Visual Studio %VS_VERSION%" -DCMAKE_BUILD_TYPE=%CONFIGURATION% ..
 
 build:
   project: build\Snake.sln
