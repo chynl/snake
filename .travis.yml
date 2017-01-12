@@ -5,9 +5,16 @@ language: cpp
 os:
   - linux
 
-compiler:
-  - clang
-  - gcc
+matrix:
+  include:
+    - env: BUILD_TYPE=Debug
+      compiler: gcc
+    - env: BUILD_TYPE=Release
+      compiler: gcc
+    - env: BUILD_TYPE=Debug
+      compiler: clang
+    - env: BUILD_TYPE=Release
+      compiler: clang
 
 branches:
   only:
@@ -34,7 +41,7 @@ before_install:
 
 before_script:
   - mkdir build && cd build
-  - cmake ..
+  - cmake -DTASTYLIB_BUILD_TEST=ON -DCMAKE_BUILD_TYPE=$BUILD_TYPE ..
 
 script:
   - make -j

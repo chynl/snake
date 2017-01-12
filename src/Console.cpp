@@ -100,9 +100,9 @@ void Console::setCursor(const int &x, const int &y) {
 
 void Console::clear() {
 #ifdef LINUX_OR_APPLE
-    system("clear");
+    if (system("clear")) {}
 #elif _WIN32
-    system("cls");
+    if (system("cls")) {}
 #else
     // Other platforms
 #endif
