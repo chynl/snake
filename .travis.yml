@@ -19,7 +19,7 @@ matrix:
 branches:
   only:
     - master
-    - dev
+    - /^(dev)|(dev_.*)$/
 
 addons:
   apt:
