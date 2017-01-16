@@ -5,7 +5,7 @@ version: 1.0.{build}
 branches:
   only:
     - master
-    - dev
+    - /^(dev)|(dev_.*)$/
 
 configuration:
   - Debug
@@ -14,17 +14,21 @@ configuration:
 environment:
   matrix:
     - VS_VERSION: 12 2013
-      VS_PLATFORM: win32
+      VS_PLATFORM: Win32
     - VS_VERSION: 12 2013
       VS_PLATFORM: x64
     - VS_VERSION: 14 2015
-      VS_PLATFORM: win32
+      VS_PLATFORM: Win32
     - VS_VERSION: 14 2015
       VS_PLATFORM: x64
 
 before_build:
   - mkdir build && cd build
-  - cmake -G "Visual Studio %VS_VERSION%" -DCMAKE_BUILD_TYPE=%CONFIGURATION% ..
+  - cmake -G "Visual Studio %VS_VERSION%"
+    -DCMAKE_BUILD_TYPE=%CONFIGURATION%
+    -DCMAKE_GENERATOR_PLATFORM=%VS_PLATFORM%
+    -DCMAKE_VERBOSE_MAKEFILE=ON
+    ..
 
 build:
   project: build\Snake.sln

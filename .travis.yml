@@ -7,10 +7,12 @@ os:
 
 matrix:
   include:
+    # gcc
     - env: BUILD_TYPE=Debug
       compiler: gcc
     - env: BUILD_TYPE=Release
       compiler: gcc
+    # clang
     - env: BUILD_TYPE=Debug
       compiler: clang
     - env: BUILD_TYPE=Release
@@ -19,7 +21,7 @@ matrix:
 branches:
   only:
     - master
-    - dev
+    - /^(dev)|(dev_.*)$/
 
 addons:
   apt:
@@ -41,7 +43,10 @@ before_install:
 
 before_script:
   - mkdir build && cd build
-  - cmake -DTASTYLIB_BUILD_TEST=ON -DCMAKE_BUILD_TYPE=$BUILD_TYPE ..
+  - cmake
+    -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+    -DCMAKE_VERBOSE_MAKEFILE=ON
+    ..
 
 script:
   - make -j
