@@ -21,11 +21,6 @@ public:
     SizeType getColCount() const;
 
     /*
-    Set whether to show the details of the searching algorithms.
-    */
-    void setShowDetail(const bool show);
-
-    /*
     Check the state of the map.
     */
     bool isInside(const Pos &p) const;
@@ -53,78 +48,15 @@ public:
     */
     static SizeType distance(const Pos &from, const Pos &to);
 
-    /*
-    Find a shortest path as straight as possible between two positions.
-    Notice that only EMPTY points are searched by the algorithm.
-
-    @param from  The starting position
-    @param to    The ending position
-    @param direc The expected searching direction
-    @param path  The result will be stored in this field
-    */
-    void findMinPath(const Pos &from, const Pos &to, const Direction direc, std::list<Direction> &path);
-
-    /*
-    Find a longest path as straight as possible between two positions.
-    Notice that only EMPTY points are searched by the algorithm.
-
-    @param from  The starting position
-    @param to    The ending position
-    @param direc The expected searching direction
-    @param path  The result will be stored in this field
-    */
-    void findMaxPath(const Pos &from, const Pos &to, const Direction direc, std::list<Direction> &path);
-
 private:
-    std::vector<std::vector<Point>> content;
-
     Pos food;
 
-    bool showDetail;
+    std::vector<std::vector<Point>> content;
 
     /*
     Return all empty positions.
     */
     std::vector<Pos> getEmptyPoints() const;
-
-    /*
-    A recursive method called in findMaxPath().
-    */
-    void findMax(const Pos &curPos,
-                 const Direction &curDirec,
-                 const Pos &from,
-                 const Pos &to,
-                 std::list<Direction> &path);
-
-    /*
-    Construct the path between two positions.
-
-    @param from The start position
-    @param to   The end position
-    @param path The result will be stored in this field.
-    */
-    void constructPath(const Pos &from, const Pos &to, std::list<Direction> &path) const;
-
-    /*
-    Show the details of a searched position.
-
-    @param p    The position
-    @param type The new point type of the position
-    */
-    void showPos(const Pos &p, const Point::Type type);
-
-    /*
-    Show a visited position on the map if the field 'showDetail' is true.
-    */
-    void showVisitPos(const Pos &p);
-
-    /*
-    Show a solution path on the map if the field 'showDetail' is true.
-
-    @param start The starting point of the path
-    @param path  The path
-    */
-    void showPath(const Pos &start, const std::list<Direction> &path);
 };
 
 #endif

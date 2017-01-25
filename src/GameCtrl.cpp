@@ -163,8 +163,8 @@ void GameCtrl::init() {
 
 void GameCtrl::initMap() {
     if (mapRowCnt < 4 || mapColCnt < 4) {
-        string msg = "GameCtrl.initMap(): Map size is at least 4*4. Current size is "
-            + util::toString(mapRowCnt) + "*" + util::toString(mapColCnt);
+        string msg = "GameCtrl.initMap(): Map size at least 4*4. Current size "
+            + util::toString(mapRowCnt) + "*" + util::toString(mapColCnt) + ".";
         throw std::range_error(msg.c_str());
     }
     map = std::make_shared<Map>(mapRowCnt, mapColCnt);
@@ -362,7 +362,7 @@ void GameCtrl::testSearch() {
     }
 
     list<Direction> path;
-    map->setShowDetail(true);
+    snake.setMap(map);
 
     // Add walls for testing
     for (int i = 4; i < 16; ++i) {
@@ -372,8 +372,8 @@ void GameCtrl::testSearch() {
     }
    
     Pos from(6, 7), to(14, 13);
-    map->findMinPath(from, to, Direction::NONE, path);
-    //map->findMaxPath(from, to, Direction::NONE, path);
+    snake.testMinPath(from, to, path);
+    //snake.testMaxPath(from, to, path);
 
     // Print path info
     string res = "Path from " + from.toString() + " to " + to.toString()
