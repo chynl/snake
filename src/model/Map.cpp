@@ -224,7 +224,7 @@ void Map::findMaxPath(const Pos &from, const Pos &to, const Direction direc, lis
     for (SizeType i = 1; i < row - 1; ++i) {
         for (SizeType j = 1; j < col - 1; ++j) {
             content[i][j].setVisit(false);
-            content[i][j].setDist(distance(Pos(i, j), to));
+            content[i][j].setDist((Point::DistType)distance(Pos(i, j), to));
         }
     }
     path.clear();

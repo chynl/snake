@@ -2,7 +2,7 @@
 #define SNAKE_GAMECTRL_H_
 
 #include "model/Snake.h"
-#include "util/console.h"
+#include "util/Console.h"
 #include <thread>
 #include <mutex>
 

@@ -87,7 +87,7 @@ void GameCtrl::exitGame(const std::string &msg) {
             fclose(movementFile);
             movementFile = nullptr;
         }
-        Console::setCursor(0, mapRowCnt);
+        Console::setCursor(0, (int)mapRowCnt);
         Console::writeWithColor(msg + "\n", ConsoleColor(WHITE, BLACK, true, false));
     }
     mutexExit.unlock();
