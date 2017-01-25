@@ -1,8 +1,8 @@
-#ifndef S_GAMECTRL_H_
-#define S_GAMECTRL_H_
+#ifndef SNAKE_GAMECTRL_H_
+#define SNAKE_GAMECTRL_H_
 
-#include "Snake.h"
-#include "Console.h"
+#include "model/Snake.h"
+#include "util/Console.h"
 #include <thread>
 #include <mutex>
 
@@ -11,110 +11,105 @@ Game controller.
 */
 class GameCtrl {
 public:
+    typedef Map::SizeType SizeType;
+
+    ~GameCtrl();
+
+    /*
+    Return the only instance
+    */
+    static GameCtrl* getInstance();
+
+    /*
+    Game configuration setters.
+    */
+    void setFPS(const double fps_);
+    void setEnableAI(const bool enableAI_);
+    void setMoveInterval(const long ms);
+    void setRecordMovements(const bool b);
+    void setRunTest(const bool b);
+    void setMapRow(const SizeType n);
+    void setMapCol(const SizeType n);
+
+    /*
+    Sleep current thread for a few milliseconds.
+    */
+    void sleepFor(const long ms) const;
+
+    /*
+    Run the game.
+
+    @return The exit status of the program.
+    */
+    int run();
+
+private:
     static const std::string MSG_BAD_ALLOC;
     static const std::string MSG_LOSE;
     static const std::string MSG_WIN;
     static const std::string MSG_ESC;
     static const std::string MAP_INFO_FILENAME;
 
-    ~GameCtrl();
-
-    /*
-    Forbid copy
-    */
-    GameCtrl(const GameCtrl &m) = delete;
-    GameCtrl& operator=(const GameCtrl &m) = delete;
-
-    /*
-    Get the only instance
-    */
-    static GameCtrl* getInstance();
-
-    /*
-    Sleep current thread.
-    */
-    void sleepFor(const long ms) const;
-
-    /*
-    Print a message and exit the game. (thread-safe)
-    */
-    void exitGame(const std::string &msg);
-
-    /*
-    Print an error and exit the game. (thread-safe)
-    */
-    void exitGameWithError(const std::string &err);
-
-    /*
-    Game configuration setters.
-    */
-    void setMapRow(const Map::size_type &n);
-    void setMapCol(const Map::size_type &n);
-    void setFPS(const double &fps_);
-    void setMoveInterval(const long &ms);
-    void setEnableAI(const bool &enable);
-    void setRunTest(const bool &b);
-    void setRecordMovements(const bool &b);
-
-    /*
-    Run the game.
-
-    @return the exit status of the program.
-    */
-    int run();
-
-private:
-    Map::size_type mapRowCnt = 10;
-    Map::size_type mapColCnt = 10;
+    SizeType mapRowCnt = 10;
+    SizeType mapColCnt = 10;
     double fps = 60.0;
     long moveInterval = 30;
     bool enableAI = true;
     bool runTest = false;
-    bool recordMovements = false;
-
-    bool pause = false;  // Field to implement pause/resume game
+    bool recordMovements = true;
 
     Snake snake;
     std::shared_ptr<Map> map;
 
-    bool threadWork = true;      // Thread running switcher
+    volatile bool pause = false;  // Control pause/resume game
+
+    volatile bool runMainThread = true;  // Switch of the main thread
+    volatile bool runSubThread = true;   // Switch of sub-threads
+
     std::thread drawThread;      // Thread to draw the map
     std::thread keyboardThread;  // Thread to receive keyboard instructions
     std::thread foodThread;      // Thread to create food
     std::thread moveThread;      // Thread to move the snake
 
-    std::mutex mutexMove;  // Mutex for moveSnake()
-    std::mutex mutexExit;  // Mutex for exitGame()
+    std::mutex mutexMove;  // Mutex of moveSnake()
+    std::mutex mutexExit;  // Mutex of exitGame()
 
     FILE *movementFile = nullptr;  // File to save snake movements
 
-    /*
-    Private constructor for singleton.
-    */
     GameCtrl();
 
     /*
-    Sleep for a time calculated by FPS value.
+    Sleep for a few time according to FPS.
     */
     void sleepByFPS() const;
+
+    /*
+    Print a message and exit the game.
+    */
+    void exitGame(const std::string &msg);
+
+    /*
+    Print an error message and exit the game.
+    */
+    void exitGameErr(const std::string &err);
+
+    /*
+    Move the snake and check if the game is over.
+    */
+    void moveSnake(Snake &s);
+
+    /*
+    Write the map content to file.
+    */
+    void writeMapToFile() const;
 
     /*
     Initialize.
     */
     void init();
     void initMap();
-    void initSnakes();
+    void initSnake();
     void initFiles();
-
-    /*
-    Move the snake and check if game is over. (thread-safe)
-    */
-    void moveSnake(Snake &s);
-
-    /*
-    Write the map content to movement file.
-    */
-    void writeMapToFile() const;
 
     /*
     Start all threads.
@@ -122,59 +117,33 @@ private:
     void startThreads();
 
     /*
-    Callback for draw thread.
-    Draw the game elements.
+    Draw thread.
     */
     void draw();
-
-    /*
-    Draw the map content.
-    */
     void drawMapContent() const;
-
-    /*
-    Draw a point in testing program.
-
-    @param p the point to draw
-    @param the color of the point
-    */
     void drawTestPoint(const Point &p, const ConsoleColor &consoleColor) const;
 
     /*
-    Callback for keyboard thread.
-    Execute keyboard instructions.
+    Keyboard thread.
     */
     void keyboard();
+    void keyboardMove(Snake &s, const Direction d);
 
     /*
-    Execute keyboard move instruction.
-
-    @param s the snake to move
-    @param d the direction to move
-    */
-    void keyboardMove(Snake &s, const Direc &d);
-
-    /*
-    Callback for food thread.
-    Create food on the map if it doesn't exist.
+    Food thread.
     */
     void createFood();
 
     /*
-    Callback for auto move thread.
-    Auto move the snake on the map.
+    Move thread
     */
     void autoMove();
 
     /*
-    Test create map food program.
+    Test functions.
     */
-    void testCreateFood();
-
-    /*
-    Test graph search algorithms.
-    */
-    void testGraphSearch();
+    void testFood();
+    void testSearch();
 };
 
 #endif
