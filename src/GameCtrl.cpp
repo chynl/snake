@@ -1,5 +1,6 @@
 #include "GameCtrl.h"
-#include <exception>
+#include "util/convert.h"
+#include <stdexcept>
 #include <cstdio>
 #include <chrono>
 #include <cstdlib>
@@ -10,10 +11,10 @@
 using std::string;
 using std::list;
 
-const string GameCtrl::MSG_BAD_ALLOC = "Oops! Not enough memory to run the game! ";
-const string GameCtrl::MSG_LOSE = "Oops! You lose! ";
-const string GameCtrl::MSG_WIN = "Congratulations! You Win! ";
-const string GameCtrl::MSG_ESC = "Game ended! ";
+const string GameCtrl::MSG_BAD_ALLOC = "Not enough memory to run the game.";
+const string GameCtrl::MSG_LOSE = "Oops! You lose!";
+const string GameCtrl::MSG_WIN = "Congratulations! You Win!";
+const string GameCtrl::MSG_ESC = "Game ended.";
 const string GameCtrl::MAP_INFO_FILENAME = "movements.txt";
 
 GameCtrl::GameCtrl() {}
@@ -21,9 +22,51 @@ GameCtrl::GameCtrl() {}
 GameCtrl::~GameCtrl() {}
 
 GameCtrl* GameCtrl::getInstance() {
-    // According to C++11, static field constructor is thread-safe
     static GameCtrl instance;
     return &instance;
+}
+
+void GameCtrl::setFPS(const double fps_) {
+    fps = fps_;
+}
+
+void GameCtrl::setEnableAI(const bool enableAI_) {
+    enableAI = enableAI_;
+}
+
+void GameCtrl::setMoveInterval(const long ms) {
+    moveInterval = ms;
+}
+
+void GameCtrl::setRecordMovements(const bool b) {
+    recordMovements = b;
+}
+
+void GameCtrl::setRunTest(const bool b) {
+    runTest = b;
+}
+
+void GameCtrl::setMapRow(const SizeType n) {
+    mapRowCnt = n;
+}
+
+void GameCtrl::setMapCol(const SizeType n) {
+    mapColCnt = n;
+}
+
+int GameCtrl::run() {
+    try {
+        init();
+        if (runTest) {
+            //testFood();
+            testSearch();
+        }
+        while (runMainThread) {}
+        return 0;
+    } catch (const std::exception &e) {
+        exitGameErr(e.what());
+        return -1;
+    }
 }
 
 void GameCtrl::sleepFor(const long ms) const {
@@ -31,127 +74,28 @@ void GameCtrl::sleepFor(const long ms) const {
 }
 
 void GameCtrl::sleepByFPS() const {
-    sleepFor(static_cast<long>((1.0 / fps) * 1000));
+    sleepFor((long)((1.0 / fps) * 1000));
 }
 
 void GameCtrl::exitGame(const std::string &msg) {
     mutexExit.lock();
-
-    // Stop threads
-    sleepFor(100);
-    threadWork = false;
-    sleepFor(100);
-
-    // Close movement file
-    if (movementFile) {
-        fclose(movementFile);
-        movementFile = nullptr;
+    if (runMainThread) {
+        sleepFor(100);
+        runSubThread = false;
+        sleepFor(100);
+        if (movementFile) {
+            fclose(movementFile);
+            movementFile = nullptr;
+        }
+        Console::setCursor(0, (int)mapRowCnt);
+        Console::writeWithColor(msg + "\n", ConsoleColor(WHITE, BLACK, true, false));
     }
-
-    // Print message
-    Console::setCursor(0, mapRowCnt + 1);
-    Console::writeWithColor(msg + "\n", ConsoleColor(WHITE, BLACK, true, false));
     mutexExit.unlock();
-    exit(0);
+    runMainThread = false;
 }
 
-void GameCtrl::exitGameWithError(const std::string &err) {
-    exitGame("Exception: " + err + "\n");
-}
-
-void GameCtrl::setMapRow(const Map::size_type &n) {
-    mapRowCnt = n;
-}
-
-void GameCtrl::setMapCol(const Map::size_type &n) {
-    mapColCnt = n;
-}
-
-void GameCtrl::setFPS(const double &fps_) {
-    fps = fps_;
-}
-
-void GameCtrl::setEnableAI(const bool &enable) {
-    enableAI = enable;
-}
-
-void GameCtrl::setMoveInterval(const long &ms) {
-    moveInterval = ms;
-}
-
-void GameCtrl::setRunTest(const bool &b) {
-    runTest = b;
-}
-
-void GameCtrl::setRecordMovements(const bool &b) {
-    recordMovements = b;
-}
-
-int GameCtrl::run() {
-    try {
-        init();
-        if (runTest) {
-            //testCreateFood();
-            testGraphSearch();
-        }
-        while (true) {
-            sleepByFPS();
-        }
-        return 0;
-    } catch (const std::exception &e) { 
-        exitGameWithError(e.what());
-        return -1;
-    }
-}
-
-void GameCtrl::init() {
-    Console::clear();
-    initMap();
-    if (!runTest) {
-        initSnakes();
-        if (recordMovements) {
-            initFiles();
-        }
-    }
-    startThreads();
-}
-
-void GameCtrl::initMap() {
-    if (mapRowCnt < 4 || mapColCnt < 4) {
-        string msg = "GameCtrl.initMap(): Map size is at least 4*4. Current size is "
-            + intToStr(mapRowCnt) + "*" + intToStr(mapColCnt);
-        throw std::range_error(msg.c_str());
-    }
-    
-    map = std::make_shared<Map>(mapRowCnt, mapColCnt);
-    if (!map) {
-        exitGame(MSG_BAD_ALLOC);
-    } else {
-        // Add some extra walls manully
-    }
-}
-
-void GameCtrl::initSnakes() {
-    snake.setHeadType(Point::Type::SNAKE_HEAD);
-    snake.setBodyType(Point::Type::SNAKE_BODY);
-    snake.setTailType(Point::Type::SNAKE_TAIL);
-    snake.setMap(map);
-    snake.addBody(Pos(1, 3));
-    snake.addBody(Pos(1, 2));
-    snake.addBody(Pos(1, 1));
-}
-
-void GameCtrl::initFiles() {
-    movementFile = fopen(MAP_INFO_FILENAME.c_str(), "w");
-    if (!movementFile) {
-        throw std::runtime_error("GameCtrl.initFiles(): Fail to open file: " + MAP_INFO_FILENAME);
-    } else {
-        // Write content description to the file
-        string str = "Content description:\n";
-        str += "#: wall\nH: snake head\nB: snake body\nT: snake tail\nF: food\n\n";
-        str += "Movements:\n\n";
-        fwrite(str.c_str(), sizeof(char), str.length(), movementFile);
-    }
+void GameCtrl::exitGameErr(const std::string &err) {
+    exitGame("ERROR: " + err);
 }
 
 void GameCtrl::moveSnake(Snake &s) {
@@ -180,10 +124,9 @@ void GameCtrl::writeMapToFile() const {
     if (!movementFile) {
         return;
     }
-    auto rows = map->getRowCount();
-    auto cols = map->getColCount();
-    for (Map::size_type i = 0; i < rows; ++i) {
-        for (Map::size_type j = 0; j < cols; ++j) {
+    SizeType rows = map->getRowCount(), cols = map->getColCount();
+    for (SizeType i = 0; i < rows; ++i) {
+        for (SizeType j = 0; j < cols; ++j) {
             switch (map->getPoint(Pos(i, j)).getType()) {
                 case Point::Type::EMPTY:
                     fwrite("  ", sizeof(char), 2, movementFile); break;
@@ -206,8 +149,54 @@ void GameCtrl::writeMapToFile() const {
     fwrite("\n", sizeof(char), 1, movementFile);
 }
 
+void GameCtrl::init() {
+    Console::clear();
+    initMap();
+    if (!runTest) {
+        initSnake();
+        if (recordMovements) {
+            initFiles();
+        }
+    }
+    startThreads();
+}
+
+void GameCtrl::initMap() {
+    if (mapRowCnt < 4 || mapColCnt < 4) {
+        string msg = "GameCtrl.initMap(): Map size at least 4*4. Current size "
+            + util::toString(mapRowCnt) + "*" + util::toString(mapColCnt) + ".";
+        throw std::range_error(msg.c_str());
+    }
+    map = std::make_shared<Map>(mapRowCnt, mapColCnt);
+    if (!map) {
+        exitGameErr(MSG_BAD_ALLOC);
+    } else {
+        // Add some extra walls manully
+    }
+}
+
+void GameCtrl::initSnake() {
+    snake.setMap(map);
+    snake.addBody(Pos(1, 3));
+    snake.addBody(Pos(1, 2));
+    snake.addBody(Pos(1, 1));
+}
+
+void GameCtrl::initFiles() {
+    movementFile = fopen(MAP_INFO_FILENAME.c_str(), "w");
+    if (!movementFile) {
+        throw std::runtime_error("GameCtrl.initFiles(): Fail to open file: " + MAP_INFO_FILENAME);
+    } else {
+        // Write content description to the file
+        string str = "Content description:\n";
+        str += "#: wall\nH: snake head\nB: snake body\nT: snake tail\nF: food\n\n";
+        str += "Movements:\n\n";
+        fwrite(str.c_str(), sizeof(char), str.length(), movementFile);
+    }
+}
+
 void GameCtrl::startThreads() {
-    threadWork = true;
+    runSubThread = true;
     drawThread = std::thread(&GameCtrl::draw, this);
     drawThread.detach();
     keyboardThread = std::thread(&GameCtrl::keyboard, this);
@@ -222,21 +211,20 @@ void GameCtrl::startThreads() {
 
 void GameCtrl::draw() {
     try {
-        while (threadWork) {
+        while (runSubThread) {
             drawMapContent();
             sleepByFPS();
         }
     } catch (const std::exception &e) {
-        exitGameWithError(e.what());
+        exitGameErr(e.what());
     }
 }
 
 void GameCtrl::drawMapContent() const {
     Console::setCursor();
-    auto rows = map->getRowCount();
-    auto cols = map->getColCount();
-    for (Map::size_type i = 0; i < rows; ++i) {
-        for (Map::size_type j = 0; j < cols; ++j) {
+    SizeType row = map->getRowCount(), col = map->getColCount();
+    for (SizeType i = 0; i < row; ++i) {
+        for (SizeType j = 0; j < col; ++j) {
             const Point &point = map->getPoint(Pos(i, j));
             switch (point.getType()) {
                 case Point::Type::EMPTY:
@@ -273,11 +261,11 @@ void GameCtrl::drawMapContent() const {
 
 void GameCtrl::drawTestPoint(const Point &p, const ConsoleColor &consoleColor) const {
     string pointStr = "";
-    if (p.getDist() == INF) {
+    if (p.getDist() == Point::MAX_DIST) {
         pointStr = "In";
     } else {
         auto dist = p.getDist();
-        pointStr = intToStr(dist);
+        pointStr = util::toString(dist);
         if (dist / 10 == 0) {
             pointStr.insert(0, " ");
         } 
@@ -287,20 +275,20 @@ void GameCtrl::drawTestPoint(const Point &p, const ConsoleColor &consoleColor) c
 
 void GameCtrl::keyboard() {
     try {
-        while (threadWork) {
+        while (runSubThread) {
             if (Console::kbhit()) {
                 switch (Console::getch()) {
                     case 'w':
-                        keyboardMove(snake, Direc::UP);
+                        keyboardMove(snake, Direction::UP);
                         break;
                     case 'a':
-                        keyboardMove(snake, Direc::LEFT);
+                        keyboardMove(snake, Direction::LEFT);
                         break;
                     case 's':
-                        keyboardMove(snake, Direc::DOWN);
+                        keyboardMove(snake, Direction::DOWN);
                         break;
                     case 'd':
-                        keyboardMove(snake, Direc::RIGHT);
+                        keyboardMove(snake, Direction::RIGHT);
                         break;
                     case ' ':
                         pause = !pause;  // Pause or resume game
@@ -315,11 +303,11 @@ void GameCtrl::keyboard() {
             sleepByFPS();
         }
     } catch (const std::exception &e) {
-        exitGameWithError(e.what());
+        exitGameErr(e.what());
     }
 }
 
-void GameCtrl::keyboardMove(Snake &s, const Direc &d) {
+void GameCtrl::keyboardMove(Snake &s, const Direction d) {
     if (pause) {
         s.setDirection(d);
         moveSnake(s);
@@ -334,20 +322,20 @@ void GameCtrl::keyboardMove(Snake &s, const Direc &d) {
 
 void GameCtrl::createFood() {
     try {
-        while (threadWork) {
+        while (runSubThread) {
             if (!map->hasFood()) {
                 map->createRandFood();
             }
             sleepByFPS();
         }
     } catch (const std::exception &e) {
-        exitGameWithError(e.what());
+        exitGameErr(e.what());
     }
 }
 
 void GameCtrl::autoMove() {
     try {
-        while (threadWork) {
+        while (runSubThread) {
             sleepFor(moveInterval);
             if (!pause) {
                 if (enableAI) {
@@ -357,24 +345,24 @@ void GameCtrl::autoMove() {
             }
         }
     } catch (const std::exception &e) {
-        exitGameWithError(e.what());
+        exitGameErr(e.what());
     }
 }
 
-void GameCtrl::testCreateFood() {
-    while (1) {
+void GameCtrl::testFood() {
+    while (runMainThread) {
         map->createRandFood();
         sleepByFPS();
     }
 }
 
-void GameCtrl::testGraphSearch() {
+void GameCtrl::testSearch() {
     if (mapRowCnt != 20 || mapColCnt != 20) {
-        throw std::range_error("GameCtrl.testGraphSearch(): Require map size 20*20.");
+        throw std::range_error("GameCtrl.testSearch(): Require map size 20*20.");
     }
 
-    list<Direc> path;
-    map->setShowSearchDetails(true);
+    list<Direction> path;
+    snake.setMap(map);
 
     // Add walls for testing
     for (int i = 4; i < 16; ++i) {
@@ -384,13 +372,13 @@ void GameCtrl::testGraphSearch() {
     }
    
     Pos from(6, 7), to(14, 13);
-    map->findMinPath(from, to, Direc::NONE, path);
-    //map->findMaxPath(from, to, Direc::NONE, path);
+    snake.testMinPath(from, to, path);
+    //snake.testMaxPath(from, to, path);
 
-    // Print result path info
+    // Print path info
     string res = "Path from " + from.toString() + " to " + to.toString()
-        + " of length " + intToStr(path.size()) + ":\n";
-    for (const auto &d : path) {
+        + " of length " + util::toString(path.size()) + ":\n";
+    for (const Direction &d : path) {
         switch (d) {
             case LEFT:
                 res += "L "; break;

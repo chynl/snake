@@ -1,10 +1,8 @@
-#include "Point.h"
+#include "model/Point.h"
 
-Point::Point() {
-}
+Point::Point() : type(EMPTY) {}
 
-Point::~Point() {
-}
+Point::~Point() {}
 
 Point::Type Point::getType() const {
     return type;
@@ -14,7 +12,7 @@ void Point::setType(Type type_) {
     type = type_;
 }
 
-void Point::setDist(const value_type dist_) {
+void Point::setDist(const DistType dist_) {
     dist = dist_;
 }
 
@@ -26,7 +24,7 @@ void Point::setVisit(const bool v) {
     visit = v;
 }
 
-Point::value_type Point::getDist() const {
+Point::DistType Point::getDist() const {
     return dist;
 }
 
