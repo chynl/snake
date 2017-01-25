@@ -1,14 +1,16 @@
-#ifndef S_POINT_H_
-#define S_POINT_H_
+#ifndef SNAKE_POINT_H_
+#define SNAKE_POINT_H_
 
-#include "Pos.h"
+#include "model/Pos.h"
 
 /*
 Point on the game map.
 */
 class Point {
 public:
-    typedef int value_type;
+    typedef uint32_t DistType;
+
+    static const DistType MAX_DIST = UINT32_MAX;
 
     enum Type {
         EMPTY,
@@ -25,21 +27,19 @@ public:
     ~Point();
 
     void setType(Type type_);
-    void setDist(const value_type dist_);
+    void setDist(const DistType dist_);
     void setParent(const Pos &p_);
     void setVisit(const bool v);
     Type getType() const;
-    value_type getDist() const;
+    DistType getDist() const;
     Pos getParent() const;
     bool isVisit() const;
 
 private:
-    Type type = EMPTY;
-
-    // Fields for grpah seaching algorithm
-    bool visit = false;
-    value_type dist = INF;
-    Pos parent = Pos::INVALID;
+    Type type;
+    bool visit;
+    Pos parent;
+    DistType dist;
 };
 
 #endif

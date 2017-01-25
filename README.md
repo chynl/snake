@@ -14,7 +14,7 @@ The AI's goal is to direct the snake to eat the food and fill the map with its b
 
 ## Demo
 
-![Image of Snake AI](img/AI.gif)
+![](img/AI.gif)
 
 ## Installation
 
@@ -45,13 +45,13 @@ The AI's goal is to direct the snake to eat the food and fill the map with its b
 |Space|pause/resume the snake|
 |Esc|exit game|
 
-**Tips:** When the snake is running, you could press the `Space` key to pause the snake and then press the `W/A/S/D` key to move the snake step by step. Anytime if you want the snake to start running again, just press `Space` key again.
+**Tips:** When the snake is running, you could press the `Space` key to pause the snake and then press the `W/A/S/D` key to move the snake step by step. Anytime if you want the snake to start running again, just press the `Space` key again.
 
 ## AI Strategy
 
-* [Snake.decideNext()](./src/Snake.cpp#L138): compute the next move direction ***D*** of the snake ***S1***
+* [Snake.decideNext()](./src/model/Snake.cpp#L110): compute the next move direction ***D*** of the snake ***S1***.
 
-    1. Compute the shortest path ***P1*** from snake ***S1***'s head to the food.
+    1. Compute the shortest path ***P1*** from snake ***S1***'s head to the food. If ***P1*** exists, go to step 2. Otherwise go to step 4.
 
     2. Direct a virtual snake, ***S2*** (the same as ***S1***), to eat the food along path ***P1***.
 
@@ -59,9 +59,9 @@ The AI's goal is to direct the snake to eat the food and fill the map with its b
 
     4. Compute the longest path ***P3*** from snake ***S1***'s head to its tail. If ***P3*** exists, let ***D*** be the first direction in path ***P3***. Otherwise go to step 5.
 
-    5. Let ***D*** be the direction that moves the snake along the longest path to the food.
+    5. Let ***D*** be the direction that makes the snake the farthest from the food.
 
-* [Map.findMinPath()](./src/Map.cpp#L184): compute the shortest path between two positions
+* [Map.findMinPath()](./src/model/Map.cpp#L169): compute the shortest path between two positions.
 
     The algorithm is based on BFS. In order to make the result path as straight as possible, each time the adjacent positions are traversed, the position at the current searching direction will be traversed first.
 
@@ -69,9 +69,9 @@ The AI's goal is to direct the snake to eat the food and fill the map with its b
 
     ![](img/shortest_path.gif)
 
-    (The green area is scanned when searching and the red area is the **shortest** path. Each number on the point denotes its **minimum** distance to the starting point.)
+    (The green area is scanned when searching and the red area is the shortest path. Each number on the point denotes its minimum distance to the starting point.)
   
-* [Map.findMaxPath()](./src/Map.cpp#L234): compute the longest path between two positions
+* [Map.findMaxPath()](./src/model/Map.cpp#L218): compute the longest path between two positions.
 
     The algorithm is based on DFS and the greedy algorithm. Each time the adjacent positions are traversed, the position that is the farthest from the destination (estimated by the Manhatten distance) will be traversed first. In addition, in order to make the result path as straight as possible, if two positions have the same distance to the destination, the position at the current searching direction will be traversed first. Since this is an NP-hard problem, this method is only approximate.
 
@@ -79,7 +79,7 @@ The AI's goal is to direct the snake to eat the food and fill the map with its b
     
     ![](img/longest_path.gif)
 
-    (The green area is scanned when searching and the red area is the **longest** path. Each number on the point denotes its **estimated** distance to the destination.)
+    (The green area is scanned when searching and the red area is the longest path. Each number on the point denotes its estimated distance to the destination.)
 
 ## Discuss
 

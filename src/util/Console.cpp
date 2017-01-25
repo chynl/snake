@@ -1,4 +1,4 @@
-#include "Console.h"
+#include "util/Console.h"
 #include <cstdio>
 #include <cstdlib>
 #ifdef LINUX_OR_APPLE
@@ -9,11 +9,12 @@
 #include <conio.h>
 #endif
 
-ConsoleColor::ConsoleColor(const ConsoleColorType foreColor_, const ConsoleColorType backColor_,
-                           const bool &foreIntensified_, const bool &backIntensified_)
-: foreColor(foreColor_), backColor(backColor_),
-foreIntensified(foreIntensified_), backIntensified(backIntensified_) {
-}
+ConsoleColor::ConsoleColor(const ConsoleColorType foreColor_,
+                           const ConsoleColorType backColor_,
+                           const bool foreIntensified_,
+                           const bool backIntensified_)
+    : foreColor(foreColor_), backColor(backColor_),
+    foreIntensified(foreIntensified_), backIntensified(backIntensified_) {}
 
 #ifdef WIN32
 
@@ -78,13 +79,13 @@ WORD Console::setColor(const ConsoleColor &consoleColor) {
     return originAttr;
 }
 
-void Console::resetColor(const WORD &attr) {
+void Console::resetColor(const WORD attr) {
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), attr);
 }
 
 #endif
 
-void Console::setCursor(const int &x, const int &y) {
+void Console::setCursor(const int x, const int y) {
 #ifdef LINUX_OR_APPLE
     printf("\033[%d;%dH", y + 1, x);  // Param: row and col
 #elif _WIN32
