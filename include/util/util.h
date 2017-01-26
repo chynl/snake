@@ -39,23 +39,11 @@ void swap(T &a, T &b) {
 }
 
 /*
-Return a random number in [0, 1].
-*/
-inline double rand() {
-    static bool seeded = false;
-    if (!seeded) {
-        std::srand((unsigned)std::time(nullptr));
-        seeded = true;
-    }
-    return (double)std::rand() / RAND_MAX;
-}
-
-/*
 Return a random integer in the interval [min, max].
 */
 template<typename Int>
 Int randInt(const Int min, const Int max) {
-    return (Int)(rand() * (max - min) + min);
+    return (Int)std::rand() % (max - min + 1) + min;
 }
 
 /*
