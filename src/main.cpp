@@ -20,9 +20,9 @@ int main() {
     // Set whether to run the test program. Default is false.
     game->setRunTest(false);
 
-    // Set map's size(including boundaries). Default is 10*10. Minimum is 4*4.
-    game->setMapRow(10);
-    game->setMapCol(10);
+    // Set map's size(including boundaries). Default is 10*10. Minimum is 5*5.
+    game->setMapRow(20);
+    game->setMapCol(20);
 
     return game->run();
 }

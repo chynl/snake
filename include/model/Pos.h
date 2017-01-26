@@ -1,10 +1,10 @@
 #ifndef SNAKE_POS_H_
 #define SNAKE_POS_H_
 
-#include "internal/base.h"
 #include "model/Direction.h"
 #include <vector>
 #include <string>
+#include <cstddef>
 
 /*
 Integer coordinate in 2D plane.

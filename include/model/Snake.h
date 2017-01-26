@@ -56,8 +56,6 @@ private:
     std::list<Pos> bodies;
     std::shared_ptr<Map> map;
 
-    bool showDetail;
-
     /*
     Remove the snake tail.
     */
@@ -128,27 +126,6 @@ private:
     @param path The result will be stored in this field.
     */
     void constructPath(const Pos &from, const Pos &to, std::list<Direction> &path) const;
-
-    /*
-    Show the details of a searched position.
-
-    @param p    The position
-    @param type The new point type of the position
-    */
-    void showPos(const Pos &p, const Point::Type type);
-
-    /*
-    Show a visited position on the map if the field 'showDetail' is true.
-    */
-    void showVisitPos(const Pos &p);
-
-    /*
-    Show a solution path on the map if the field 'showDetail' is true.
-
-    @param start The starting point of the path
-    @param path  The path
-    */
-    void showPath(const Pos &start, const std::list<Direction> &path);
 };
 
 #endif

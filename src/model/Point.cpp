@@ -12,8 +12,8 @@ void Point::setType(Type type_) {
     type = type_;
 }
 
-void Point::setDist(const DistType dist_) {
-    dist = dist_;
+void Point::setValue(const ValueType dist_) {
+    val = dist_;
 }
 
 void Point::setParent(const Pos &p_) {
@@ -24,8 +24,8 @@ void Point::setVisit(const bool v) {
     visit = v;
 }
 
-Point::DistType Point::getDist() const {
-    return dist;
+Point::ValueType Point::getValue() const {
+    return val;
 }
 
 Pos Point::getParent() const {

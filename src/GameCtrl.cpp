@@ -1,5 +1,5 @@
 #include "GameCtrl.h"
-#include "util/convert.h"
+#include "util/util.h"
 #include <stdexcept>
 #include <cstdio>
 #include <chrono>
@@ -69,20 +69,16 @@ int GameCtrl::run() {
     }
 }
 
-void GameCtrl::sleepFor(const long ms) const {
-    std::this_thread::sleep_for(std::chrono::milliseconds(ms));
-}
-
-void GameCtrl::sleepByFPS() const {
-    sleepFor((long)((1.0 / fps) * 1000));
+void GameCtrl::sleepFPS() const {
+    util::sleep((long)((1.0 / fps) * 1000));
 }
 
 void GameCtrl::exitGame(const std::string &msg) {
     mutexExit.lock();
     if (runMainThread) {
-        sleepFor(100);
+        util::sleep(100);
         runSubThread = false;
-        sleepFor(100);
+        util::sleep(100);
         if (movementFile) {
             fclose(movementFile);
             movementFile = nullptr;
@@ -162,8 +158,8 @@ void GameCtrl::init() {
 }
 
 void GameCtrl::initMap() {
-    if (mapRowCnt < 4 || mapColCnt < 4) {
-        string msg = "GameCtrl.initMap(): Map size at least 4*4. Current size "
+    if (mapRowCnt < 5 || mapColCnt < 5) {
+        string msg = "GameCtrl.initMap(): Map size at least 5*5. Current size "
             + util::toString(mapRowCnt) + "*" + util::toString(mapColCnt) + ".";
         throw std::range_error(msg.c_str());
     }
@@ -213,7 +209,7 @@ void GameCtrl::draw() {
     try {
         while (runSubThread) {
             drawMapContent();
-            sleepByFPS();
+            sleepFPS();
         }
     } catch (const std::exception &e) {
         exitGameErr(e.what());
@@ -261,12 +257,12 @@ void GameCtrl::drawMapContent() const {
 
 void GameCtrl::drawTestPoint(const Point &p, const ConsoleColor &consoleColor) const {
     string pointStr = "";
-    if (p.getDist() == Point::MAX_DIST) {
+    if (p.getValue() == Point::MAX_VALUE) {
         pointStr = "In";
     } else {
-        auto dist = p.getDist();
-        pointStr = util::toString(dist);
-        if (dist / 10 == 0) {
+        Point::ValueType val = p.getValue();
+        pointStr = util::toString(p.getValue());
+        if (val / 10 == 0) {
             pointStr.insert(0, " ");
         } 
     }
@@ -300,7 +296,7 @@ void GameCtrl::keyboard() {
                         break;
                 }
             }
-            sleepByFPS();
+            sleepFPS();
         }
     } catch (const std::exception &e) {
         exitGameErr(e.what());
@@ -326,7 +322,7 @@ void GameCtrl::createFood() {
             if (!map->hasFood()) {
                 map->createRandFood();
             }
-            sleepByFPS();
+            sleepFPS();
         }
     } catch (const std::exception &e) {
         exitGameErr(e.what());
@@ -336,7 +332,7 @@ void GameCtrl::createFood() {
 void GameCtrl::autoMove() {
     try {
         while (runSubThread) {
-            sleepFor(moveInterval);
+            util::sleep(moveInterval);
             if (!pause) {
                 if (enableAI) {
                     snake.decideNext();
@@ -352,7 +348,7 @@ void GameCtrl::autoMove() {
 void GameCtrl::testFood() {
     while (runMainThread) {
         map->createRandFood();
-        sleepByFPS();
+        sleepFPS();
     }
 }
 
