@@ -21,8 +21,8 @@ int main() {
     game->setRunTest(false);
 
     // Set map's size(including boundaries). Default is 10*10. Minimum is 5*5.
-    game->setMapRow(20);
-    game->setMapCol(20);
+    game->setMapRow(10);
+    game->setMapCol(10);
 
     return game->run();
 }
