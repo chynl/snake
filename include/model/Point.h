@@ -47,6 +47,7 @@ private:
        to the starting point.
     2. When searching the longest path, it stores the estimated distance
        to the destination.
+    3. When building a hamiltonian cycle, it stores the cycle's path index.
     */
     ValueType val;
 };

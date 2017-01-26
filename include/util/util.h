@@ -39,7 +39,7 @@ void swap(T &a, T &b) {
 }
 
 /*
-Return a random number in [0, 1).
+Return a random number in [0, 1].
 */
 inline double rand() {
     static bool seeded = false;
@@ -55,7 +55,7 @@ Return a random integer in the interval [min, max].
 */
 template<typename Int>
 Int randInt(const Int min, const Int max) {
-    return (Int)(rand() * (max - min + 1) + min);
+    return (Int)(rand() * (max - min) + min);
 }
 
 /*

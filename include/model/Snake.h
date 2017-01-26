@@ -44,6 +44,11 @@ public:
     void move(const std::list<Direction> &path);
 
     /*
+    Enable the snake AI based on the hamiltonian cycle.
+    */
+    void enableHamilton();
+
+    /*
     Decide the next moving direction. After its execution,
     the next moving direction will be stored in field 'direc'.
     */
@@ -55,6 +60,8 @@ private:
 
     std::list<Pos> bodies;
     std::shared_ptr<Map> map;
+
+    bool hamiltonEnabled;
 
     /*
     Remove the snake tail.
@@ -119,13 +126,24 @@ private:
                  std::list<Direction> &path);
 
     /*
-    Construct the path between two positions.
+    Build a path between two positions.
 
     @param from The start position
     @param to   The end position
     @param path The result will be stored in this field.
     */
-    void constructPath(const Pos &from, const Pos &to, std::list<Direction> &path) const;
+    void buildPath(const Pos &from, const Pos &to, std::list<Direction> &path) const;
+
+    /*
+    Build a hamiltonian cycle on the map.
+    The path index will be stored in the 'value' field of each Point.
+
+    @param curPos   The current processing position
+    @param goal     The ending position of the hamiltonian cycle
+    @param visitCnt The amount of positions that has been visited
+    @return         True if a hamilonian cycle is built.
+    */
+    bool buildHamilton(const Pos &curPos, const Pos &goal, const SizeType visitCnt);
 };
 
 #endif
