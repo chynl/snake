@@ -21,6 +21,11 @@ public:
     SizeType getColCount() const;
 
     /*
+    Return the number of points excluding the boundaries.
+    */
+    SizeType getSize() const;
+
+    /*
     Enable testing methods.
     */
     void enableTest();
@@ -68,6 +73,7 @@ public:
 
 private:
     Pos food;
+    SizeType size;
 
     std::vector<std::vector<Point>> content;
 

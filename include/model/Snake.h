@@ -44,6 +44,11 @@ public:
     void move(const std::list<Direction> &path);
 
     /*
+    Enable the snake AI based on the hamiltonian cycle.
+    */
+    void enableHamilton();
+
+    /*
     Decide the next moving direction. After its execution,
     the next moving direction will be stored in field 'direc'.
     */
@@ -55,6 +60,8 @@ private:
 
     std::list<Pos> bodies;
     std::shared_ptr<Map> map;
+
+    bool hamiltonEnabled;
 
     /*
     Remove the snake tail.

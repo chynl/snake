@@ -34,6 +34,10 @@ void GameCtrl::setEnableAI(const bool enableAI_) {
     enableAI = enableAI_;
 }
 
+void GameCtrl::setEnableHamilton(const bool enableHamilton_) {
+    enableHamilton = enableHamilton_;
+}
+
 void GameCtrl::setMoveInterval(const long ms) {
     moveInterval = ms;
 }
@@ -176,6 +180,9 @@ void GameCtrl::initSnake() {
     snake.addBody(Pos(1, 3));
     snake.addBody(Pos(1, 2));
     snake.addBody(Pos(1, 1));
+    if (enableHamilton) {
+        snake.enableHamilton();
+    }
 }
 
 void GameCtrl::initFiles() {

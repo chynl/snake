@@ -7,6 +7,7 @@ using std::list;
 
 Map::Map(const SizeType rowCnt_, const SizeType colCnt_)
     : content(rowCnt_, vector<Point>(colCnt_)), testEnabled(false) {
+    size = (rowCnt_ - 2) * (colCnt_ - 2);
     // Add boundary walls
     SizeType row = getRowCount(), col = getColCount();
     for (SizeType i = 0; i < row; ++i) {
@@ -37,6 +38,10 @@ Map::SizeType Map::getRowCount() const {
 
 Map::SizeType Map::getColCount() const {
     return content[0].size();
+}
+
+Map::SizeType Map::getSize() const {
+    return size;
 }
 
 void Map::enableTest() {

@@ -25,6 +25,7 @@ public:
     */
     void setFPS(const double fps_);
     void setEnableAI(const bool enableAI_);
+    void setEnableHamilton(const bool enableHamilton_);
     void setMoveInterval(const long ms);
     void setRecordMovements(const bool b);
     void setRunTest(const bool b);
@@ -50,8 +51,9 @@ private:
     double fps = 60.0;
     long moveInterval = 30;
     bool enableAI = true;
-    bool runTest = false;
+    bool enableHamilton = false;
     bool recordMovements = true;
+    bool runTest = false;
 
     Snake snake;
     std::shared_ptr<Map> map;

@@ -2,13 +2,14 @@
 #include "util/util.h"
 #include <queue>
 #include <algorithm>
+#include <stdexcept>
 
 using std::vector;
 using std::list;
 using std::shared_ptr;
 using std::queue;
 
-Snake::Snake() : dead(false), direc(NONE) {}
+Snake::Snake() : dead(false), direc(NONE), hamiltonEnabled(false) {}
 
 Snake::~Snake() {}
 
@@ -97,6 +98,20 @@ void Snake::move(const std::list<Direction> &path) {
     }
 }
 
+void Snake::enableHamilton() {
+    // Check map size
+    SizeType row = map->getRowCount(), col = map->getColCount();
+    if (row % 2 == 1 && col % 2 == 1) {
+        throw std::range_error("Snake.enableHamilton(): require even amount of rows or columns.");
+    }
+    // Preparation for finding a hamiltonian cycle
+    hamiltonEnabled = true;
+    Point::ValueType val = 0;
+    for (auto it = bodies.crbegin(); it != bodies.crend(); ++it) {
+        map->getPoint(*it).setValue(val++);
+    }
+}
+
 void Snake::decideNext() {
     if (isDead() || !map) {
         return;
@@ -104,44 +119,57 @@ void Snake::decideNext() {
         direc = NONE;
         return;
     }
-    list<Direction> pathToFood, pathToTail;
-    // Create a virtual snake
-    Snake tmpSnake(*this);
-    shared_ptr<Map> tmpMap = std::make_shared<Map>(*map);
-    tmpSnake.setMap(tmpMap);
-    // Step 1
-    tmpSnake.findMinPathToFood(pathToFood);
-    if (!pathToFood.empty()) {
-        // Step 2
-        tmpSnake.move(pathToFood);
-        if (tmpMap->isAllBody()) {
-            this->setDirection(*(pathToFood.begin()));
-            return;
-        } else {
-            // Step 3
-            tmpSnake.findMaxPathToTail(pathToTail);
-            if (pathToTail.size() > 1) {
-                this->setDirection(*(pathToFood.begin()));
-                return;
+    if (hamiltonEnabled) {  // AI based on the hamiltonian cycle
+        const Pos head = getHead();
+        const Point::ValueType curPathIndex = map->getPoint(head).getValue();
+        const vector<Pos> adjPositions = head.getAllAdj();
+        for (const Pos &adjPos : adjPositions) {
+            Point adjPoint = map->getPoint(adjPos);
+            if (adjPoint.getValue() == (curPathIndex + 1) % map->getSize()) {
+                direc = head.getDirectionTo(adjPos);
+                break;
             }
         }
-    }
-    // Step 4
-    this->findMaxPathToTail(pathToTail);
-    if (pathToTail.size() > 1) {
-        this->setDirection(*(pathToTail.begin()));
-        return;
-    }
-    // Step 5
-    Pos head = getHead();
-    SizeType max = 0;
-    vector<Pos> adjPositions = head.getAllAdj();
-    for (const Pos &adjPos : adjPositions) {
-        if (map->isSafe(adjPos)) {
-            SizeType dist = Map::distance(adjPos, map->getFood());
-            if (dist >= max) {
-                max = dist;
-                direc = head.getDirectionTo(adjPos);
+    } else {  // AI based on searching
+        list<Direction> pathToFood, pathToTail;
+        // Create a virtual snake
+        Snake tmpSnake(*this);
+        shared_ptr<Map> tmpMap = std::make_shared<Map>(*map);
+        tmpSnake.setMap(tmpMap);
+        // Step 1
+        tmpSnake.findMinPathToFood(pathToFood);
+        if (!pathToFood.empty()) {
+            // Step 2
+            tmpSnake.move(pathToFood);
+            if (tmpMap->isAllBody()) {
+                this->setDirection(*(pathToFood.begin()));
+                return;
+            } else {
+                // Step 3
+                tmpSnake.findMaxPathToTail(pathToTail);
+                if (pathToTail.size() > 1) {
+                    this->setDirection(*(pathToFood.begin()));
+                    return;
+                }
+            }
+        }
+        // Step 4
+        this->findMaxPathToTail(pathToTail);
+        if (pathToTail.size() > 1) {
+            this->setDirection(*(pathToTail.begin()));
+            return;
+        }
+        // Step 5
+        Pos head = getHead();
+        SizeType max = 0;
+        vector<Pos> adjPositions = head.getAllAdj();
+        for (const Pos &adjPos : adjPositions) {
+            if (map->isSafe(adjPos)) {
+                SizeType dist = Map::distance(adjPos, map->getFood());
+                if (dist >= max) {
+                    max = dist;
+                    direc = head.getDirectionTo(adjPos);
+                }
             }
         }
     }
