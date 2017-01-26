@@ -28,18 +28,18 @@ public:
     ~Point();
 
     void setType(Type type_);
-    void setValue(const ValueType dist_);
     void setParent(const Pos &p_);
     void setVisit(const bool v);
+    void setValue(const ValueType dist_);
     Type getType() const;
-    ValueType getValue() const;
     Pos getParent() const;
     bool isVisit() const;
+    ValueType getValue() const;
 
 private:
-    Type type;
-    bool visit;
+    Type type = EMPTY;
     Pos parent;
+    bool visit;
 
     /*
     This field has different usages:

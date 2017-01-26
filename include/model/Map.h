@@ -72,12 +72,11 @@ public:
     void showPath(const Pos &start, const std::list<Direction> &path);
 
 private:
-    Pos food;
-    SizeType size;
-
     std::vector<std::vector<Point>> content;
+    SizeType size;
+    Pos food;
 
-    bool testEnabled;
+    bool testEnabled = false;
 
     /*
     Return all empty positions.

@@ -19,7 +19,14 @@ const string GameCtrl::MAP_INFO_FILENAME = "movements.txt";
 
 GameCtrl::GameCtrl() {}
 
-GameCtrl::~GameCtrl() {}
+GameCtrl::~GameCtrl() {
+    delete map;
+    map = nullptr;
+    if (movementFile) {
+        fclose(movementFile);
+        movementFile = nullptr;
+    }
+}
 
 GameCtrl* GameCtrl::getInstance() {
     static GameCtrl instance;
@@ -80,15 +87,9 @@ void GameCtrl::sleepFPS() const {
 void GameCtrl::exitGame(const std::string &msg) {
     mutexExit.lock();
     if (runMainThread) {
-        util::sleep(100);
         runSubThread = false;
         util::sleep(100);
-        if (movementFile) {
-            fclose(movementFile);
-            movementFile = nullptr;
-        }
-        Console::setCursor(0, (int)mapRowCnt);
-        Console::writeWithColor(msg + "\n", ConsoleColor(WHITE, BLACK, true, false));
+        printMsg(msg);
     }
     mutexExit.unlock();
     runMainThread = false;
@@ -96,6 +97,11 @@ void GameCtrl::exitGame(const std::string &msg) {
 
 void GameCtrl::exitGameErr(const std::string &err) {
     exitGame("ERROR: " + err);
+}
+
+void GameCtrl::printMsg(const std::string &msg) {
+    Console::setCursor(0, (int)mapRowCnt);
+    Console::writeWithColor(msg + "\n", ConsoleColor(WHITE, BLACK, true, false));
 }
 
 void GameCtrl::moveSnake(Snake &s) {
@@ -167,7 +173,7 @@ void GameCtrl::initMap() {
             + util::toString(mapRowCnt) + "*" + util::toString(mapColCnt) + ".";
         throw std::range_error(msg.c_str());
     }
-    map = std::make_shared<Map>(mapRowCnt, mapColCnt);
+    map = new Map(mapRowCnt, mapColCnt);
     if (!map) {
         exitGameErr(MSG_BAD_ALLOC);
     } else {

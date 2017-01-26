@@ -2,7 +2,6 @@
 #define SNAKE_SNAKE_H_
 
 #include "model/Map.h"
-#include <memory>
 
 /*
 Game snake.
@@ -15,7 +14,7 @@ public:
     ~Snake();
 
     void setDirection(const Direction &d);
-    void setMap(std::shared_ptr<Map> m);
+    void setMap(Map *const m);
     Direction getDirection() const;
     bool isDead() const;
 
@@ -55,13 +54,13 @@ public:
     void decideNext();
 
 private:
-    bool dead;
-    Direction direc;
-
+    Map *map = nullptr;
     std::list<Pos> bodies;
-    std::shared_ptr<Map> map;
 
-    bool hamiltonEnabled;
+    Direction direc = NONE;
+
+    bool dead = false;
+    bool hamiltonEnabled = false;
 
     /*
     Remove the snake tail.

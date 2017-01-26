@@ -6,10 +6,9 @@
 
 using std::vector;
 using std::list;
-using std::shared_ptr;
 using std::queue;
 
-Snake::Snake() : dead(false), direc(NONE), hamiltonEnabled(false) {}
+Snake::Snake() {}
 
 Snake::~Snake() {}
 
@@ -17,7 +16,7 @@ void Snake::setDirection(const Direction &d) {
     direc = d;
 }
 
-void Snake::setMap(std::shared_ptr<Map> m) {
+void Snake::setMap(Map *const m) {
     map = m;
 }
 
@@ -40,40 +39,20 @@ void Snake::testMaxPath(const Pos &from, const Pos &to, std::list<Direction> &pa
 }
 
 void Snake::addBody(const Pos &p) {
-    if (map && map->isInside(p)) {
-        if (bodies.size() == 0) {  // Insert a head
-            map->getPoint(p).setType(Point::Type::SNAKE_HEAD);
-        } else {  // Insert a body
-            if (bodies.size() > 1) {
-                const Pos &oldTail = getTail();
-                map->getPoint(oldTail).setType(Point::Type::SNAKE_BODY);
-            }
-            map->getPoint(p).setType(Point::Type::SNAKE_TAIL);
+    if (bodies.size() == 0) {  // Insert a head
+        map->getPoint(p).setType(Point::Type::SNAKE_HEAD);
+    } else {  // Insert a body
+        if (bodies.size() > 1) {
+            const Pos &oldTail = getTail();
+            map->getPoint(oldTail).setType(Point::Type::SNAKE_BODY);
         }
-        bodies.push_back(p);
+        map->getPoint(p).setType(Point::Type::SNAKE_TAIL);
     }
-}
-
-const Pos& Snake::getHead() const {
-    return *bodies.begin();
-}
-
-const Pos& Snake::getTail() const {
-    return *bodies.rbegin();
-}
-
-void Snake::removeTail() {
-    if (map) {
-        map->getPoint(getTail()).setType(Point::Type::EMPTY);
-    }
-    bodies.pop_back();
-    if (bodies.size() > 1) {
-        map->getPoint(getTail()).setType(Point::Type::SNAKE_TAIL);
-    }
+    bodies.push_back(p);
 }
 
 void Snake::move() {
-    if (isDead() || direc == NONE || !map) {
+    if (isDead() || direc == NONE) {
         return;
     }
     map->getPoint(getHead()).setType(Point::Type::SNAKE_BODY);
@@ -125,7 +104,7 @@ void Snake::enableHamilton() {
 }
 
 void Snake::decideNext() {
-    if (isDead() || !map) {
+    if (isDead()) {
         return;
     } else if (!map->hasFood()) {
         direc = NONE;
@@ -165,15 +144,15 @@ void Snake::decideNext() {
 
         list<Direction> pathToFood, pathToTail;
         // Create a virtual snake
+        Map tmpMap = *map;
         Snake tmpSnake(*this);
-        shared_ptr<Map> tmpMap = std::make_shared<Map>(*map);
-        tmpSnake.setMap(tmpMap);
+        tmpSnake.setMap(&tmpMap);
         // Step 1
         tmpSnake.findMinPathToFood(pathToFood);
         if (!pathToFood.empty()) {
             // Step 2
             tmpSnake.move(pathToFood);
-            if (tmpMap->isAllBody()) {
+            if (tmpMap.isAllBody()) {
                 this->setDirection(*(pathToFood.begin()));
                 return;
             } else {
@@ -205,6 +184,22 @@ void Snake::decideNext() {
             }
         }
 
+    }
+}
+
+const Pos& Snake::getHead() const {
+    return *bodies.begin();
+}
+
+const Pos& Snake::getTail() const {
+    return *bodies.rbegin();
+}
+
+void Snake::removeTail() {
+    map->getPoint(getTail()).setType(Point::Type::EMPTY);
+    bodies.pop_back();
+    if (bodies.size() > 1) {
+        map->getPoint(getTail()).setType(Point::Type::SNAKE_TAIL);
     }
 }
 

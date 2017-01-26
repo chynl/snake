@@ -46,17 +46,17 @@ private:
     static const std::string MSG_ESC;
     static const std::string MAP_INFO_FILENAME;
 
-    SizeType mapRowCnt = 10;
-    SizeType mapColCnt = 10;
     double fps = 60.0;
-    long moveInterval = 30;
     bool enableAI = true;
     bool enableHamilton = false;
+    long moveInterval = 30;
     bool recordMovements = true;
     bool runTest = false;
+    SizeType mapRowCnt = 10;
+    SizeType mapColCnt = 10;
 
+    Map *map = nullptr;
     Snake snake;
-    std::shared_ptr<Map> map;
 
     volatile bool pause = false;  // Control pause/resume game
 
@@ -89,6 +89,11 @@ private:
     Print an error message and exit the game.
     */
     void exitGameErr(const std::string &err);
+
+    /*
+    Print a message to the terminal.
+    */
+    void printMsg(const std::string &msg);
 
     /*
     Move the snake and check if the game is over.
