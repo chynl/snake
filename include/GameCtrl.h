@@ -32,11 +32,6 @@ public:
     void setMapCol(const SizeType n);
 
     /*
-    Sleep current thread for a few milliseconds.
-    */
-    void sleepFor(const long ms) const;
-
-    /*
     Run the game.
 
     @return The exit status of the program.
@@ -81,7 +76,7 @@ private:
     /*
     Sleep for a few time according to FPS.
     */
-    void sleepByFPS() const;
+    void sleepFPS() const;
 
     /*
     Print a message and exit the game.

@@ -1,13 +1,42 @@
-#ifndef SNAKE_RANDOM_H_
-#define SNAKE_RANDOM_H_
+#ifndef SNAKE_UTIL_H_
+#define SNAKE_UTIL_H_
 
-#include "internal/base.h"
-#include "util/swap.h"
+#include <sstream>
+#include <string>
+#include <iomanip>
 #include <cstdlib>
 #include <ctime>
 #include <vector>
+#include <thread>
 
-UTIL_NS_BEGIN
+namespace util {
+
+/*
+Sleep current thread for a few milliseconds.
+*/
+inline void sleep(const long ms) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+}
+
+/*
+Convert an object to a std::string object.
+*/
+template<typename T>
+std::string toString(const T &obj) {
+    std::ostringstream oss;
+    oss << std::setiosflags(std::ios::fixed) << obj;
+    return oss.str();
+}
+
+/*
+Swap the values of two elements.
+*/
+template<typename T>
+void swap(T &a, T &b) {
+    T tmp = a;
+    a = b;
+    b = tmp;
+}
 
 /*
 Return a random number in [0, 1).
@@ -42,6 +71,6 @@ void randChange(std::vector<T> &arr) {
     }
 }
 
-UTIL_NS_END
+}
 
 #endif
