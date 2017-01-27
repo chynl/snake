@@ -23,6 +23,7 @@ public:
     */
     void testMinPath(const Pos &from, const Pos &to, std::list<Direction> &path);
     void testMaxPath(const Pos &from, const Pos &to, std::list<Direction> &path);
+    void testHamilton();
 
     /*
     Add a new snake body.

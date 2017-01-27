@@ -38,6 +38,17 @@ void Snake::testMaxPath(const Pos &from, const Pos &to, std::list<Direction> &pa
     findMaxPath(from, to, path);
 }
 
+void Snake::testHamilton() {
+    map->enableTest();
+    enableHamilton();
+    SizeType row = map->getRowCount(), col = map->getColCount();
+    for (SizeType i = 1; i < row - 1; ++i) {
+        for (SizeType j = 1; j < col - 1; ++j) {
+            map->showPos(Pos(i, j));
+        }
+    }
+}
+
 void Snake::addBody(const Pos &p) {
     if (bodies.size() == 0) {  // Insert a head
         map->getPoint(p).setType(Point::Type::SNAKE_HEAD);

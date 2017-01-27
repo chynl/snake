@@ -69,8 +69,7 @@ int GameCtrl::run() {
     try {
         init();
         if (runTest) {
-            //testFood();
-            testSearch();
+            test();
         }
         while (runMainThread) {}
         return 0;
@@ -87,6 +86,7 @@ void GameCtrl::sleepFPS() const {
 void GameCtrl::exitGame(const std::string &msg) {
     mutexExit.lock();
     if (runMainThread) {
+        util::sleep(100);
         runSubThread = false;
         util::sleep(100);
         printMsg(msg);
@@ -358,11 +358,19 @@ void GameCtrl::autoMove() {
     }
 }
 
+void GameCtrl::test() {
+    //testFood();
+    testSearch();
+    //testHamilton();
+}
+
 void GameCtrl::testFood() {
-    while (runMainThread) {
+    SizeType cnt = 0;
+    while (runMainThread && cnt++ < map->getSize()) {
         map->createRandFood();
         sleepFPS();
     }
+    exitGame("testFood() finished.");
 }
 
 void GameCtrl::testSearch() {
@@ -385,22 +393,32 @@ void GameCtrl::testSearch() {
     //snake.testMaxPath(from, to, path);
 
     // Print path info
-    string res = "Path from " + from.toString() + " to " + to.toString()
+    string info = "Path from " + from.toString() + " to " + to.toString()
         + " of length " + util::toString(path.size()) + ":\n";
     for (const Direction &d : path) {
         switch (d) {
             case LEFT:
-                res += "L "; break;
+                info += "L "; break;
             case UP:
-                res += "U "; break;
+                info += "U "; break;
             case RIGHT:
-                res += "R "; break;
+                info += "R "; break;
             case DOWN:
-                res += "D "; break;
+                info += "D "; break;
             case NONE:
             default:
-                res += "NONE "; break;
+                info += "NONE "; break;
         }
     }
-    exitGame(res);
+    info += "\ntestSearch() finished.";
+    exitGame(info);
+}
+
+void GameCtrl::testHamilton() {
+    snake.setMap(map);
+    snake.addBody(Pos(1, 3));
+    snake.addBody(Pos(1, 2));
+    snake.addBody(Pos(1, 1));
+    snake.testHamilton();
+    exitGame("testHamilton() finished.");
 }

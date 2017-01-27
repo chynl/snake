@@ -144,8 +144,10 @@ private:
     /*
     Test functions.
     */
+    void test();
     void testFood();
     void testSearch();
+    void testHamilton();
 };
 
 #endif

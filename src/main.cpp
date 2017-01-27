@@ -21,6 +21,7 @@ int main() {
     game->setRecordMovements(true);
 
     // Set whether to run the test program. Default is false.
+    // You can select different testing methods by modifying GameCtrl::test().
     game->setRunTest(false);
 
     // Set map's size(including boundaries). Default is 10*10. Minimum is 5*5.
