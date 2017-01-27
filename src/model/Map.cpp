@@ -87,9 +87,10 @@ bool Map::isAllBody() const {
 }
 
 void Map::createRandFood() {
+    auto random = util::Random<>::getInstance();
     vector<Pos> emptyPoints = getEmptyPoints();
     if (!emptyPoints.empty()) {
-        SizeType i = util::randInt((SizeType)0, emptyPoints.size() - 1);
+        SizeType i = random->nextInt((SizeType)0, emptyPoints.size() - 1);
         createFood(emptyPoints[i]);
     }
 }

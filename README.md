@@ -10,7 +10,7 @@ The AI's goal is to direct the snake to eat the food and fill the map with its b
 
 | Linux | Windows |
 |:-----:|:-------:|
-|[![Build Status](https://travis-ci.org/stevennL/Snake.svg?branch=master)](https://travis-ci.org/stevennL/Snake)|[![Build Status](https://ci.appveyor.com/api/projects/status/bryir507227d0i1q?svg=true)](https://ci.appveyor.com/project/stevennL/snake)|
+|[![Travis Status](https://travis-ci.org/stevennl/Snake.svg?branch=master)](https://travis-ci.org/stevennl/Snake)|[![AppVeyor Status](https://ci.appveyor.com/api/projects/status/4ieqm8mffik9tks7/branch/master?svg=true)](https://ci.appveyor.com/project/stevennl/snake/branch/master)|
 
 ## Demo
 

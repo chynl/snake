@@ -16,7 +16,7 @@ public:
     ~GameCtrl();
 
     /*
-    Return the only instance
+    Return the only instance.
     */
     static GameCtrl* getInstance();
 
