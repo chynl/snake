@@ -1,5 +1,5 @@
 #include "GameCtrl.h"
-#include "util/convert.h"
+#include "util/util.h"
 #include <stdexcept>
 #include <cstdio>
 #include <chrono>
@@ -19,7 +19,14 @@ const string GameCtrl::MAP_INFO_FILENAME = "movements.txt";
 
 GameCtrl::GameCtrl() {}
 
-GameCtrl::~GameCtrl() {}
+GameCtrl::~GameCtrl() {
+    delete map;
+    map = nullptr;
+    if (movementFile) {
+        fclose(movementFile);
+        movementFile = nullptr;
+    }
+}
 
 GameCtrl* GameCtrl::getInstance() {
     static GameCtrl instance;
@@ -32,6 +39,10 @@ void GameCtrl::setFPS(const double fps_) {
 
 void GameCtrl::setEnableAI(const bool enableAI_) {
     enableAI = enableAI_;
+}
+
+void GameCtrl::setEnableHamilton(const bool enableHamilton_) {
+    enableHamilton = enableHamilton_;
 }
 
 void GameCtrl::setMoveInterval(const long ms) {
@@ -58,8 +69,7 @@ int GameCtrl::run() {
     try {
         init();
         if (runTest) {
-            //testFood();
-            testSearch();
+            test();
         }
         while (runMainThread) {}
         return 0;
@@ -69,26 +79,17 @@ int GameCtrl::run() {
     }
 }
 
-void GameCtrl::sleepFor(const long ms) const {
-    std::this_thread::sleep_for(std::chrono::milliseconds(ms));
-}
-
-void GameCtrl::sleepByFPS() const {
-    sleepFor((long)((1.0 / fps) * 1000));
+void GameCtrl::sleepFPS() const {
+    util::sleep((long)((1.0 / fps) * 1000));
 }
 
 void GameCtrl::exitGame(const std::string &msg) {
     mutexExit.lock();
     if (runMainThread) {
-        sleepFor(100);
+        util::sleep(100);
         runSubThread = false;
-        sleepFor(100);
-        if (movementFile) {
-            fclose(movementFile);
-            movementFile = nullptr;
-        }
-        Console::setCursor(0, (int)mapRowCnt);
-        Console::writeWithColor(msg + "\n", ConsoleColor(WHITE, BLACK, true, false));
+        util::sleep(100);
+        printMsg(msg);
     }
     mutexExit.unlock();
     runMainThread = false;
@@ -96,6 +97,11 @@ void GameCtrl::exitGame(const std::string &msg) {
 
 void GameCtrl::exitGameErr(const std::string &err) {
     exitGame("ERROR: " + err);
+}
+
+void GameCtrl::printMsg(const std::string &msg) {
+    Console::setCursor(0, (int)mapRowCnt);
+    Console::writeWithColor(msg + "\n", ConsoleColor(WHITE, BLACK, true, false));
 }
 
 void GameCtrl::moveSnake(Snake &s) {
@@ -162,12 +168,12 @@ void GameCtrl::init() {
 }
 
 void GameCtrl::initMap() {
-    if (mapRowCnt < 4 || mapColCnt < 4) {
-        string msg = "GameCtrl.initMap(): Map size at least 4*4. Current size "
+    if (mapRowCnt < 5 || mapColCnt < 5) {
+        string msg = "GameCtrl.initMap(): Map size at least 5*5. Current size "
             + util::toString(mapRowCnt) + "*" + util::toString(mapColCnt) + ".";
         throw std::range_error(msg.c_str());
     }
-    map = std::make_shared<Map>(mapRowCnt, mapColCnt);
+    map = new Map(mapRowCnt, mapColCnt);
     if (!map) {
         exitGameErr(MSG_BAD_ALLOC);
     } else {
@@ -180,6 +186,9 @@ void GameCtrl::initSnake() {
     snake.addBody(Pos(1, 3));
     snake.addBody(Pos(1, 2));
     snake.addBody(Pos(1, 1));
+    if (enableHamilton) {
+        snake.enableHamilton();
+    }
 }
 
 void GameCtrl::initFiles() {
@@ -213,7 +222,7 @@ void GameCtrl::draw() {
     try {
         while (runSubThread) {
             drawMapContent();
-            sleepByFPS();
+            sleepFPS();
         }
     } catch (const std::exception &e) {
         exitGameErr(e.what());
@@ -261,12 +270,12 @@ void GameCtrl::drawMapContent() const {
 
 void GameCtrl::drawTestPoint(const Point &p, const ConsoleColor &consoleColor) const {
     string pointStr = "";
-    if (p.getDist() == Point::MAX_DIST) {
+    if (p.getValue() == Point::MAX_VALUE) {
         pointStr = "In";
     } else {
-        auto dist = p.getDist();
-        pointStr = util::toString(dist);
-        if (dist / 10 == 0) {
+        Point::ValueType val = p.getValue();
+        pointStr = util::toString(p.getValue());
+        if (val / 10 == 0) {
             pointStr.insert(0, " ");
         } 
     }
@@ -300,7 +309,7 @@ void GameCtrl::keyboard() {
                         break;
                 }
             }
-            sleepByFPS();
+            sleepFPS();
         }
     } catch (const std::exception &e) {
         exitGameErr(e.what());
@@ -326,7 +335,7 @@ void GameCtrl::createFood() {
             if (!map->hasFood()) {
                 map->createRandFood();
             }
-            sleepByFPS();
+            sleepFPS();
         }
     } catch (const std::exception &e) {
         exitGameErr(e.what());
@@ -336,7 +345,7 @@ void GameCtrl::createFood() {
 void GameCtrl::autoMove() {
     try {
         while (runSubThread) {
-            sleepFor(moveInterval);
+            util::sleep(moveInterval);
             if (!pause) {
                 if (enableAI) {
                     snake.decideNext();
@@ -349,11 +358,19 @@ void GameCtrl::autoMove() {
     }
 }
 
+void GameCtrl::test() {
+    //testFood();
+    testSearch();
+    //testHamilton();
+}
+
 void GameCtrl::testFood() {
-    while (runMainThread) {
+    SizeType cnt = 0;
+    while (runMainThread && cnt++ < map->getSize()) {
         map->createRandFood();
-        sleepByFPS();
+        sleepFPS();
     }
+    exitGame("testFood() finished.");
 }
 
 void GameCtrl::testSearch() {
@@ -376,22 +393,32 @@ void GameCtrl::testSearch() {
     //snake.testMaxPath(from, to, path);
 
     // Print path info
-    string res = "Path from " + from.toString() + " to " + to.toString()
+    string info = "Path from " + from.toString() + " to " + to.toString()
         + " of length " + util::toString(path.size()) + ":\n";
     for (const Direction &d : path) {
         switch (d) {
             case LEFT:
-                res += "L "; break;
+                info += "L "; break;
             case UP:
-                res += "U "; break;
+                info += "U "; break;
             case RIGHT:
-                res += "R "; break;
+                info += "R "; break;
             case DOWN:
-                res += "D "; break;
+                info += "D "; break;
             case NONE:
             default:
-                res += "NONE "; break;
+                info += "NONE "; break;
         }
     }
-    exitGame(res);
+    info += "\ntestSearch() finished.";
+    exitGame(info);
+}
+
+void GameCtrl::testHamilton() {
+    snake.setMap(map);
+    snake.addBody(Pos(1, 3));
+    snake.addBody(Pos(1, 2));
+    snake.addBody(Pos(1, 1));
+    snake.testHamilton();
+    exitGame("testHamilton() finished.");
 }

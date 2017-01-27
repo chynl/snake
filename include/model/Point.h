@@ -2,15 +2,16 @@
 #define SNAKE_POINT_H_
 
 #include "model/Pos.h"
+#include <cstdint>
 
 /*
 Point on the game map.
 */
 class Point {
 public:
-    typedef uint32_t DistType;
+    typedef uint32_t ValueType;
 
-    static const DistType MAX_DIST = UINT32_MAX;
+    static const ValueType MAX_VALUE = UINT32_MAX;
 
     enum Type {
         EMPTY,
@@ -27,19 +28,28 @@ public:
     ~Point();
 
     void setType(Type type_);
-    void setDist(const DistType dist_);
     void setParent(const Pos &p_);
     void setVisit(const bool v);
+    void setValue(const ValueType dist_);
     Type getType() const;
-    DistType getDist() const;
     Pos getParent() const;
     bool isVisit() const;
+    ValueType getValue() const;
 
 private:
-    Type type;
-    bool visit;
+    Type type = EMPTY;
     Pos parent;
-    DistType dist;
+    bool visit;
+
+    /*
+    This field has different usages:
+    1. When searching the shortest path, it stores the minimum distance
+       to the starting point.
+    2. When searching the longest path, it stores the estimated distance
+       to the destination.
+    3. When building a hamiltonian cycle, it stores the cycle's path index.
+    */
+    ValueType val;
 };
 
 #endif

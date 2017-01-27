@@ -2,7 +2,6 @@
 #define SNAKE_SNAKE_H_
 
 #include "model/Map.h"
-#include <memory>
 
 /*
 Game snake.
@@ -15,7 +14,7 @@ public:
     ~Snake();
 
     void setDirection(const Direction &d);
-    void setMap(std::shared_ptr<Map> m);
+    void setMap(Map *const m);
     Direction getDirection() const;
     bool isDead() const;
 
@@ -24,6 +23,7 @@ public:
     */
     void testMinPath(const Pos &from, const Pos &to, std::list<Direction> &path);
     void testMaxPath(const Pos &from, const Pos &to, std::list<Direction> &path);
+    void testHamilton();
 
     /*
     Add a new snake body.
@@ -44,19 +44,24 @@ public:
     void move(const std::list<Direction> &path);
 
     /*
+    Enable the snake AI based on the hamiltonian cycle.
+    */
+    void enableHamilton();
+
+    /*
     Decide the next moving direction. After its execution,
     the next moving direction will be stored in field 'direc'.
     */
     void decideNext();
 
 private:
-    bool dead;
-    Direction direc;
-
+    Map *map = nullptr;
     std::list<Pos> bodies;
-    std::shared_ptr<Map> map;
 
-    bool showDetail;
+    Direction direc = NONE;
+
+    bool dead = false;
+    bool hamiltonEnabled = false;
 
     /*
     Remove the snake tail.
@@ -121,34 +126,24 @@ private:
                  std::list<Direction> &path);
 
     /*
-    Construct the path between two positions.
+    Build a path between two positions.
 
     @param from The start position
     @param to   The end position
     @param path The result will be stored in this field.
     */
-    void constructPath(const Pos &from, const Pos &to, std::list<Direction> &path) const;
+    void buildPath(const Pos &from, const Pos &to, std::list<Direction> &path) const;
 
     /*
-    Show the details of a searched position.
+    Build a hamiltonian cycle on the map.
+    The path index will be stored in the 'value' field of each Point.
 
-    @param p    The position
-    @param type The new point type of the position
+    @param curPos   The current processing position
+    @param goal     The ending position of the hamiltonian cycle
+    @param visitCnt The amount of positions that has been visited
+    @return         True if a hamilonian cycle is built.
     */
-    void showPos(const Pos &p, const Point::Type type);
-
-    /*
-    Show a visited position on the map if the field 'showDetail' is true.
-    */
-    void showVisitPos(const Pos &p);
-
-    /*
-    Show a solution path on the map if the field 'showDetail' is true.
-
-    @param start The starting point of the path
-    @param path  The path
-    */
-    void showPath(const Pos &start, const std::list<Direction> &path);
+    bool buildHamilton(const Pos &curPos, const Pos &goal, const SizeType visitCnt);
 };
 
 #endif

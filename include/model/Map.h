@@ -21,6 +21,16 @@ public:
     SizeType getColCount() const;
 
     /*
+    Return the number of points excluding the boundaries.
+    */
+    SizeType getSize() const;
+
+    /*
+    Enable testing methods.
+    */
+    void enableTest();
+
+    /*
     Check the state of the map.
     */
     bool isInside(const Pos &p) const;
@@ -48,15 +58,38 @@ public:
     */
     static SizeType distance(const Pos &from, const Pos &to);
 
+    /*
+    Show a position on the map if the field 'testEnabled' is true.
+    */
+    void showPos(const Pos &p);
+
+    /*
+    Show a solution path on the map if the field 'testEnabled' is true.
+
+    @param start The starting point of the path
+    @param path  The path list
+    */
+    void showPath(const Pos &start, const std::list<Direction> &path);
+
 private:
+    std::vector<std::vector<Point>> content;
+    SizeType size;
     Pos food;
 
-    std::vector<std::vector<Point>> content;
+    bool testEnabled = false;
 
     /*
     Return all empty positions.
     */
     std::vector<Pos> getEmptyPoints() const;
+
+    /*
+    Show the details of a position.
+
+    @param p    The position
+    @param type The new point type of the position
+    */
+    void testPos(const Pos &p, const Point::Type type);
 };
 
 #endif

@@ -1,8 +1,7 @@
 #include "model/Pos.h"
-#include "util/convert.h"
+#include "util/util.h"
 
-Pos::Pos(const SizeType x_, const SizeType y_)
-    : x(x_), y(y_) {}
+Pos::Pos(const SizeType x_, const SizeType y_) : x(x_), y(y_) {}
 
 Pos::~Pos() {}
 

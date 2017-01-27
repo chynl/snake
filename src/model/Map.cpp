@@ -1,5 +1,5 @@
 #include "model/Map.h"
-#include "util/random.h"
+#include "util/util.h"
 
 using std::vector;
 using std::string;
@@ -7,6 +7,7 @@ using std::list;
 
 Map::Map(const SizeType rowCnt_, const SizeType colCnt_)
     : content(rowCnt_, vector<Point>(colCnt_)) {
+    size = (rowCnt_ - 2) * (colCnt_ - 2);
     // Add boundary walls
     SizeType row = getRowCount(), col = getColCount();
     for (SizeType i = 0; i < row; ++i) {
@@ -37,6 +38,14 @@ Map::SizeType Map::getRowCount() const {
 
 Map::SizeType Map::getColCount() const {
     return content[0].size();
+}
+
+Map::SizeType Map::getSize() const {
+    return size;
+}
+
+void Map::enableTest() {
+    testEnabled = true;
 }
 
 bool Map::isInside(const Pos &p) const {
@@ -78,9 +87,10 @@ bool Map::isAllBody() const {
 }
 
 void Map::createRandFood() {
+    auto random = util::Random<>::getInstance();
     vector<Pos> emptyPoints = getEmptyPoints();
     if (!emptyPoints.empty()) {
-        SizeType i = util::randInt((SizeType)0, emptyPoints.size() - 1);
+        SizeType i = random->nextInt((SizeType)0, emptyPoints.size() - 1);
         createFood(emptyPoints[i]);
     }
 }
@@ -104,6 +114,36 @@ const Pos& Map::getFood() const {
     return food;
 }
 
+Map::SizeType Map::distance(const Pos &from, const Pos &to) {
+    SizeType fromX = from.getX(), toX = to.getX();
+    SizeType fromY = from.getY(), toY = to.getY();
+    SizeType dx = fromX > toX ? fromX - toX : toX - fromX;
+    SizeType dy = fromY > toY ? fromY - toY : toY - fromY;
+    return dx + dy;
+}
+
+void Map::testPos(const Pos &p, const Point::Type type) {
+    getPoint(p).setType(type);
+    util::sleep(10);
+}
+
+void Map::showPos(const Pos &p) {
+    if (testEnabled) {
+        testPos(p, Point::Type::TEST_VISIT);
+    }
+}
+
+void Map::showPath(const Pos &start, const list<Direction> &path) {
+    if (testEnabled) {
+        Pos tmp = start;
+        for (const Direction &d : path) {
+            testPos(tmp, Point::Type::TEST_PATH);
+            tmp = tmp.getAdj(d);
+        }
+        testPos(tmp, Point::Type::TEST_PATH);
+    }
+}
+
 vector<Pos> Map::getEmptyPoints() const {
     vector<Pos> points;
     SizeType row = getRowCount(), col = getColCount();
@@ -115,12 +155,4 @@ vector<Pos> Map::getEmptyPoints() const {
         }
     }
     return points;
-}
-
-Map::SizeType Map::distance(const Pos &from, const Pos &to) {
-    SizeType fromX = from.getX(), toX = to.getX();
-    SizeType fromY = from.getY(), toY = to.getY();
-    SizeType dx = fromX > toX ? fromX - toX : toX - fromX;
-    SizeType dy = fromY > toY ? fromY - toY : toY - fromY;
-    return dx + dy;
 }

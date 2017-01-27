@@ -16,7 +16,7 @@ public:
     ~GameCtrl();
 
     /*
-    Return the only instance
+    Return the only instance.
     */
     static GameCtrl* getInstance();
 
@@ -25,16 +25,12 @@ public:
     */
     void setFPS(const double fps_);
     void setEnableAI(const bool enableAI_);
+    void setEnableHamilton(const bool enableHamilton_);
     void setMoveInterval(const long ms);
     void setRecordMovements(const bool b);
     void setRunTest(const bool b);
     void setMapRow(const SizeType n);
     void setMapCol(const SizeType n);
-
-    /*
-    Sleep current thread for a few milliseconds.
-    */
-    void sleepFor(const long ms) const;
 
     /*
     Run the game.
@@ -50,16 +46,17 @@ private:
     static const std::string MSG_ESC;
     static const std::string MAP_INFO_FILENAME;
 
+    double fps = 60.0;
+    bool enableAI = true;
+    bool enableHamilton = false;
+    long moveInterval = 30;
+    bool recordMovements = true;
+    bool runTest = false;
     SizeType mapRowCnt = 10;
     SizeType mapColCnt = 10;
-    double fps = 60.0;
-    long moveInterval = 30;
-    bool enableAI = true;
-    bool runTest = false;
-    bool recordMovements = true;
 
+    Map *map = nullptr;
     Snake snake;
-    std::shared_ptr<Map> map;
 
     volatile bool pause = false;  // Control pause/resume game
 
@@ -81,7 +78,7 @@ private:
     /*
     Sleep for a few time according to FPS.
     */
-    void sleepByFPS() const;
+    void sleepFPS() const;
 
     /*
     Print a message and exit the game.
@@ -92,6 +89,11 @@ private:
     Print an error message and exit the game.
     */
     void exitGameErr(const std::string &err);
+
+    /*
+    Print a message to the terminal.
+    */
+    void printMsg(const std::string &msg);
 
     /*
     Move the snake and check if the game is over.
@@ -142,8 +144,10 @@ private:
     /*
     Test functions.
     */
+    void test();
     void testFood();
     void testSearch();
+    void testHamilton();
 };
 
 #endif

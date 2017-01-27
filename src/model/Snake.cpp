@@ -1,15 +1,14 @@
 #include "model/Snake.h"
-#include "util/random.h"
-#include "GameCtrl.h"
+#include "util/util.h"
 #include <queue>
 #include <algorithm>
+#include <stdexcept>
 
 using std::vector;
 using std::list;
-using std::shared_ptr;
 using std::queue;
 
-Snake::Snake() : dead(false), direc(NONE), showDetail(false) {}
+Snake::Snake() {}
 
 Snake::~Snake() {}
 
@@ -17,7 +16,7 @@ void Snake::setDirection(const Direction &d) {
     direc = d;
 }
 
-void Snake::setMap(std::shared_ptr<Map> m) {
+void Snake::setMap(Map *const m) {
     map = m;
 }
 
@@ -30,52 +29,41 @@ bool Snake::isDead() const {
 }
 
 void Snake::testMinPath(const Pos &from, const Pos &to, std::list<Direction> &path) {
-    showDetail = true;
+    map->enableTest();
     findMinPath(from, to, path);
-    showDetail = false;
 }
 
 void Snake::testMaxPath(const Pos &from, const Pos &to, std::list<Direction> &path) {
-    showDetail = true;
+    map->enableTest();
     findMaxPath(from, to, path);
-    showDetail = false;
+}
+
+void Snake::testHamilton() {
+    map->enableTest();
+    enableHamilton();
+    SizeType row = map->getRowCount(), col = map->getColCount();
+    for (SizeType i = 1; i < row - 1; ++i) {
+        for (SizeType j = 1; j < col - 1; ++j) {
+            map->showPos(Pos(i, j));
+        }
+    }
 }
 
 void Snake::addBody(const Pos &p) {
-    if (map && map->isInside(p)) {
-        if (bodies.size() == 0) {  // Insert a head
-            map->getPoint(p).setType(Point::Type::SNAKE_HEAD);
-        } else {  // Insert a body
-            if (bodies.size() > 1) {
-                const Pos &oldTail = getTail();
-                map->getPoint(oldTail).setType(Point::Type::SNAKE_BODY);
-            }
-            map->getPoint(p).setType(Point::Type::SNAKE_TAIL);
+    if (bodies.size() == 0) {  // Insert a head
+        map->getPoint(p).setType(Point::Type::SNAKE_HEAD);
+    } else {  // Insert a body
+        if (bodies.size() > 1) {
+            const Pos &oldTail = getTail();
+            map->getPoint(oldTail).setType(Point::Type::SNAKE_BODY);
         }
-        bodies.push_back(p);
+        map->getPoint(p).setType(Point::Type::SNAKE_TAIL);
     }
-}
-
-const Pos& Snake::getHead() const {
-    return *bodies.begin();
-}
-
-const Pos& Snake::getTail() const {
-    return *bodies.rbegin();
-}
-
-void Snake::removeTail() {
-    if (map) {
-        map->getPoint(getTail()).setType(Point::Type::EMPTY);
-    }
-    bodies.pop_back();
-    if (bodies.size() > 1) {
-        map->getPoint(getTail()).setType(Point::Type::SNAKE_TAIL);
-    }
+    bodies.push_back(p);
 }
 
 void Snake::move() {
-    if (isDead() || direc == NONE || !map) {
+    if (isDead() || direc == NONE) {
         return;
     }
     map->getPoint(getHead()).setType(Point::Type::SNAKE_BODY);
@@ -100,53 +88,129 @@ void Snake::move(const std::list<Direction> &path) {
     }
 }
 
+void Snake::enableHamilton() {
+    // Check map size
+    SizeType row = map->getRowCount(), col = map->getColCount();
+    if (row % 2 == 1 && col % 2 == 1) {
+        throw std::range_error("Snake.enableHamilton(): require even amount of rows or columns.");
+    }
+    // Preparation for building a hamiltonian cycle
+    hamiltonEnabled = true;
+    for (SizeType i = 0; i < row; ++i) {
+        for (SizeType j = 0; j < col; ++j) {
+            Point &point = map->getPoint(Pos(i, j));
+            point.setVisit(false);
+            point.setValue(Point::MAX_VALUE);
+        }
+    }
+    Point::ValueType val = 0;
+    for (auto it = bodies.crbegin(); it != bodies.crend(); ++it) {
+        Point &point = map->getPoint(*it);
+        point.setVisit(true);
+        point.setValue(val++);
+    }
+    // Build a hamiltonian cycle
+    SizeType visitCnt = bodies.size();
+    buildHamilton(getHead(), getTail(), visitCnt);
+}
+
 void Snake::decideNext() {
-    if (isDead() || !map) {
+    if (isDead()) {
         return;
     } else if (!map->hasFood()) {
         direc = NONE;
         return;
     }
-    list<Direction> pathToFood, pathToTail;
-    // Create a virtual snake
-    Snake tmpSnake(*this);
-    shared_ptr<Map> tmpMap = std::make_shared<Map>(*map);
-    tmpSnake.setMap(tmpMap);
-    // Step 1
-    tmpSnake.findMinPathToFood(pathToFood);
-    if (!pathToFood.empty()) {
-        // Step 2
-        tmpSnake.move(pathToFood);
-        if (tmpMap->isAllBody()) {
-            this->setDirection(*(pathToFood.begin()));
-            return;
-        } else {
-            // Step 3
-            tmpSnake.findMaxPathToTail(pathToTail);
-            if (pathToTail.size() > 1) {
+
+    if (hamiltonEnabled) {  // AI based on the hamiltonian cycle
+
+        Direction hamiltonDirec = Direction::NONE;
+        const SizeType size = map->getSize();
+        const Pos head = getHead(), tail = getTail();
+        const Point::ValueType curPathIndex = map->getPoint(head).getValue();
+        const vector<Pos> adjPositions = head.getAllAdj();
+        for (const Pos &adjPos : adjPositions) {
+            Point adjPoint = map->getPoint(adjPos);
+            Point::ValueType adjVal = adjPoint.getValue();
+            Point::ValueType headVal = map->getPoint(head).getValue();
+            Point::ValueType tailVal = map->getPoint(tail).getValue();
+            if (adjPoint.getType() == Point::Type::FOOD && tailVal != (adjVal + 1) % size) {
+                // Check whether to take shortcuts to eat the food
+                if (tailVal < headVal && (adjVal > headVal || adjVal < tailVal)) {
+                    direc = head.getDirectionTo(adjPos);
+                    return;
+                } else if (tailVal > headVal && (adjVal > headVal && adjVal < tailVal)) {
+                    direc = head.getDirectionTo(adjPos);
+                    return;
+                }
+            }
+            if (adjVal == (curPathIndex + 1) % size) {
+                hamiltonDirec = head.getDirectionTo(adjPos);
+            }
+        }
+        // No shorcuts found, just move along the hamiltonian cycle
+        direc = hamiltonDirec;
+
+    } else {  // AI based on searching
+
+        list<Direction> pathToFood, pathToTail;
+        // Create a virtual snake
+        Map tmpMap = *map;
+        Snake tmpSnake(*this);
+        tmpSnake.setMap(&tmpMap);
+        // Step 1
+        tmpSnake.findMinPathToFood(pathToFood);
+        if (!pathToFood.empty()) {
+            // Step 2
+            tmpSnake.move(pathToFood);
+            if (tmpMap.isAllBody()) {
                 this->setDirection(*(pathToFood.begin()));
                 return;
+            } else {
+                // Step 3
+                tmpSnake.findMaxPathToTail(pathToTail);
+                if (pathToTail.size() > 1) {
+                    this->setDirection(*(pathToFood.begin()));
+                    return;
+                }
             }
         }
-    }
-    // Step 4
-    this->findMaxPathToTail(pathToTail);
-    if (pathToTail.size() > 1) {
-        this->setDirection(*(pathToTail.begin()));
-        return;
-    }
-    // Step 5
-    Pos head = getHead();
-    SizeType max = 0;
-    vector<Pos> adjPositions = head.getAllAdj();
-    for (const Pos &adjPos : adjPositions) {
-        if (map->isSafe(adjPos)) {
-            SizeType dist = Map::distance(adjPos, map->getFood());
-            if (dist >= max) {
-                max = dist;
-                direc = head.getDirectionTo(adjPos);
+        // Step 4
+        this->findMaxPathToTail(pathToTail);
+        if (pathToTail.size() > 1) {
+            this->setDirection(*(pathToTail.begin()));
+            return;
+        }
+        // Step 5
+        Pos head = getHead();
+        SizeType max = 0;
+        vector<Pos> adjPositions = head.getAllAdj();
+        for (const Pos &adjPos : adjPositions) {
+            if (map->isSafe(adjPos)) {
+                SizeType dist = Map::distance(adjPos, map->getFood());
+                if (dist >= max) {
+                    max = dist;
+                    direc = head.getDirectionTo(adjPos);
+                }
             }
         }
+
+    }
+}
+
+const Pos& Snake::getHead() const {
+    return *bodies.begin();
+}
+
+const Pos& Snake::getTail() const {
+    return *bodies.rbegin();
+}
+
+void Snake::removeTail() {
+    map->getPoint(getTail()).setType(Point::Type::EMPTY);
+    bodies.pop_back();
+    if (bodies.size() > 1) {
+        map->getPoint(getTail()).setType(Point::Type::SNAKE_TAIL);
     }
 }
 
@@ -175,14 +239,16 @@ void Snake::findPathTo(const int pathType, const Pos &goal, list<Direction> &pat
 
 void Snake::findMinPath(const Pos &from, const Pos &to, list<Direction> &path) {
     // Init
+    auto random = util::Random<>::getInstance();
     SizeType row = map->getRowCount(), col = map->getColCount();
     for (SizeType i = 1; i < row - 1; ++i) {
         for (SizeType j = 1; j < col - 1; ++j) {
-            map->getPoint(Pos(i, j)).setDist(Point::MAX_DIST);
+            Point &point = map->getPoint(Pos(i, j));
+            point.setValue(Point::MAX_VALUE);
         }
     }
     path.clear();
-    map->getPoint(from).setDist(0);
+    map->getPoint(from).setValue(0);
     queue<Pos> openList;
     openList.push(from);
     // BFS
@@ -190,14 +256,15 @@ void Snake::findMinPath(const Pos &from, const Pos &to, list<Direction> &path) {
         const Pos curPos = openList.front();
         const Point &curPoint = map->getPoint(curPos);
         openList.pop();
-        showVisitPos(curPos);
+        map->showPos(curPos);
         if (curPos == to) {
-            constructPath(from, to, path);
-            showPath(from, path);
+            buildPath(from, to, path);
+            map->showPath(from, path);
             break;
         }
         // Arrange the order of traversing to make the result path as straight as possible
         vector<Pos> adjPositions = curPos.getAllAdj();
+        random->shuffle(adjPositions.begin(), adjPositions.end());
         Direction bestDirec = (curPos == from ? direc : curPoint.getParent().getDirectionTo(curPos));
         for (SizeType i = 0; i < adjPositions.size(); ++i) {
             if (bestDirec == curPos.getDirectionTo(adjPositions[i])) {
@@ -208,9 +275,9 @@ void Snake::findMinPath(const Pos &from, const Pos &to, list<Direction> &path) {
         // Traverse the adjacent positions
         for (const Pos &adjPos : adjPositions) {
             Point &adjPoint = map->getPoint(adjPos);
-            if (map->isEmpty(adjPos) && adjPoint.getDist() == Point::MAX_DIST) {
+            if (map->isEmpty(adjPos) && adjPoint.getValue() == Point::MAX_VALUE) {
                 adjPoint.setParent(curPos);
-                adjPoint.setDist(curPoint.getDist() + 1);
+                adjPoint.setValue(curPoint.getValue() + 1);
                 openList.push(adjPos);
             }
         }
@@ -222,14 +289,15 @@ void Snake::findMaxPath(const Pos &from, const Pos &to, list<Direction> &path) {
     SizeType row = map->getRowCount(), col = map->getColCount();
     for (SizeType i = 1; i < row - 1; ++i) {
         for (SizeType j = 1; j < col - 1; ++j) {
-            map->getPoint(Pos(i, j)).setVisit(false);
-            map->getPoint(Pos(i, j)).setDist((Point::DistType)map->distance(Pos(i, j), to));
+            Point &point = map->getPoint(Pos(i, j));
+            point.setVisit(false);
+            point.setValue((Point::ValueType)map->distance(Pos(i, j), to));
         }
     }
     path.clear();
     // DFS
     findMax(from, direc, from, to, path);
-    showPath(from, path);
+    map->showPath(from, path);
 }
 
 void Snake::findMax(const Pos &curPos,
@@ -241,19 +309,19 @@ void Snake::findMax(const Pos &curPos,
         return;
     }
     map->getPoint(curPos).setVisit(true);
-    showVisitPos(curPos);
+    map->showPos(curPos);
     if (curPos == to) {
-        constructPath(from, to, path);
+        buildPath(from, to, path);
     } else {
         // Arrange the order of traversing to make the result path as straight as possible
         vector<Pos> adjPositions = curPos.getAllAdj();
         std::sort(adjPositions.begin(), adjPositions.end(),
                   [&](const Pos &a, const Pos &b) {
-            return map->getPoint(a).getDist() > map->getPoint(b).getDist();
+            return map->getPoint(a).getValue() > map->getPoint(b).getValue();
         });
-        Point::DistType maxDist = map->getPoint(adjPositions[0]).getDist();
+        Point::ValueType maxDist = map->getPoint(adjPositions[0]).getValue();
         for (SizeType i = 0; i < adjPositions.size(); ++i) {
-            if (map->getPoint(adjPositions[i]).getDist() == maxDist
+            if (map->getPoint(adjPositions[i]).getValue() == maxDist
                 && curPos.getDirectionTo(adjPositions[i] == curDirec)) {
                 util::swap(adjPositions[0], adjPositions[i]);
                 break;
@@ -269,7 +337,7 @@ void Snake::findMax(const Pos &curPos,
     }
 }
 
-void Snake::constructPath(const Pos &from, const Pos &to, list<Direction> &path) const {
+void Snake::buildPath(const Pos &from, const Pos &to, list<Direction> &path) const {
     Pos tmp = to, parent;
     while (tmp != from) {
         parent = map->getPoint(tmp).getParent();
@@ -278,24 +346,26 @@ void Snake::constructPath(const Pos &from, const Pos &to, list<Direction> &path)
     }
 }
 
-void Snake::showPos(const Pos &p, const Point::Type type) {
-    map->getPoint(p).setType(type);
-    GameCtrl::getInstance()->sleepFor(10);
-}
-
-void Snake::showVisitPos(const Pos &p) {
-    if (showDetail) {
-        showPos(p, Point::Type::TEST_VISIT);
-    }
-}
-
-void Snake::showPath(const Pos &start, const list<Direction> &path) {
-    if (showDetail) {
-        Pos tmp = start;
-        for (const Direction &d : path) {
-            showPos(tmp, Point::Type::TEST_PATH);
-            tmp = tmp.getAdj(d);
+bool Snake::buildHamilton(const Pos &curPos, const Pos &goal, const SizeType visitCnt) {
+    auto random = util::Random<>::getInstance();
+    Point &curPoint = map->getPoint(curPos);
+    vector<Pos> adjPositions = curPos.getAllAdj();
+    random->shuffle(adjPositions.begin(), adjPositions.end());
+    for (const Pos &adjPos : adjPositions) {
+        if (adjPos == goal && visitCnt == map->getSize()) {
+            return true;
         }
-        showPos(tmp, Point::Type::TEST_PATH);
+        if (map->isInside(adjPos)) {
+            Point &adjPoint = map->getPoint(adjPos);
+            if (!adjPoint.isVisit()) {
+                adjPoint.setVisit(true);
+                adjPoint.setValue(curPoint.getValue() + 1);
+                if (buildHamilton(adjPos, goal, visitCnt + 1)) {
+                    return true;
+                }
+                adjPoint.setVisit(false);
+            }
+        }
     }
+    return false;
 }
