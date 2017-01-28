@@ -7,6 +7,7 @@
 using std::vector;
 using std::list;
 using std::queue;
+using util::Random;
 
 Snake::Snake() {}
 
@@ -224,7 +225,7 @@ void Snake::findPathTo(const int pathType, const Pos &goal, list<Direction> &pat
 
 void Snake::findMinPath(const Pos &from, const Pos &to, list<Direction> &path) {
     // Init
-    auto random = util::Random<>::getInstance();
+    auto random = Random<>::getInstance();
     SizeType row = map->getRowCount(), col = map->getColCount();
     for (SizeType i = 1; i < row - 1; ++i) {
         for (SizeType j = 1; j < col - 1; ++j) {
@@ -332,15 +333,14 @@ void Snake::buildPath(const Pos &from, const Pos &to, list<Direction> &path) con
 }
 
 bool Snake::buildHamilton(const Pos &curPos, const Pos &goal, const SizeType visitCnt) {
-    auto random = util::Random<>::getInstance();
     Point &curPoint = map->getPoint(curPos);
     vector<Pos> adjPositions = curPos.getAllAdj();
-    random->shuffle(adjPositions.begin(), adjPositions.end());
+    Random<>::getInstance()->shuffle(adjPositions.begin(), adjPositions.end());
     for (const Pos &adjPos : adjPositions) {
-        if (adjPos == goal && visitCnt == map->getSize()) {
-            return true;
-        }
         if (map->isInside(adjPos)) {
+            if (adjPos == goal) {
+                return visitCnt == map->getSize();
+            }
             Point &adjPoint = map->getPoint(adjPos);
             if (!adjPoint.isVisit()) {
                 adjPoint.setVisit(true);
