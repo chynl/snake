@@ -7,6 +7,7 @@
 using std::vector;
 using std::list;
 using std::queue;
+using util::Random;
 
 Snake::Snake() {}
 
@@ -124,32 +125,17 @@ void Snake::decideNext() {
 
     if (hamiltonEnabled) {  // AI based on the hamiltonian cycle
 
-        Direction hamiltonDirec = Direction::NONE;
-        const SizeType size = map->getSize();
-        const Pos head = getHead(), tail = getTail();
-        const Point::ValueType curPathIndex = map->getPoint(head).getValue();
-        const vector<Pos> adjPositions = head.getAllAdj();
+        SizeType size = map->getSize();
+        Pos head = getHead(), tail = getTail();
+        Point::ValueType curIndex = map->getPoint(head).getValue();
+        vector<Pos> adjPositions = head.getAllAdj();
         for (const Pos &adjPos : adjPositions) {
             Point adjPoint = map->getPoint(adjPos);
-            Point::ValueType adjVal = adjPoint.getValue();
-            Point::ValueType headVal = map->getPoint(head).getValue();
-            Point::ValueType tailVal = map->getPoint(tail).getValue();
-            if (adjPoint.getType() == Point::Type::FOOD && tailVal != (adjVal + 1) % size) {
-                // Check whether to take shortcuts to eat the food
-                if (tailVal < headVal && (adjVal > headVal || adjVal < tailVal)) {
-                    direc = head.getDirectionTo(adjPos);
-                    return;
-                } else if (tailVal > headVal && (adjVal > headVal && adjVal < tailVal)) {
-                    direc = head.getDirectionTo(adjPos);
-                    return;
-                }
-            }
-            if (adjVal == (curPathIndex + 1) % size) {
-                hamiltonDirec = head.getDirectionTo(adjPos);
+            Point::ValueType adjIndex = adjPoint.getValue();
+            if (adjIndex == (curIndex + 1) % size) {
+                direc = head.getDirectionTo(adjPos);
             }
         }
-        // No shorcuts found, just move along the hamiltonian cycle
-        direc = hamiltonDirec;
 
     } else {  // AI based on searching
 
@@ -239,7 +225,7 @@ void Snake::findPathTo(const int pathType, const Pos &goal, list<Direction> &pat
 
 void Snake::findMinPath(const Pos &from, const Pos &to, list<Direction> &path) {
     // Init
-    auto random = util::Random<>::getInstance();
+    auto random = Random<>::getInstance();
     SizeType row = map->getRowCount(), col = map->getColCount();
     for (SizeType i = 1; i < row - 1; ++i) {
         for (SizeType j = 1; j < col - 1; ++j) {
@@ -347,15 +333,14 @@ void Snake::buildPath(const Pos &from, const Pos &to, list<Direction> &path) con
 }
 
 bool Snake::buildHamilton(const Pos &curPos, const Pos &goal, const SizeType visitCnt) {
-    auto random = util::Random<>::getInstance();
     Point &curPoint = map->getPoint(curPos);
     vector<Pos> adjPositions = curPos.getAllAdj();
-    random->shuffle(adjPositions.begin(), adjPositions.end());
+    Random<>::getInstance()->shuffle(adjPositions.begin(), adjPositions.end());
     for (const Pos &adjPos : adjPositions) {
-        if (adjPos == goal && visitCnt == map->getSize()) {
-            return true;
-        }
         if (map->isInside(adjPos)) {
+            if (adjPos == goal) {
+                return visitCnt == map->getSize();
+            }
             Point &adjPoint = map->getPoint(adjPos);
             if (!adjPoint.isVisit()) {
                 adjPoint.setVisit(true);
