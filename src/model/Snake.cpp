@@ -123,21 +123,7 @@ void Snake::decideNext() {
         return;
     }
 
-    if (hamiltonEnabled) {  // AI based on the hamiltonian cycle
-
-        SizeType size = map->getSize();
-        Pos head = getHead(), tail = getTail();
-        Point::ValueType curIndex = map->getPoint(head).getValue();
-        vector<Pos> adjPositions = head.getAllAdj();
-        for (const Pos &adjPos : adjPositions) {
-            Point adjPoint = map->getPoint(adjPos);
-            Point::ValueType adjIndex = adjPoint.getValue();
-            if (adjIndex == (curIndex + 1) % size) {
-                direc = head.getDirectionTo(adjPos);
-            }
-        }
-
-    } else {  // AI based on searching
+    if (!hamiltonEnabled) {  // AI based on graph search
 
         list<Direction> pathToFood, pathToTail;
         // Create a virtual snake
@@ -168,6 +154,7 @@ void Snake::decideNext() {
             return;
         }
         // Step 5
+        direc = Direction::DOWN;  // A default direction
         Pos head = getHead();
         SizeType max = 0;
         vector<Pos> adjPositions = head.getAllAdj();
@@ -178,6 +165,20 @@ void Snake::decideNext() {
                     max = dist;
                     direc = head.getDirectionTo(adjPos);
                 }
+            }
+        }
+
+    } else {  // AI based on the hamiltonian cycle
+
+        SizeType size = map->getSize();
+        Pos head = getHead(), tail = getTail();
+        Point::ValueType curIndex = map->getPoint(head).getValue();
+        vector<Pos> adjPositions = head.getAllAdj();
+        for (const Pos &adjPos : adjPositions) {
+            Point adjPoint = map->getPoint(adjPos);
+            Point::ValueType adjIndex = adjPoint.getValue();
+            if (adjIndex == (curIndex + 1) % size) {
+                direc = head.getDirectionTo(adjPos);
             }
         }
 

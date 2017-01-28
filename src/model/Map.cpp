@@ -124,7 +124,7 @@ Map::SizeType Map::distance(const Pos &from, const Pos &to) {
 
 void Map::testPos(const Pos &p, const Point::Type type) {
     getPoint(p).setType(type);
-    util::sleep(10);
+    util::sleep(TEST_INTERVAL);
 }
 
 void Map::showPos(const Pos &p) {

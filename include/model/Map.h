@@ -72,6 +72,8 @@ public:
     void showPath(const Pos &start, const std::list<Direction> &path);
 
 private:
+    static const long TEST_INTERVAL = 10;
+
     std::vector<std::vector<Point>> content;
     SizeType size;
     Pos food;
