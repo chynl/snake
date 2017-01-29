@@ -32,11 +32,22 @@ bool Snake::isDead() const {
 void Snake::testMinPath(const Pos &from, const Pos &to, std::list<Direction> &path) {
     map->setTestEnabled(true);
     findMinPath(from, to, path);
+    map->showPath(from, path);
+    map->setTestEnabled(false);
 }
 
 void Snake::testMaxPath(const Pos &from, const Pos &to, std::list<Direction> &path) {
     map->setTestEnabled(true);
     findMaxPath(from, to, path);
+    Pos cur = from;
+    for (const Direction d : path) {
+        map->getPoint(cur).setValue(0);
+        cur = cur.getAdj(d);
+    }
+    map->getPoint(from).setValue(77);
+    map->getPoint(to).setValue(77);
+    map->showPath(from, path);
+    map->setTestEnabled(false);
 }
 
 void Snake::testHamilton() {
@@ -90,29 +101,11 @@ void Snake::move(const std::list<Direction> &path) {
 }
 
 void Snake::enableHamilton() {
-    // Check map size
-    SizeType row = map->getRowCount(), col = map->getColCount();
-    if (row % 2 == 1 && col % 2 == 1) {
+    if (map->getRowCount() % 2 == 1 && map->getColCount() % 2 == 1) {
         throw std::range_error("Snake.enableHamilton(): require even amount of rows or columns.");
     }
-    // Preparation for building a hamiltonian cycle
     hamiltonEnabled = true;
-    for (SizeType i = 0; i < row; ++i) {
-        for (SizeType j = 0; j < col; ++j) {
-            Point &point = map->getPoint(Pos(i, j));
-            point.setVisit(false);
-            point.setValue(Point::MAX_VALUE);
-        }
-    }
-    Point::ValueType val = 0;
-    for (auto it = bodies.crbegin(); it != bodies.crend(); ++it) {
-        Point &point = map->getPoint(*it);
-        point.setVisit(true);
-        point.setValue(val++);
-    }
-    // Build a hamiltonian cycle
-    SizeType visitCnt = bodies.size();
-    buildHamilton(getHead(), getTail(), visitCnt);
+    buildHamilton();
 }
 
 void Snake::decideNext() {
@@ -205,10 +198,6 @@ void Snake::findMinPathToFood(list<Direction> &path) {
     findPathTo(0, map->getFood(), path);
 }
 
-void Snake::findMinPathToTail(list<Direction> &path) {
-    findPathTo(0, getTail(), path);
-}
-
 void Snake::findMaxPathToTail(list<Direction> &path) {
     findPathTo(1, getTail(), path);
 }
@@ -229,8 +218,7 @@ void Snake::findMinPath(const Pos &from, const Pos &to, list<Direction> &path) {
     SizeType row = map->getRowCount(), col = map->getColCount();
     for (SizeType i = 1; i < row - 1; ++i) {
         for (SizeType j = 1; j < col - 1; ++j) {
-            Point &point = map->getPoint(Pos(i, j));
-            point.setValue(Point::MAX_VALUE);
+            map->getPoint(Pos(i, j)).setValue(Point::MAX_VALUE);
         }
     }
     path.clear();
@@ -245,7 +233,6 @@ void Snake::findMinPath(const Pos &from, const Pos &to, list<Direction> &path) {
         map->showPos(curPos);
         if (curPos == to) {
             buildPath(from, to, path);
-            map->showPath(from, path);
             break;
         }
         vector<Pos> adjPositions = curPos.getAllAdj();
@@ -271,7 +258,7 @@ void Snake::findMinPath(const Pos &from, const Pos &to, list<Direction> &path) {
 }
 
 void Snake::findMaxPath(const Pos &from, const Pos &to, list<Direction> &path) {
-    // Get the shortest path first
+    // Get the shortest path
     bool oriEnabled = map->isTestEnabled();
     map->setTestEnabled(false);
     findMinPath(from, to, path);
@@ -280,10 +267,7 @@ void Snake::findMaxPath(const Pos &from, const Pos &to, list<Direction> &path) {
     SizeType row = map->getRowCount(), col = map->getColCount();
     for (SizeType i = 1; i < row - 1; ++i) {
         for (SizeType j = 1; j < col - 1; ++j) {
-            Pos pos = Pos(i, j);
-            Point &point = map->getPoint(pos);
-            point.setVisit(false);
-            point.setValue(pos == from || pos == to ? 77 : 0);  // Point value just for debugging
+            map->getPoint(Pos(i, j)).setVisit(false);
         }
     }
     // Make all points on the path visited
@@ -372,7 +356,6 @@ void Snake::findMaxPath(const Pos &from, const Pos &to, list<Direction> &path) {
             cur = next;
         }
     }
-    map->showPath(from, path);
 }
 
 void Snake::buildPath(const Pos &from, const Pos &to, list<Direction> &path) const {
@@ -384,25 +367,28 @@ void Snake::buildPath(const Pos &from, const Pos &to, list<Direction> &path) con
     }
 }
 
-bool Snake::buildHamilton(const Pos &curPos, const Pos &goal, const SizeType visitCnt) {
-    Point &curPoint = map->getPoint(curPos);
-    vector<Pos> adjPositions = curPos.getAllAdj();
-    Random<>::getInstance()->shuffle(adjPositions.begin(), adjPositions.end());
-    for (const Pos &adjPos : adjPositions) {
-        if (map->isInside(adjPos)) {
-            if (adjPos == goal) {
-                return visitCnt == map->getSize();
-            }
-            Point &adjPoint = map->getPoint(adjPos);
-            if (!adjPoint.isVisit()) {
-                adjPoint.setVisit(true);
-                adjPoint.setValue(curPoint.getValue() + 1);
-                if (buildHamilton(adjPos, goal, visitCnt + 1)) {
-                    return true;
-                }
-                adjPoint.setVisit(false);
-            }
-        }
+void Snake::buildHamilton() {
+    // Change the initial body to a wall temporarily
+    Point &bodyPoint = map->getPoint(*(++bodies.begin()));
+    map->getPoint(*(++bodies.begin())).setType(Point::Type::WALL);
+    // Get the longest path
+    bool oriEnabled = map->isTestEnabled();
+    map->setTestEnabled(false);
+    list<Direction> maxPath;
+    findMaxPathToTail(maxPath);
+    map->setTestEnabled(oriEnabled);
+    bodyPoint.setType(Point::Type::SNAKE_BODY);
+    // Initialize the first three incides of the cycle
+    Point::ValueType val = 0;
+    for (auto it = bodies.crbegin(); it != bodies.crend(); ++it) {
+        map->getPoint(*it).setValue(val++);
     }
-    return false;
+    // Build remaining cycle
+    SizeType size = map->getSize();
+    Pos cur = getHead();
+    for (const Direction d : maxPath) {
+        Pos next = cur.getAdj(d);
+        map->getPoint(next).setValue((map->getPoint(cur).getValue() + 1) % size);
+        cur = next;
+    }
 }
