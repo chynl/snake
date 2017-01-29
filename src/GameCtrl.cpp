@@ -273,6 +273,8 @@ void GameCtrl::drawTestPoint(const Point &p, const ConsoleColor &consoleColor) c
     string pointStr = "";
     if (p.getDist() == Point::MAX_VALUE) {
         pointStr = "In";
+    } else if (p.getDist() == EMPTY_VALUE) {
+        pointStr = "  ";
     } else {
         Point::ValueType dist = p.getDist();
         pointStr = util::toString(p.getDist());

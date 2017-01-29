@@ -1,5 +1,6 @@
 #include "model/Snake.h"
 #include "util/util.h"
+#include "GameCtrl.h"
 #include <queue>
 #include <algorithm>
 #include <stdexcept>
@@ -41,11 +42,11 @@ void Snake::testMaxPath(const Pos &from, const Pos &to, std::list<Direction> &pa
     findMaxPath(from, to, path);
     Pos cur = from;
     for (const Direction d : path) {
-        map->getPoint(cur).setDist(0);
+        map->getPoint(cur).setDist(GameCtrl::EMPTY_VALUE);
         cur = cur.getAdj(d);
     }
-    map->getPoint(from).setDist(77);
-    map->getPoint(to).setDist(77);
+    map->getPoint(from).setDist(0);
+    map->getPoint(to).setDist(1);
     map->showPath(from, path);
     map->setTestEnabled(false);
 }

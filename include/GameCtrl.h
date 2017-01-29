@@ -13,6 +13,8 @@ class GameCtrl {
 public:
     typedef Map::SizeType SizeType;
 
+    static const Point::ValueType EMPTY_VALUE = 99999;
+
     ~GameCtrl();
 
     /*
