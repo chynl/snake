@@ -48,7 +48,7 @@ private:
 
     double fps = 60.0;
     bool enableAI = true;
-    bool enableHamilton = false;
+    bool enableHamilton = true;
     long moveInterval = 30;
     bool recordMovements = true;
     bool runTest = false;

@@ -119,7 +119,42 @@ void Snake::decideNext() {
         return;
     }
 
-    if (!hamiltonEnabled) {  // AI based on graph search
+    if (hamiltonEnabled) {  // AI based on the hamiltonian cycle
+
+        SizeType size = map->getSize();
+        Pos head = getHead(), tail = getTail();
+        Point::ValueType tailIndex = map->getPoint(tail).getIndex();
+        Point::ValueType headIndex = map->getPoint(head).getIndex();
+        // Try to take shortcuts when the snake is not long enough
+        if (bodies.size() < size * 3 / 4) {
+            list<Direction> minPath;
+            findMinPathToFood(minPath);
+            if (!minPath.empty()) {
+                Direction nextDirec = *minPath.begin();
+                Pos nextPos = head.getAdj(nextDirec);
+                Point::ValueType nextIndex = map->getPoint(nextPos).getIndex();
+                Point::ValueType foodIndex = map->getPoint(map->getFood()).getIndex();
+                headIndex = util::getDistance(tailIndex, headIndex, (Point::ValueType)size);
+                nextIndex = util::getDistance(tailIndex, nextIndex, (Point::ValueType)size);
+                foodIndex = util::getDistance(tailIndex, foodIndex, (Point::ValueType)size);
+                if (nextIndex > headIndex && nextIndex <= foodIndex) {
+                    direc = nextDirec;
+                    return;
+                }
+            }
+        }
+        // Move along the hamitonian cycle
+        headIndex = map->getPoint(head).getIndex();
+        vector<Pos> adjPositions = head.getAllAdj();
+        for (const Pos &adjPos : adjPositions) {
+            const Point &adjPoint = map->getPoint(adjPos);
+            Point::ValueType adjIndex = adjPoint.getIndex();
+            if (adjIndex == (headIndex + 1) % size) {
+                direc = head.getDirectionTo(adjPos);
+            }
+        }
+
+    } else {  // AI based on graph search
 
         list<Direction> pathToFood, pathToTail;
         // Create a virtual snake
@@ -164,40 +199,6 @@ void Snake::decideNext() {
             }
         }
 
-    } else {  // AI based on the hamiltonian cycle
-
-        SizeType size = map->getSize();
-        Pos head = getHead(), tail = getTail();
-        Point::ValueType tailIndex = map->getPoint(tail).getIndex();
-        Point::ValueType headIndex = map->getPoint(head).getIndex();
-        // Try to take shortcuts when the snake is not long enough
-        if (bodies.size() < size * 3 / 4) {
-            list<Direction> minPath;
-            findMinPathToFood(minPath);
-            if (!minPath.empty()) {
-                Direction nextDirec = *minPath.begin();
-                Pos nextPos = head.getAdj(nextDirec);
-                Point::ValueType nextIndex = map->getPoint(nextPos).getIndex();
-                Point::ValueType foodIndex = map->getPoint(map->getFood()).getIndex();
-                headIndex = util::getDistance(tailIndex, headIndex, (Point::ValueType)size);
-                nextIndex = util::getDistance(tailIndex, nextIndex, (Point::ValueType)size);
-                foodIndex = util::getDistance(tailIndex, foodIndex, (Point::ValueType)size);
-                if (nextIndex > headIndex && nextIndex <= foodIndex) {
-                    direc = nextDirec;
-                    return;
-                }
-            }
-        }
-        // Move along the hamitonian cycle
-        headIndex = map->getPoint(head).getIndex();
-        vector<Pos> adjPositions = head.getAllAdj();
-        for (const Pos &adjPos : adjPositions) {
-            const Point &adjPoint = map->getPoint(adjPos);
-            Point::ValueType adjIndex = adjPoint.getIndex();
-            if (adjIndex == (headIndex + 1) % size) {
-                direc = head.getDirectionTo(adjPos);
-            }
-        }
     }
 }
 
