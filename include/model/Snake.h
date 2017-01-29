@@ -97,8 +97,7 @@ private:
     void findPathTo(const int type, const Pos &to, std::list<Direction> &path);
 
     /*
-    Find a shortest path as straight as possible between two positions.
-    Notice that only EMPTY points are searched by the algorithm.
+    Find the shortest path as straight as possible between two positions.
 
     @param from The starting position
     @param to   The ending position
@@ -107,22 +106,13 @@ private:
     void findMinPath(const Pos &from, const Pos &to, std::list<Direction> &path);
 
     /*
-    Find a longest path as straight as possible between two positions.
-    Notice that only EMPTY points are searched by the algorithm.
+    Find the longest path between two positions.
 
     @param from The starting position
     @param to   The ending position
     @param path The result will be stored in this field
     */
     void findMaxPath(const Pos &from, const Pos &to, std::list<Direction> &path);
-
-    /*
-    A recursive method called in findMaxPath().
-    */
-    void findMax(const Pos &curPos,
-                 const Pos &from,
-                 const Pos &to,
-                 std::list<Direction> &path);
 
     /*
     Build a path between two positions.

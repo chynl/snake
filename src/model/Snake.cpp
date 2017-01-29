@@ -30,17 +30,17 @@ bool Snake::isDead() const {
 }
 
 void Snake::testMinPath(const Pos &from, const Pos &to, std::list<Direction> &path) {
-    map->enableTest();
+    map->setTestEnabled(true);
     findMinPath(from, to, path);
 }
 
 void Snake::testMaxPath(const Pos &from, const Pos &to, std::list<Direction> &path) {
-    map->enableTest();
+    map->setTestEnabled(true);
     findMaxPath(from, to, path);
 }
 
 void Snake::testHamilton() {
-    map->enableTest();
+    map->setTestEnabled(true);
     enableHamilton();
     SizeType row = map->getRowCount(), col = map->getColCount();
     for (SizeType i = 1; i < row - 1; ++i) {
@@ -271,46 +271,108 @@ void Snake::findMinPath(const Pos &from, const Pos &to, list<Direction> &path) {
 }
 
 void Snake::findMaxPath(const Pos &from, const Pos &to, list<Direction> &path) {
+    // Get the shortest path first
+    bool oriEnabled = map->isTestEnabled();
+    map->setTestEnabled(false);
+    findMinPath(from, to, path);
+    map->setTestEnabled(oriEnabled);
     // Init
     SizeType row = map->getRowCount(), col = map->getColCount();
     for (SizeType i = 1; i < row - 1; ++i) {
         for (SizeType j = 1; j < col - 1; ++j) {
-            Point &point = map->getPoint(Pos(i, j));
+            Pos pos = Pos(i, j);
+            Point &point = map->getPoint(pos);
             point.setVisit(false);
-            point.setValue((Point::ValueType)map->distance(Pos(i, j), to));
+            point.setValue(pos == from || pos == to ? 77 : 0);  // Point value just for debugging
         }
     }
-    path.clear();
-    // DFS
-    findMax(from, from, to, path);
-    map->showPath(from, path);
-}
-
-void Snake::findMax(const Pos &curPos,
-                    const Pos &from,
-                    const Pos &to,
-                    list<Direction> &path) {
-    if (!path.empty()) {  // A solution is found
-        return;
+    // Make all points on the path visited
+    Pos cur = from;
+    for (const Direction d : path) {
+        map->getPoint(cur).setVisit(true);
+        cur = cur.getAdj(d);
     }
-    map->getPoint(curPos).setVisit(true);
-    map->showPos(curPos);
-    if (curPos == to) {
-        buildPath(from, to, path);
-    } else {
-        vector<Pos> adjPositions = curPos.getAllAdj();
-        Random<>::getInstance()->shuffle(adjPositions.begin(), adjPositions.end());
-        std::sort(adjPositions.begin(), adjPositions.end(), [&](const Pos &a, const Pos &b) {
-            return map->getPoint(a).getValue() > map->getPoint(b).getValue();
-        });
-        for (const Pos &adjPos : adjPositions) {
-            Point &adjPoint = map->getPoint(adjPos);
-            if (map->isEmpty(adjPos) && !adjPoint.isVisit()) {
-                adjPoint.setParent(curPos);
-                findMax(adjPos, from, to, path);
+    map->getPoint(cur).setVisit(true);
+    // Extend the path between each pair of the points
+    for (auto it = path.begin(); it != path.end();) {
+        if (it == path.begin()) {
+            cur = from;
+        }
+        bool extended = false;
+        Direction curDirec = *it;
+        Pos next = cur.getAdj(curDirec);
+        switch (curDirec) {
+            case LEFT:
+            case RIGHT: {
+                Pos curUp = cur.getAdj(UP);
+                Pos nextUp = next.getAdj(UP);
+                // Check two points above
+                if (map->isEmptyNotVisit(curUp) && map->isEmptyNotVisit(nextUp)) {
+                    map->getPoint(curUp).setVisit(true);
+                    map->getPoint(nextUp).setVisit(true);
+                    it = path.erase(it);
+                    it = path.insert(it, DOWN);
+                    it = path.insert(it, curDirec);
+                    it = path.insert(it, UP);
+                    it = path.begin();
+                    extended = true;
+                } else {
+                    Pos curDown = cur.getAdj(DOWN);
+                    Pos nextDown = next.getAdj(DOWN);
+                    // Check two points below
+                    if (map->isEmptyNotVisit(curDown) && map->isEmptyNotVisit(nextDown)) {
+                        map->getPoint(curDown).setVisit(true);
+                        map->getPoint(nextDown).setVisit(true);
+                        it = path.erase(it);
+                        it = path.insert(it, UP);
+                        it = path.insert(it, curDirec);
+                        it = path.insert(it, DOWN);
+                        it = path.begin();
+                        extended = true;
+                    }
+                }
+                break;
             }
+            case UP:
+            case DOWN: {
+                Pos curLeft = cur.getAdj(LEFT);
+                Pos nextLeft = next.getAdj(LEFT);
+                // Check two points on the left
+                if (map->isEmptyNotVisit(curLeft) && map->isEmptyNotVisit(nextLeft)) {
+                    map->getPoint(curLeft).setVisit(true);
+                    map->getPoint(nextLeft).setVisit(true);
+                    it = path.erase(it);
+                    it = path.insert(it, RIGHT);
+                    it = path.insert(it, curDirec);
+                    it = path.insert(it, LEFT);
+                    it = path.begin();
+                    extended = true;
+                } else {
+                    Pos curRight = cur.getAdj(RIGHT);
+                    Pos nextRight = next.getAdj(RIGHT);
+                    // Check two points on the right
+                    if (map->isEmptyNotVisit(curRight) && map->isEmptyNotVisit(nextRight)) {
+                        map->getPoint(curRight).setVisit(true);
+                        map->getPoint(nextRight).setVisit(true);
+                        it = path.erase(it);
+                        it = path.insert(it, LEFT);
+                        it = path.insert(it, curDirec);
+                        it = path.insert(it, RIGHT);
+                        it = path.begin();
+                        extended = true;
+                    }
+                }
+                break;
+            }
+            default:
+                break;
+        }
+        if (!extended) {
+            ++it;
+            cur = next;
         }
     }
+    map->showPath(from, path);
 }
 
 void Snake::buildPath(const Pos &from, const Pos &to, list<Direction> &path) const {

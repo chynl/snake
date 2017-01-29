@@ -26,17 +26,17 @@ public:
     SizeType getSize() const;
 
     /*
-    Enable testing methods.
+    Testing control.
     */
-    void enableTest();
+    void setTestEnabled(const bool e);
+    bool isTestEnabled() const;
 
     /*
     Check the state of the map.
     */
     bool isInside(const Pos &p) const;
-    bool isHead(const Pos &p) const;
-    bool isTail(const Pos &p) const;
     bool isEmpty(const Pos &p) const;
+    bool isEmptyNotVisit(const Pos &p) const;
     bool isSafe(const Pos &p) const;
     bool isAllBody() const;
 
@@ -72,7 +72,7 @@ public:
     void showPath(const Pos &start, const std::list<Direction> &path);
 
 private:
-    static const long TEST_INTERVAL = 10;
+    static const long TEST_INTERVAL = 20;
 
     std::vector<std::vector<Point>> content;
     SizeType size;
