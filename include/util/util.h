@@ -38,6 +38,18 @@ void swap(T &a, T &b) {
 }
 
 /*
+Return the distance of a given index relative to the origin index in an integer cycle.
+
+@param ori  The origin index
+@param x    The given index
+@param size The size of the integer cycle
+*/
+template<typename SizeType>
+SizeType getDistance(const SizeType ori, const SizeType x, const SizeType size) {
+    return ori < x ? x - ori : (x + size) - ori;
+}
+
+/*
 Random number generator.
 */
 template<typename RandEngine = std::default_random_engine>

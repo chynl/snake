@@ -65,7 +65,6 @@ private:
 
     std::thread drawThread;      // Thread to draw the map
     std::thread keyboardThread;  // Thread to receive keyboard instructions
-    std::thread foodThread;      // Thread to create food
     std::thread moveThread;      // Thread to move the snake
 
     std::mutex mutexMove;  // Mutex of moveSnake()
@@ -98,7 +97,7 @@ private:
     /*
     Move the snake and check if the game is over.
     */
-    void moveSnake(Snake &s);
+    void moveSnake();
 
     /*
     Write the map content to file.
@@ -130,11 +129,6 @@ private:
     */
     void keyboard();
     void keyboardMove(Snake &s, const Direction d);
-
-    /*
-    Food thread.
-    */
-    void createFood();
 
     /*
     Move thread

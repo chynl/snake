@@ -30,26 +30,20 @@ public:
     void setType(Type type_);
     void setParent(const Pos &p_);
     void setVisit(const bool v);
-    void setValue(const ValueType dist_);
+    void setDist(const ValueType dist_);
+    void setIndex(const ValueType index_);
     Type getType() const;
     Pos getParent() const;
     bool isVisit() const;
-    ValueType getValue() const;
+    ValueType getDist() const;
+    ValueType getIndex() const;
 
 private:
     Type type = EMPTY;
     Pos parent;
     bool visit;
-
-    /*
-    This field has different usages:
-    1. When searching the shortest path, it stores the minimum distance
-       to the starting point.
-    2. When searching the longest path, it stores the estimated distance
-       to the destination.
-    3. When building a hamiltonian cycle, it stores the cycle's path index.
-    */
-    ValueType val;
+    ValueType dist;
+    ValueType index;
 };
 
 #endif

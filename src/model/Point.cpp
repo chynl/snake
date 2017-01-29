@@ -20,8 +20,12 @@ void Point::setVisit(const bool v) {
     visit = v;
 }
 
-void Point::setValue(const ValueType dist_) {
-    val = dist_;
+void Point::setDist(const ValueType dist_) {
+    dist = dist_;
+}
+
+void Point::setIndex(const ValueType index_) {
+    index = index_;
 }
 
 Pos Point::getParent() const {
@@ -32,6 +36,10 @@ bool Point::isVisit() const {
     return visit;
 }
 
-Point::ValueType Point::getValue() const {
-    return val;
+Point::ValueType Point::getDist() const {
+    return dist;
+}
+
+Point::ValueType Point::getIndex() const {
+    return index;
 }
