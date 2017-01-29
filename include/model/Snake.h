@@ -120,7 +120,6 @@ private:
     A recursive method called in findMaxPath().
     */
     void findMax(const Pos &curPos,
-                 const Direction curDirec,
                  const Pos &from,
                  const Pos &to,
                  std::list<Direction> &path);
