@@ -84,7 +84,6 @@ private:
     @param path The result path will be stored in this field.
     */
     void findMinPathToFood(std::list<Direction> &path);
-    void findMinPathToTail(std::list<Direction> &path);
     void findMaxPathToTail(std::list<Direction> &path);
 
     /*
@@ -97,8 +96,7 @@ private:
     void findPathTo(const int type, const Pos &to, std::list<Direction> &path);
 
     /*
-    Find a shortest path as straight as possible between two positions.
-    Notice that only EMPTY points are searched by the algorithm.
+    Find the shortest path as straight as possible between two positions.
 
     @param from The starting position
     @param to   The ending position
@@ -107,23 +105,13 @@ private:
     void findMinPath(const Pos &from, const Pos &to, std::list<Direction> &path);
 
     /*
-    Find a longest path as straight as possible between two positions.
-    Notice that only EMPTY points are searched by the algorithm.
+    Find the longest path between two positions.
 
     @param from The starting position
     @param to   The ending position
     @param path The result will be stored in this field
     */
     void findMaxPath(const Pos &from, const Pos &to, std::list<Direction> &path);
-
-    /*
-    A recursive method called in findMaxPath().
-    */
-    void findMax(const Pos &curPos,
-                 const Direction curDirec,
-                 const Pos &from,
-                 const Pos &to,
-                 std::list<Direction> &path);
 
     /*
     Build a path between two positions.
@@ -137,13 +125,8 @@ private:
     /*
     Build a hamiltonian cycle on the map.
     The path index will be stored in the 'value' field of each Point.
-
-    @param curPos   The current processing position
-    @param goal     The ending position of the hamiltonian cycle
-    @param visitCnt The amount of positions that has been visited
-    @return         True if a hamilonian cycle is built.
     */
-    bool buildHamilton(const Pos &curPos, const Pos &goal, const SizeType visitCnt);
+    void buildHamilton();
 };
 
 #endif

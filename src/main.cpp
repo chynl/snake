@@ -9,8 +9,8 @@ int main() {
     // Set whether to enable the snake AI. Default is true.
     game->setEnableAI(true);
 
-    // Set whether to use a hamiltonian cycle to guide the AI. Default is false.
-    game->setEnableHamilton(false);
+    // Set whether to use a hamiltonian cycle to guide the AI. Default is true.
+    game->setEnableHamilton(true);
 
     // Set the interval time between each snake's movement. Default is 30 ms.
     // To play classic snake game, set to 150 ms is perfect.

@@ -44,8 +44,12 @@ Map::SizeType Map::getSize() const {
     return size;
 }
 
-void Map::enableTest() {
-    testEnabled = true;
+void Map::setTestEnabled(const bool e) {
+    testEnabled = e;
+}
+
+bool Map::isTestEnabled() const {
+    return testEnabled;
 }
 
 bool Map::isInside(const Pos &p) const {
@@ -54,28 +58,25 @@ bool Map::isInside(const Pos &p) const {
         && p.getY() < getColCount() - 1;
 }
 
-bool Map::isHead(const Pos &p) const {
-    return isInside(p) && content[p.getX()][p.getY()].getType() == Point::Type::SNAKE_HEAD;
-}
-
-bool Map::isTail(const Pos &p) const {
-    return isInside(p) && content[p.getX()][p.getY()].getType() == Point::Type::SNAKE_TAIL;
-}
-
 bool Map::isEmpty(const Pos &p) const {
-    return isInside(p) && content[p.getX()][p.getY()].getType() == Point::Type::EMPTY;
+    return isInside(p) && getPoint(p).getType() == Point::Type::EMPTY;
+}
+
+bool Map::isEmptyNotVisit(const Pos &p) const {
+    return isEmpty(p) && !getPoint(p).isVisit();
 }
 
 bool Map::isSafe(const Pos &p) const {
-    return isInside(p) && (getPoint(p).getType() == Point::Type::EMPTY
-        || getPoint(p).getType() == Point::Type::FOOD);
+    const Point &point = getPoint(p);
+    return isInside(p) && (point.getType() == Point::Type::EMPTY 
+                           || point.getType() == Point::Type::FOOD);
 }
 
 bool Map::isAllBody() const {
     SizeType row = getRowCount(), col = getColCount();
     for (SizeType i = 1; i < row - 1; ++i) {
         for (SizeType j = 1; j < col - 1; ++j) {
-            auto type = content[i][j].getType();
+            Point::Type type = content[i][j].getType();
             if (!(type == Point::Type::SNAKE_HEAD
                 || type == Point::Type::SNAKE_BODY
                 || type == Point::Type::SNAKE_TAIL)) {
@@ -124,7 +125,7 @@ Map::SizeType Map::distance(const Pos &from, const Pos &to) {
 
 void Map::testPos(const Pos &p, const Point::Type type) {
     getPoint(p).setType(type);
-    util::sleep(10);
+    util::sleep(TEST_INTERVAL);
 }
 
 void Map::showPos(const Pos &p) {

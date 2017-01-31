@@ -13,6 +13,8 @@ class GameCtrl {
 public:
     typedef Map::SizeType SizeType;
 
+    static const Point::ValueType EMPTY_VALUE = 99999;
+
     ~GameCtrl();
 
     /*
@@ -48,7 +50,7 @@ private:
 
     double fps = 60.0;
     bool enableAI = true;
-    bool enableHamilton = false;
+    bool enableHamilton = true;
     long moveInterval = 30;
     bool recordMovements = true;
     bool runTest = false;
@@ -65,7 +67,6 @@ private:
 
     std::thread drawThread;      // Thread to draw the map
     std::thread keyboardThread;  // Thread to receive keyboard instructions
-    std::thread foodThread;      // Thread to create food
     std::thread moveThread;      // Thread to move the snake
 
     std::mutex mutexMove;  // Mutex of moveSnake()
@@ -98,7 +99,7 @@ private:
     /*
     Move the snake and check if the game is over.
     */
-    void moveSnake(Snake &s);
+    void moveSnake();
 
     /*
     Write the map content to file.
@@ -130,11 +131,6 @@ private:
     */
     void keyboard();
     void keyboardMove(Snake &s, const Direction d);
-
-    /*
-    Food thread.
-    */
-    void createFood();
 
     /*
     Move thread

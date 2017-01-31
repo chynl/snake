@@ -104,19 +104,22 @@ void GameCtrl::printMsg(const std::string &msg) {
     Console::writeWithColor(msg + "\n", ConsoleColor(WHITE, BLACK, true, false));
 }
 
-void GameCtrl::moveSnake(Snake &s) {
+void GameCtrl::moveSnake() {
     mutexMove.lock();
     if (map->isAllBody()) {
         mutexMove.unlock();
         exitGame(MSG_WIN);
-    } else if (s.isDead()) {
+    } else if (snake.isDead()) {
         mutexMove.unlock();
         exitGame(MSG_LOSE);
     } else {
         try {
-            s.move();
-            if (recordMovements && s.getDirection() != NONE) {
+            snake.move();
+            if (recordMovements && snake.getDirection() != NONE) {
                 writeMapToFile();
+            }
+            if (!map->hasFood()) {
+                map->createRandFood();
             }
             mutexMove.unlock();
         } catch (const std::exception) {
@@ -211,8 +214,6 @@ void GameCtrl::startThreads() {
     keyboardThread = std::thread(&GameCtrl::keyboard, this);
     keyboardThread.detach();
     if (!runTest) {
-        foodThread = std::thread(&GameCtrl::createFood, this);
-        foodThread.detach();
         moveThread = std::thread(&GameCtrl::autoMove, this);
         moveThread.detach();
     }
@@ -270,12 +271,14 @@ void GameCtrl::drawMapContent() const {
 
 void GameCtrl::drawTestPoint(const Point &p, const ConsoleColor &consoleColor) const {
     string pointStr = "";
-    if (p.getValue() == Point::MAX_VALUE) {
+    if (p.getDist() == Point::MAX_VALUE) {
         pointStr = "In";
+    } else if (p.getDist() == EMPTY_VALUE) {
+        pointStr = "  ";
     } else {
-        Point::ValueType val = p.getValue();
-        pointStr = util::toString(p.getValue());
-        if (val / 10 == 0) {
+        Point::ValueType dist = p.getDist();
+        pointStr = util::toString(p.getDist());
+        if (dist / 10 == 0) {
             pointStr.insert(0, " ");
         } 
     }
@@ -319,26 +322,13 @@ void GameCtrl::keyboard() {
 void GameCtrl::keyboardMove(Snake &s, const Direction d) {
     if (pause) {
         s.setDirection(d);
-        moveSnake(s);
+        moveSnake();
     } else if (!enableAI) {
         if (s.getDirection() == d) {
-            moveSnake(s);  // Accelerate
+            moveSnake();  // Accelerate
         } else {
             s.setDirection(d);
         }
-    }
-}
-
-void GameCtrl::createFood() {
-    try {
-        while (runSubThread) {
-            if (!map->hasFood()) {
-                map->createRandFood();
-            }
-            sleepFPS();
-        }
-    } catch (const std::exception &e) {
-        exitGameErr(e.what());
     }
 }
 
@@ -350,7 +340,7 @@ void GameCtrl::autoMove() {
                 if (enableAI) {
                     snake.decideNext();
                 }
-                moveSnake(snake);
+                moveSnake();
             }
         }
     } catch (const std::exception &e) {
