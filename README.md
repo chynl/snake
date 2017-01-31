@@ -87,17 +87,7 @@ This is a widespread picture of a perfect snake:
 
 From the picture we can figure out that in order to fill the map with the snake's body, the whole body must form a hamiltonian cycle when the game ends. To ensure a hamiltonian cycle exists, the map must have **even(not odd)** amount of rows or columns.
 
-There are two versions of AI algorithm to guide the snake, the first one is [based on graph search](#ai-based-on-graph-search) and the other is [based on the hamiltonian cycle](#ai-based-on-the-hamiltonian-cycle). Both of them are implemented in [Snake.decideNext()](./src/model/Snake.cpp#L115).
-
-#### AI based on graph search
-
-To find the snake(**S1**)'s next moving direction(**D**), the AI follows the steps below:
-
-1. Compute the shortest path **P1** from snake **S1**'s head to the food. If **P1** exists, go to step 2. Otherwise go to step 4.
-2. Direct a virtual snake, **S2**(the same as **S1**), to eat the food along path **P1**.
-3. Compute the longest path **P2** from snake **S2**'s head to its tail. If **P2** exists, let **D** be the first direction in path **P1**. Otherwise go to step 4.
-4. Compute the longest path **P3** from snake **S1**'s head to its tail. If **P3** exists, let **D** be the first direction in path **P3**. Otherwise go to step 5.
-5. Let **D** be the direction that makes the snake the farthest from the food.
+There are two versions of the AI algorithm to guide the snake, the first one is [based on the hamiltonian cycle](#ai-based-on-the-hamiltonian-cycle) and the other is [based on graph search](#ai-based-on-graph-search). Both of them are implemented in [Snake.decideNext()](./src/model/Snake.cpp#L115).
 
 #### AI based on the hamiltonian cycle
 
@@ -120,6 +110,16 @@ To construct the cycle above, we fix the point 0, 1 and 2 first since they are t
 Sometimes the snake can eat the food directly(take shortcuts) instead of following the hamiltonian cycle. The image below explains this idea briefly. For more details, please refer to [this article](https://johnflux.com/2015/05/02/nokia-6110-part-3-algorithms/).
 
 ![](./img/take_shortcuts.png)
+
+#### AI based on graph search
+
+To find the snake(**S1**)'s next moving direction(**D**), the AI follows the steps below:
+
+1. Compute the shortest path **P1** from snake **S1**'s head to the food. If **P1** exists, go to step 2. Otherwise go to step 4.
+2. Direct a virtual snake, **S2**(the same as **S1**), to eat the food along path **P1**.
+3. Compute the longest path **P2** from snake **S2**'s head to its tail. If **P2** exists, let **D** be the first direction in path **P1**. Otherwise go to step 4.
+4. Compute the longest path **P3** from snake **S1**'s head to its tail. If **P3** exists, let **D** be the first direction in path **P3**. Otherwise go to step 5.
+5. Let **D** be the direction that makes the snake the farthest from the food.
 
 ## License
 
