@@ -2,6 +2,8 @@
 
 This project focuses on the AI algorithm of the snake game. The AI's goal is to direct the snake to eat the food and fill the map with its body as quickly as possible, so it **should not** just follow a fixed pattern(e.g., zigzagging).
 
+There are some pertinent discussions [here](https://www.reddit.com/r/programming/comments/5ly972/ai_algorithm_of_snake_game_share_opinions_if_you/).
+
 ## Build Status
 
 | Linux | Windows |
