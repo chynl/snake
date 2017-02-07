@@ -44,7 +44,7 @@ public:
     void move(const std::list<Direction> &path);
 
     /*
-    Enable the snake AI based on the hamiltonian cycle.
+    Enable the snake AI based on the Hamiltonian cycle.
     */
     void enableHamilton();
 
@@ -123,7 +123,7 @@ private:
     void buildPath(const Pos &from, const Pos &to, std::list<Direction> &path) const;
 
     /*
-    Build a hamiltonian cycle on the map.
+    Build a Hamiltonian cycle on the map.
     The path index will be stored in the 'value' field of each Point.
     */
     void buildHamilton();

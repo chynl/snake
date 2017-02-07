@@ -120,7 +120,7 @@ void Snake::decideNext() {
         return;
     }
 
-    if (hamiltonEnabled) {  // AI based on the hamiltonian cycle
+    if (hamiltonEnabled) {  // AI based on the Hamiltonian cycle
 
         SizeType size = map->getSize();
         Pos head = getHead(), tail = getTail();
