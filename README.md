@@ -22,21 +22,21 @@ There are some pertinent discussions [here](https://www.reddit.com/r/programming
 
 ## Installation
 
-1. Install [CMake](https://cmake.org/download/).
+1. Build with CMake:
 
-2. Generate build files using the commands below:
-
-    ```bash
+    ```
     $ mkdir build
     $ cd build
     $ cmake ..
     ```
 
-3. Build files will be generated in the `build` directory based on your operating system. Use them to build this project:
+2. Continue to build with GNU Make on Linux:
 
-    | Linux | OS X | Windows |
-    |:-----:|:----:|:-------:|
-    |Makefile|Makefile|Visual Studio Project|
+    ```
+    $ make
+    ```
+
+    Note that on other platforms like Windows or OS X, CMake may generate a Visual Studio or Xcode project instead of a Makefile. You can [customize your CMake Generators](https://cmake.org/cmake/help/v3.0/manual/cmake-generators.7.html).
 
 ## Keyboard Controls
 
