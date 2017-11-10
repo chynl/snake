@@ -5,46 +5,48 @@ language: cpp
 os:
   - linux
 
-matrix:
-  include:
-    # gcc
-    - env: BUILD_TYPE=Debug
-      compiler: gcc
-    - env: BUILD_TYPE=Release
-      compiler: gcc
-    # clang
-    - env: BUILD_TYPE=Debug
-      compiler: clang
-    - env: BUILD_TYPE=Release
-      compiler: clang
-
 branches:
   only:
     - master
     - /^(dev)|(dev_.*)$/
 
-addons:
-  apt:
-    sources:
-      - ubuntu-toolchain-r-test
-      - llvm-toolchain-precise-3.7
-    packages:
-      - gcc-4.9
-      - g++-4.9
-      - clang-3.7
+env:
+  global:
+    - ARCH_FLAG_x86='-m32'
+    - ARCH_FLAG_x86_64='-m64'
+
+matrix:
+  include:
+    # gcc
+    - env: BUILD_TYPE=Debug ARCH='x86'
+      compiler: gcc
+    - env: BUILD_TYPE=Release ARCH='x86'
+      compiler: gcc
+    - env: BUILD_TYPE=Debug ARCH='x86_64'
+      compiler: gcc
+    - env: BUILD_TYPE=Release ARCH='x86_64'
+      compiler: gcc
+    # clang
+    - env: BUILD_TYPE=Debug ARCH='x86'
+      compiler: clang
+    - env: BUILD_TYPE=Release ARCH='x86'
+      compiler: clang
+    - env: BUILD_TYPE=Debug ARCH='x86_64'
+      compiler: clang
+    - env: BUILD_TYPE=Release ARCH='x86_64'
+      compiler: clang
 
 before_install:
-  - if [ "$CXX" = "g++" ]; then export CXX="g++-4.9" CC="gcc-4.9"; fi
-  - if [ "$CXX" = "clang++" ] && [ "$TRAVIS_OS_NAME" = "linux" ]; then export CXX="clang++-3.7" CC="clang-3.7"; fi
-  - echo ${PATH}
-  - echo ${CXX}
-  - ${CXX} --version
+  - sudo apt-add-repository -y ppa:ubuntu-toolchain-r/test
+  - sudo apt-get update -qq
+  - sudo apt-get install -y g++-multilib
   - ${CXX} -v
 
 before_script:
   - mkdir build && cd build
+  - eval "ARCH_FLAG=\${ARCH_FLAG_${ARCH}}"
   - cmake
-    -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+    -DCMAKE_BUILD_TYPE=${BUILD_TYPE}
     -DCMAKE_VERBOSE_MAKEFILE=ON
     ..
 
