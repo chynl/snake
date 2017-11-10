@@ -1,4 +1,4 @@
-#include "GameCtrl.h"
+#include "gamectrl.h"
 
 int main() {
     auto game = GameCtrl::getInstance();

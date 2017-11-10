@@ -1,7 +1,7 @@
 #ifndef SNAKE_POINT_H_
 #define SNAKE_POINT_H_
 
-#include "model/Pos.h"
+#include "base/pos.h"
 #include <cstdint>
 
 /*

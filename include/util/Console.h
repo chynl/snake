@@ -1,13 +1,15 @@
-#ifndef SNAKE_CONSOLE_H_
-#define SNAKE_CONSOLE_H_
+#ifndef _CONSOLE_H_
+#define _CONSOLE_H_
 
 #include <string>
+
 #if defined(WIN32) || defined(_WIN32)
 #include <Windows.h>
-#endif
+#define TERM_WIN
+#endif 
 
 #if defined(__linux__) || defined(__APPLE__)
-#define LINUX_OR_APPLE
+#define TERM_UNIX
 #endif
 
 enum ConsoleColorType {
@@ -76,7 +78,7 @@ public:
     static int kbhit();
 
 private:
-#ifdef WIN32
+#ifdef TERM_WIN
     /*
     Set console output color. Only available in windows platform.
 

@@ -1,4 +1,4 @@
-#include "model/Pos.h"
+#include "base/pos.h"
 #include "util/util.h"
 
 Pos::Pos(const SizeType x_, const SizeType y_) : x(x_), y(y_) {}

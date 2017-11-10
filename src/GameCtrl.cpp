@@ -1,4 +1,4 @@
-#include "GameCtrl.h"
+#include "gamectrl.h"
 #include "util/util.h"
 #include <stdexcept>
 #include <cstdio>

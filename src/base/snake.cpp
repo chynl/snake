@@ -1,6 +1,6 @@
-#include "model/Snake.h"
+#include "base/snake.h"
 #include "util/util.h"
-#include "GameCtrl.h"
+#include "gamectrl.h"
 #include <queue>
 #include <algorithm>
 #include <stdexcept>

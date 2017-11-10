@@ -1,8 +1,8 @@
 #ifndef SNAKE_GAMECTRL_H_
 #define SNAKE_GAMECTRL_H_
 
-#include "model/Snake.h"
-#include "util/Console.h"
+#include "base/snake.h"
+#include "util/console.h"
 #include <thread>
 #include <mutex>
 

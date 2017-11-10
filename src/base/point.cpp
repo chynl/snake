@@ -1,4 +1,4 @@
-#include "model/Point.h"
+#include "base/point.h"
 
 Point::Point() {}
 

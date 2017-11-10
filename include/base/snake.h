@@ -1,7 +1,7 @@
 #ifndef SNAKE_SNAKE_H_
 #define SNAKE_SNAKE_H_
 
-#include "model/Map.h"
+#include "base/map.h"
 
 /*
 Game snake.

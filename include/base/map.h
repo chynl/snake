@@ -1,7 +1,7 @@
 #ifndef SNAKE_MAP_H_
 #define SNAKE_MAP_H_
 
-#include "model/Point.h"
+#include "base/point.h"
 #include <list>
 
 /*
