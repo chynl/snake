@@ -1,5 +1,5 @@
-#ifndef SNAKE_UTIL_H_
-#define SNAKE_UTIL_H_
+#ifndef SNAKE_UTIL_H
+#define SNAKE_UTIL_H
 
 #include <sstream>
 #include <string>

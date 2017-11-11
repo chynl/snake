@@ -2,11 +2,11 @@
 #include <cstdio>
 #include <cstdlib>
 
-#ifdef TERM_UNIX
+#ifdef OS_UNIX
 #include <termios.h>
 #include <unistd.h>
 #include <fcntl.h>
-#elif defined(TERM_WIN) 
+#elif defined(OS_WIN) 
 #include <conio.h>
 #endif
 
@@ -18,9 +18,9 @@ ConsoleColor::ConsoleColor(const ConsoleColorType foreColor_,
     foreIntensified(foreIntensified_), backIntensified(backIntensified_) {}
 
 void Console::setCursor(const int x, const int y) {
-#ifdef TERM_UNIX
+#ifdef OS_UNIX
     printf("\033[%d;%dH", y + 1, x);  // Param: row and col
-#elif defined(TERM_WIN)
+#elif defined(OS_WIN)
     HANDLE hout = GetStdHandle(STD_OUTPUT_HANDLE);
     COORD coord;
     coord.X = x;
@@ -32,9 +32,9 @@ void Console::setCursor(const int x, const int y) {
 }
 
 void Console::clear() {
-#ifdef TERM_UNIX
+#ifdef OS_UNIX
     if (system("clear")) {}
-#elif defined(TERM_WIN)
+#elif defined(OS_WIN)
     if (system("cls")) {}
 #else
     // Other platforms
@@ -46,7 +46,7 @@ void Console::write(const std::string &str) {
 }
 
 void Console::writeWithColor(const std::string &str, const ConsoleColor &consoleColor) {
-#ifdef TERM_UNIX
+#ifdef OS_UNIX
     int fore = -1, back = -1;
     switch (consoleColor.backColor) {
         case WHITE:
@@ -91,7 +91,7 @@ void Console::writeWithColor(const std::string &str, const ConsoleColor &console
     if (fore != -1 && back != -1) {
         printf("\033[%d;%dm%s\033[0m", fore, back, str.c_str());
     }
-#elif defined(TERM_WIN)
+#elif defined(OS_WIN)
     WORD originAttr = setColor(consoleColor);
     printf("%s", str.c_str());
     resetColor(originAttr);  // Reset to origin output color
@@ -101,7 +101,7 @@ void Console::writeWithColor(const std::string &str, const ConsoleColor &console
 }
 
 char Console::getch() {
-#ifdef TERM_UNIX
+#ifdef OS_UNIX
     struct termios oldattr, newattr;
     int ch;
     tcgetattr(STDIN_FILENO, &oldattr);
@@ -111,7 +111,7 @@ char Console::getch() {
     ch = getchar();
     tcsetattr(STDIN_FILENO, TCSANOW, &oldattr);
     return ch;
-#elif defined(TERM_WIN)
+#elif defined(OS_WIN)
     return _getch();
 #else
     // Other platforms
@@ -119,7 +119,7 @@ char Console::getch() {
 }
 
 int Console::kbhit() {
-#ifdef TERM_UNIX
+#ifdef OS_UNIX
     struct termios oldt, newt;
     int ch;
     int oldf;
@@ -142,14 +142,14 @@ int Console::kbhit() {
     }
 
     return 0;
-#elif defined(TERM_WIN)
+#elif defined(OS_WIN)
     return _kbhit();
 #else
     // Other platforms
 #endif
 }
 
-#ifdef TERM_WIN
+#ifdef OS_WIN
 
 WORD Console::setColor(const ConsoleColor &consoleColor) {
     WORD color = 0;

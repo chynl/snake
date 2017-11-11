@@ -123,25 +123,25 @@ Map::SizeType Map::distance(const Pos &from, const Pos &to) {
     return dx + dy;
 }
 
-void Map::testPos(const Pos &p, const Point::Type type) {
+void Map::setPointTypeWithDelay(const Pos &p, const Point::Type type) {
     getPoint(p).setType(type);
-    util::sleep(TEST_INTERVAL);
+    util::sleep(20);
 }
 
-void Map::showPos(const Pos &p) {
+void Map::showTestPos(const Pos &p) {
     if (testEnabled) {
-        testPos(p, Point::Type::TEST_VISIT);
+        setPointTypeWithDelay(p, Point::Type::TEST_VISIT);
     }
 }
 
-void Map::showPath(const Pos &start, const list<Direction> &path) {
+void Map::showTestPath(const Pos &start, const list<Direction> &path) {
     if (testEnabled) {
         Pos tmp = start;
         for (const Direction &d : path) {
-            testPos(tmp, Point::Type::TEST_PATH);
+            setPointTypeWithDelay(tmp, Point::Type::TEST_PATH);
             tmp = tmp.getAdj(d);
         }
-        testPos(tmp, Point::Type::TEST_PATH);
+        setPointTypeWithDelay(tmp, Point::Type::TEST_PATH);
     }
 }
 

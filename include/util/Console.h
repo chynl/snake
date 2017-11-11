@@ -1,15 +1,15 @@
-#ifndef _CONSOLE_H_
-#define _CONSOLE_H_
+#ifndef CONSOLE_H
+#define CONSOLE_H
 
 #include <string>
 
 #if defined(WIN32) || defined(_WIN32)
 #include <Windows.h>
-#define TERM_WIN
+#define OS_WIN
 #endif 
 
 #if defined(__linux__) || defined(__APPLE__)
-#define TERM_UNIX
+#define OS_UNIX
 #endif
 
 enum ConsoleColorType {
@@ -78,7 +78,7 @@ public:
     static int kbhit();
 
 private:
-#ifdef TERM_WIN
+#ifdef OS_WIN
     /*
     Set console output color. Only available in windows platform.
 

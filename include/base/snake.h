@@ -1,5 +1,5 @@
-#ifndef SNAKE_SNAKE_H_
-#define SNAKE_SNAKE_H_
+#ifndef SNAKE_SNAKE_H
+#define SNAKE_SNAKE_H
 
 #include "base/map.h"
 
@@ -10,27 +10,17 @@ class Snake {
 public:
     typedef Map::SizeType SizeType;
 
+public:
     Snake();
     ~Snake();
 
-    void setDirection(const Direction &d);
-    void setMap(Map *const m);
-    Direction getDirection() const;
     bool isDead() const;
 
-    /*
-    Testing methods.
-    */
-    void testMinPath(const Pos &from, const Pos &to, std::list<Direction> &path);
-    void testMaxPath(const Pos &from, const Pos &to, std::list<Direction> &path);
-    void testHamilton();
+    void setMap(Map *const m);
 
-    /*
-    Add a new snake body.
+    void setDirection(const Direction &d);
+    Direction getDirection() const;
 
-    @param p The position of the new bodies
-    @return  True if adding succeed, false otherwise
-    */
     void addBody(const Pos &p);
 
     /*
@@ -50,39 +40,20 @@ public:
 
     /*
     Decide the next moving direction. After its execution,
-    the next moving direction will be stored in field 'direc'.
+    the next moving direction can be got by calling getDirection().
     */
     void decideNext();
 
+    void testMinPath(const Pos &from, const Pos &to, std::list<Direction> &path);
+    void testMaxPath(const Pos &from, const Pos &to, std::list<Direction> &path);
+    void testHamilton();
+
 private:
-    Map *map = nullptr;
-    std::list<Pos> bodies;
-
-    Direction direc = NONE;
-
-    bool dead = false;
-    bool hamiltonEnabled = false;
-
-    /*
-    Remove the snake tail.
-    */
     void removeTail();
 
-    /*
-    Get the head position.
-    */
     const Pos& getHead() const;
-
-    /*
-    Get the tail position.
-    */
     const Pos& getTail() const;
 
-    /*
-    Find path between two points.
-
-    @param path The result path will be stored in this field.
-    */
     void findMinPathToFood(std::list<Direction> &path);
     void findMaxPathToTail(std::list<Direction> &path);
 
@@ -96,7 +67,7 @@ private:
     void findPathTo(const int type, const Pos &to, std::list<Direction> &path);
 
     /*
-    Find the shortest path as straight as possible between two positions.
+    Find the shortest path AS STRAIGHT AS POSSIBLE between two positions.
 
     @param from The starting position
     @param to   The ending position
@@ -127,6 +98,13 @@ private:
     The path index will be stored in the 'value' field of each Point.
     */
     void buildHamilton();
+
+private:
+    Map *map = nullptr;
+    std::list<Pos> bodies;
+    Direction direc = NONE;
+    bool dead = false;
+    bool hamiltonEnabled = false;
 };
 
 #endif

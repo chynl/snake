@@ -1,5 +1,8 @@
 #include "base/point.h"
 
+const Point::ValueType Point::MAX_VALUE = UINT32_MAX;
+const Point::ValueType Point::EMPTY_DIST = 999999;
+
 Point::Point() {}
 
 Point::~Point() {}
@@ -24,8 +27,8 @@ void Point::setDist(const ValueType dist_) {
     dist = dist_;
 }
 
-void Point::setIndex(const ValueType index_) {
-    index = index_;
+void Point::setIdx(const ValueType index_) {
+    idx = index_;
 }
 
 Pos Point::getParent() const {
@@ -40,6 +43,6 @@ Point::ValueType Point::getDist() const {
     return dist;
 }
 
-Point::ValueType Point::getIndex() const {
-    return index;
+Point::ValueType Point::getIdx() const {
+    return idx;
 }

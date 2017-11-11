@@ -4,7 +4,8 @@
 #include <cstdio>
 #include <chrono>
 #include <cstdlib>
-#ifdef _WIN32
+
+#ifdef OS_WIN
 #include <Windows.h>
 #endif
 
@@ -20,8 +21,10 @@ const string GameCtrl::MAP_INFO_FILENAME = "movements.txt";
 GameCtrl::GameCtrl() {}
 
 GameCtrl::~GameCtrl() {
-    delete map;
-    map = nullptr;
+    if (map) {
+        delete map;
+        map = nullptr;
+    }
     if (movementFile) {
         fclose(movementFile);
         movementFile = nullptr;
@@ -70,8 +73,9 @@ int GameCtrl::run() {
         init();
         if (runTest) {
             test();
+        } else {
+            mainLoop();
         }
-        while (runMainThread) {}
         return 0;
     } catch (const std::exception &e) {
         exitGameErr(e.what());
@@ -96,7 +100,7 @@ void GameCtrl::exitGame(const std::string &msg) {
 }
 
 void GameCtrl::exitGameErr(const std::string &err) {
-    exitGame("ERROR: " + err);
+    exitGame("ERR: " + err);
 }
 
 void GameCtrl::printMsg(const std::string &msg) {
@@ -104,32 +108,42 @@ void GameCtrl::printMsg(const std::string &msg) {
     Console::writeWithColor(msg + "\n", ConsoleColor(WHITE, BLACK, true, false));
 }
 
-void GameCtrl::moveSnake() {
-    mutexMove.lock();
-    if (map->isAllBody()) {
-        mutexMove.unlock();
-        exitGame(MSG_WIN);
-    } else if (snake.isDead()) {
-        mutexMove.unlock();
-        exitGame(MSG_LOSE);
-    } else {
-        try {
-            snake.move();
-            if (recordMovements && snake.getDirection() != NONE) {
-                writeMapToFile();
+void GameCtrl::mainLoop() {
+    while (runMainThread) {
+        if (!pause) {
+            if (enableAI) {
+                snake.decideNext();
             }
-            if (!map->hasFood()) {
-                map->createRandFood();
+            if (map->isAllBody()) {
+                exitGame(MSG_WIN);
+            } else if (snake.isDead()) {
+                exitGame(MSG_LOSE);
+            } else {
+                moveSnake();
             }
-            mutexMove.unlock();
-        } catch (const std::exception) {
-            mutexMove.unlock();
-            throw;
         }
+        util::sleep(moveInterval);
     }
 }
 
-void GameCtrl::writeMapToFile() const {
+void GameCtrl::moveSnake() {
+    mutexMove.lock();
+    try {
+        snake.move();
+        if (recordMovements && snake.getDirection() != NONE) {
+            saveMapContent();
+        }
+        if (!map->hasFood()) {
+            map->createRandFood();
+        }
+        mutexMove.unlock();
+    } catch (const std::exception) {
+        mutexMove.unlock();
+        throw;
+    }
+}
+
+void GameCtrl::saveMapContent() const {
     if (!movementFile) {
         return;
     }
@@ -167,7 +181,7 @@ void GameCtrl::init() {
             initFiles();
         }
     }
-    startThreads();
+    startSubThreads();
 }
 
 void GameCtrl::initMap() {
@@ -207,16 +221,12 @@ void GameCtrl::initFiles() {
     }
 }
 
-void GameCtrl::startThreads() {
+void GameCtrl::startSubThreads() {
     runSubThread = true;
     drawThread = std::thread(&GameCtrl::draw, this);
     drawThread.detach();
     keyboardThread = std::thread(&GameCtrl::keyboard, this);
     keyboardThread.detach();
-    if (!runTest) {
-        moveThread = std::thread(&GameCtrl::autoMove, this);
-        moveThread.detach();
-    }
 }
 
 void GameCtrl::draw() {
@@ -273,7 +283,7 @@ void GameCtrl::drawTestPoint(const Point &p, const ConsoleColor &consoleColor) c
     string pointStr = "";
     if (p.getDist() == Point::MAX_VALUE) {
         pointStr = "In";
-    } else if (p.getDist() == EMPTY_VALUE) {
+    } else if (p.getDist() == Point::EMPTY_DIST) {
         pointStr = "  ";
     } else {
         Point::ValueType dist = p.getDist();
@@ -329,22 +339,6 @@ void GameCtrl::keyboardMove(Snake &s, const Direction d) {
         } else {
             s.setDirection(d);
         }
-    }
-}
-
-void GameCtrl::autoMove() {
-    try {
-        while (runSubThread) {
-            util::sleep(moveInterval);
-            if (!pause) {
-                if (enableAI) {
-                    snake.decideNext();
-                }
-                moveSnake();
-            }
-        }
-    } catch (const std::exception &e) {
-        exitGameErr(e.what());
     }
 }
 

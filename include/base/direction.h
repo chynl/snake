@@ -1,5 +1,5 @@
-#ifndef SNAKE_DIRECTION_H_
-#define SNAKE_DIRECTION_H_
+#ifndef SNAKE_DIRECTION_H
+#define SNAKE_DIRECTION_H
 
 enum Direction {
     NONE,

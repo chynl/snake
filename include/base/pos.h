@@ -1,5 +1,5 @@
-#ifndef SNAKE_POS_H_
-#define SNAKE_POS_H_
+#ifndef SNAKE_POS_H
+#define SNAKE_POS_H
 
 #include "base/direction.h"
 #include <vector>
@@ -13,6 +13,7 @@ class Pos {
 public:
     typedef std::size_t SizeType;
 
+public:
     Pos(const SizeType x_ = 0, const SizeType y_ = 0);
     ~Pos();
 
@@ -38,7 +39,7 @@ public:
 
     /*
     Return the adjacent position at a given direction. If there
-    is no valid position at the given direction, return this position.
+    is no valid position at the given direction, return current position.
 
     @param d The given direction
     */

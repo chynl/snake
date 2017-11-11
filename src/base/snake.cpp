@@ -1,6 +1,5 @@
 #include "base/snake.h"
 #include "util/util.h"
-#include "gamectrl.h"
 #include <queue>
 #include <algorithm>
 #include <stdexcept>
@@ -33,7 +32,7 @@ bool Snake::isDead() const {
 void Snake::testMinPath(const Pos &from, const Pos &to, std::list<Direction> &path) {
     map->setTestEnabled(true);
     findMinPath(from, to, path);
-    map->showPath(from, path);
+    map->showTestPath(from, path);
     map->setTestEnabled(false);
 }
 
@@ -42,12 +41,12 @@ void Snake::testMaxPath(const Pos &from, const Pos &to, std::list<Direction> &pa
     findMaxPath(from, to, path);
     Pos cur = from;
     for (const Direction d : path) {
-        map->getPoint(cur).setDist(GameCtrl::EMPTY_VALUE);
+        map->getPoint(cur).setDist(Point::EMPTY_DIST);
         cur = cur.getAdj(d);
     }
     map->getPoint(from).setDist(0);
     map->getPoint(to).setDist(1);
-    map->showPath(from, path);
+    map->showTestPath(from, path);
     map->setTestEnabled(false);
 }
 
@@ -59,8 +58,8 @@ void Snake::testHamilton() {
         for (SizeType j = 1; j < col - 1; ++j) {
             Pos pos = Pos(i, j);
             Point &point = map->getPoint(pos);
-            point.setDist(point.getIndex());
-            map->showPos(pos);
+            point.setDist(point.getIdx());
+            map->showTestPos(pos);
         }
     }
 }
@@ -124,8 +123,8 @@ void Snake::decideNext() {
 
         SizeType size = map->getSize();
         Pos head = getHead(), tail = getTail();
-        Point::ValueType tailIndex = map->getPoint(tail).getIndex();
-        Point::ValueType headIndex = map->getPoint(head).getIndex();
+        Point::ValueType tailIndex = map->getPoint(tail).getIdx();
+        Point::ValueType headIndex = map->getPoint(head).getIdx();
         // Try to take shortcuts when the snake is not long enough
         if (bodies.size() < size * 3 / 4) {
             list<Direction> minPath;
@@ -133,8 +132,8 @@ void Snake::decideNext() {
             if (!minPath.empty()) {
                 Direction nextDirec = *minPath.begin();
                 Pos nextPos = head.getAdj(nextDirec);
-                Point::ValueType nextIndex = map->getPoint(nextPos).getIndex();
-                Point::ValueType foodIndex = map->getPoint(map->getFood()).getIndex();
+                Point::ValueType nextIndex = map->getPoint(nextPos).getIdx();
+                Point::ValueType foodIndex = map->getPoint(map->getFood()).getIdx();
                 headIndex = util::getDistance(tailIndex, headIndex, (Point::ValueType)size);
                 nextIndex = util::getDistance(tailIndex, nextIndex, (Point::ValueType)size);
                 foodIndex = util::getDistance(tailIndex, foodIndex, (Point::ValueType)size);
@@ -145,11 +144,11 @@ void Snake::decideNext() {
             }
         }
         // Move along the hamitonian cycle
-        headIndex = map->getPoint(head).getIndex();
+        headIndex = map->getPoint(head).getIdx();
         vector<Pos> adjPositions = head.getAllAdj();
         for (const Pos &adjPos : adjPositions) {
             const Point &adjPoint = map->getPoint(adjPos);
-            Point::ValueType adjIndex = adjPoint.getIndex();
+            Point::ValueType adjIndex = adjPoint.getIdx();
             if (adjIndex == (headIndex + 1) % size) {
                 direc = head.getDirectionTo(adjPos);
             }
@@ -255,7 +254,7 @@ void Snake::findMinPath(const Pos &from, const Pos &to, list<Direction> &path) {
         Pos curPos = openList.front();
         const Point &curPoint = map->getPoint(curPos);
         openList.pop();
-        map->showPos(curPos);
+        map->showTestPos(curPos);
         if (curPos == to) {
             buildPath(from, to, path);
             break;
@@ -405,16 +404,16 @@ void Snake::buildHamilton() {
     map->setTestEnabled(oriEnabled);
     bodyPoint.setType(Point::Type::SNAKE_BODY);
     // Initialize the first three incides of the cycle
-    Point::ValueType index = 0;
+    Point::ValueType idx = 0;
     for (auto it = bodies.crbegin(); it != bodies.crend(); ++it) {
-        map->getPoint(*it).setIndex(index++);
+        map->getPoint(*it).setIdx(idx++);
     }
     // Build remaining cycle
     SizeType size = map->getSize();
     Pos cur = getHead();
     for (const Direction d : maxPath) {
         Pos next = cur.getAdj(d);
-        map->getPoint(next).setIndex((map->getPoint(cur).getIndex() + 1) % size);
+        map->getPoint(next).setIdx((map->getPoint(cur).getIdx() + 1) % size);
         cur = next;
     }
 }
