@@ -37,14 +37,12 @@ class Pos(object):
     def __add__(self, other):
         if isinstance(self, other.__class__):
             return Pos(self.__x + other.x, self.__y + other.y)
-        else:
-            raise TypeError("addition requires two Pos object")
+        return NotImplemented
 
     def __sub__(self, other):
         if isinstance(self, other.__class__):
             return self + (-other)
-        else:
-            raise TypeError("subtraction requires two Pos object")
+        return NotImplemented
 
     def __hash__(self):
         return hash((self.x, self.y))
