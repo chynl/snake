@@ -4,7 +4,6 @@
 
 """Definition of class Point."""
 
-import unittest
 from enum import Enum, unique
 
 
@@ -29,16 +28,3 @@ class Point(object):
     @type.setter
     def type(self, val):
         self.__type = val
-
-
-class TestPoint(unittest.TestCase):
-
-    def test_init(self):
-        p = Point()
-        self.assertEqual(p.type, PointType.EMPTY)
-        p.type = PointType.FOOD
-        self.assertEqual(p.type, PointType.FOOD)
-
-
-if __name__ == "__main__":
-    unittest.main()

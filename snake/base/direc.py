@@ -4,7 +4,6 @@
 
 """Definition of enum Direc."""
 
-import unittest
 from enum import Enum, unique
 
 
@@ -30,16 +29,3 @@ class Direc(Enum):
             return direc.UP
         else:
             return direc.NONE
-
-
-class TestDirec(unittest.TestCase):
-
-    def test_opposite(self):
-        self.assertEqual(Direc.opposite(Direc.UP), Direc.DOWN)
-        self.assertEqual(Direc.opposite(Direc.DOWN), Direc.UP)
-        self.assertEqual(Direc.opposite(Direc.LEFT), Direc.RIGHT)
-        self.assertEqual(Direc.opposite(Direc.RIGHT), Direc.LEFT)
-
-
-if __name__ == "__main__":
-    unittest.main()

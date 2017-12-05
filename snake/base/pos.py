@@ -4,8 +4,7 @@
 
 """Definitions of class Pos."""
 
-import unittest
-from direc import Direc
+from snake.base.direc import Direc
 
 
 class Pos(object):
@@ -99,55 +98,3 @@ class Pos(object):
     @y.setter
     def y(self, val):
         self.__y = val
-
-
-class TestPos(unittest.TestCase):
-
-    def test_init(self):
-        p = Pos(-5, 5)
-        self.assertEqual(p, Pos(-5, 5))
-        p.x = -10
-        p.y = 10
-        self.assertNotEqual(p, Pos(-5, 5))
-        self.assertEqual(p, Pos(-10, 10))
-
-    def test_arithmetic(self):
-        p1 = Pos(-5, 10)
-        p2 = Pos(5, -10)
-        p3 = p1 + p2
-        p4 = p1 - p2
-        p5 = p2 - p1
-        self.assertEqual(p3, Pos(0, 0))
-        self.assertEqual(p3 - p1, p2)
-        self.assertEqual(p3 - p2, p1)
-        self.assertEqual(p4, Pos(-10, 20))
-        self.assertEqual(p5, -Pos(-10, 20))
-        self.assertEqual(p4 + p2, p1)
-        self.assertEqual(p5 + p1, p2)
-
-    def test_adj(self):
-        p = Pos(0, 0)
-        adjs = p.all_adj()
-        self.assertEqual(len(adjs), 4)
-        hit = [False] * 4
-        self.assertEqual(hit.count(False), 4)
-        for adj in adjs:
-            if adj == Pos(-1, 0):
-                self.assertEqual(p.direc_to(adj), Direc.UP)
-                hit[0] = True
-            elif adj == Pos(1, 0):
-                self.assertEqual(p.direc_to(adj), Direc.DOWN)
-                hit[1] = True
-            elif adj == Pos(0, 1):
-                self.assertEqual(p.direc_to(adj), Direc.RIGHT)
-                hit[2] = True
-            elif adj == Pos(0, -1):
-                self.assertEqual(p.direc_to(adj), Direc.LEFT)
-                hit[3] = True
-            else:
-                raise ValueError("error adj Pos")
-        self.assertEqual(hit.count(False), 0)
-
-
-if __name__ == "__main__":
-    unittest.main()

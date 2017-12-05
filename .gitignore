@@ -10,3 +10,4 @@ Makefile
 
 *.pyc
 __pycache__
+*.cache
