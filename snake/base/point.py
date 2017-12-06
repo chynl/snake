@@ -11,9 +11,10 @@ from enum import Enum, unique
 class PointType(Enum):
     """Type of the points on the game map."""
     EMPTY = 0
-    FOOD = 1
-    SNAKE_HEAD = 2
-    SNAKE_BODY = 3
+    WALL = 1
+    FOOD = 2
+    SNAKE_HEAD = 3
+    SNAKE_BODY = 4
 
 
 class Point(object):

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# pylint: disable=C0111
+# pylint: disable=C0103,C0111
 
 """Unit tests for class Direction."""
 
@@ -30,6 +30,12 @@ def test_arithmetic():
     assert p5 == -Pos(-10, 20)
     assert p4 + p2 == p1
     assert p5 + p1 == p2
+
+
+def test_dist():
+    p1 = Pos(-5, 20)
+    p2 = Pos(10, 8)
+    assert Pos.manhattan_dis(p1, p2) == 27
 
 
 def test_adj():

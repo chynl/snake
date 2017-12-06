@@ -1,0 +1,52 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# pylint: disable=C0103,C0111
+
+"""Unit tests for class Map."""
+
+import pytest
+from snake.base.pos import Pos
+from snake.base.point import PointType
+from snake.base.map import Map
+
+
+def test_init():
+    with pytest.raises(TypeError):
+        m = Map(5, 1.5)
+    with pytest.raises(ValueError):
+        m = Map(4, 5)
+    m = Map(12, 12)
+    for i in range(m.num_rows):
+        for j in range(m.num_cols):
+            if i == 0 or i == m.num_rows - 1 or j == 0 or j == m.num_cols - 1:
+                assert m.point(Pos(i, j)).type == PointType.WALL
+            else:
+                assert m.point(Pos(i, j)).type == PointType.EMPTY
+
+
+def test_predicate():
+    m = Map(5, 5)
+    assert not m.is_full()
+    for i in range(m.num_rows):
+        for j in range(m.num_cols):
+            p = Pos(i, j)
+            if i == 0 or i == m.num_rows - 1 or j == 0 or j == m.num_cols - 1:
+                assert not m.is_inside(p) and not m.is_empty(p) \
+                       and not m.is_safe(p)
+            else:
+                assert m.is_inside(p) and m.is_empty(p) and m.is_safe(p)
+    p1, p2, p3 = Pos(1, 1), Pos(2, 2), Pos(3, 3)
+    m.point(p1).type = PointType.SNAKE_HEAD
+    m.point(p2).type = PointType.SNAKE_BODY
+    m.point(p3).type = PointType.FOOD
+    assert m.is_inside(p1) and not m.is_empty(p1) and not m.is_safe(p1)
+    assert m.is_inside(p2) and not m.is_empty(p2) and not m.is_safe(p2)
+    assert m.is_inside(p3) and not m.is_empty(p3) and m.is_safe(p3)
+    assert not m.is_full()
+    for i in range(1, m.num_rows - 1):
+        for j in range(1, m.num_cols - 1):
+            if i < m.num_rows / 2:
+                m.point(Pos(i, j)).type = PointType.SNAKE_HEAD
+            else:
+                m.point(Pos(i, j)).type = PointType.SNAKE_BODY
+    assert m.is_full()

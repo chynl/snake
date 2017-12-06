@@ -46,6 +46,10 @@ class Pos(object):
     def __hash__(self):
         return hash((self.x, self.y))
 
+    @staticmethod
+    def manhattan_dis(p1, p2):
+        return abs(p1.x - p2.x) + abs(p1.y - p2.y)
+
     def direc_to(self, adj_pos):
         """Return the direction of an adjacent Pos relative to self."""
         if self.__x == adj_pos.x:
