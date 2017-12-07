@@ -5,7 +5,6 @@
 """Definition of class Map."""
 
 import random
-from snake.base.direc import Direc
 from snake.base.pos import Pos
 from snake.base.point import PointType, Point
 
@@ -90,7 +89,9 @@ class Map(object):
                     empty_pos.append(Pos(i, j))
                 elif t == PointType.FOOD:
                     return None  # Stop if food exists
-        self.add_food(random.choice(empty_pos))
+        food = random.choice(empty_pos)
+        self.add_food(food)
+        return food
 
     @property
     def num_rows(self):

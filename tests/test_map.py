@@ -50,3 +50,22 @@ def test_predicate():
             else:
                 m.point(Pos(i, j)).type = PointType.SNAKE_BODY
     assert m.is_full()
+
+
+def test_food():
+    m = Map(5, 5)
+    assert not m.has_food()
+    m.add_food(Pos(1, 1))
+    m.add_food(Pos(2, 2))
+    assert m.has_food()
+    m.rm_food()
+    assert not m.has_food()
+    fd1 = m.add_rand_food()
+    fd2 = m.add_rand_food()
+    assert m.has_food()
+    assert m.point(fd1).type == PointType.FOOD
+    assert fd2 is None
+    m.rm_food()
+    for i in range(1, m.num_rows - 1):
+        for j in range(1, m.num_cols - 1):
+            assert m.point(Pos(i, j)).type == PointType.EMPTY
