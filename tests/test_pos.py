@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=C0103,C0111
 
-"""Unit tests for class Direction."""
+"""Unit tests for class Pos."""
 
 from snake.base.direc import Direc
 from snake.base.pos import Pos
