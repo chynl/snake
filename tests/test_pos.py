@@ -4,8 +4,7 @@
 
 """Unit tests for class Pos."""
 
-from snake.base.direc import Direc
-from snake.base.pos import Pos
+from snake.base import Direc, Pos
 
 
 def test_init():

@@ -13,8 +13,16 @@ class PointType(Enum):
     EMPTY = 0
     WALL = 1
     FOOD = 2
-    SNAKE_HEAD = 3
-    SNAKE_BODY = 4
+    HEAD_L = 100
+    HEAD_U = 101
+    HEAD_R = 102
+    HEAD_D = 103
+    BODY_LU = 104
+    BODY_UR = 105
+    BODY_RD = 106
+    BODY_DL = 107
+    BODY_HOR = 108
+    BODY_VER = 109
 
 
 class Point(object):

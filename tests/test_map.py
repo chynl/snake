@@ -5,9 +5,7 @@
 """Unit tests for class Map."""
 
 import pytest
-from snake.base.pos import Pos
-from snake.base.point import PointType
-from snake.base.map import Map
+from snake.base import Pos, PointType, Map
 
 
 def test_init():
@@ -36,8 +34,8 @@ def test_predicate():
             else:
                 assert m.is_inside(p) and m.is_empty(p) and m.is_safe(p)
     p1, p2, p3 = Pos(1, 1), Pos(2, 2), Pos(3, 3)
-    m.point(p1).type = PointType.SNAKE_HEAD
-    m.point(p2).type = PointType.SNAKE_BODY
+    m.point(p1).type = PointType.HEAD_L
+    m.point(p2).type = PointType.BODY_VER
     m.point(p3).type = PointType.FOOD
     assert m.is_inside(p1) and not m.is_empty(p1) and not m.is_safe(p1)
     assert m.is_inside(p2) and not m.is_empty(p2) and not m.is_safe(p2)
@@ -46,9 +44,9 @@ def test_predicate():
     for i in range(1, m.num_rows - 1):
         for j in range(1, m.num_cols - 1):
             if i < m.num_rows / 2:
-                m.point(Pos(i, j)).type = PointType.SNAKE_HEAD
+                m.point(Pos(i, j)).type = PointType.HEAD_U
             else:
-                m.point(Pos(i, j)).type = PointType.SNAKE_BODY
+                m.point(Pos(i, j)).type = PointType.BODY_UR
     assert m.is_full()
 
 

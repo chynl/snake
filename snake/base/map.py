@@ -40,7 +40,7 @@ class Map(object):
         Use {add|rm}_food() methods instead.
 
         Args:
-            pos (snake.pos.Pos): The position of the point to be fetched
+            pos (base.pos.Pos): The position of the point to be fetched
 
         Returns:
             snake.point.Point: The point at the given position.
@@ -63,7 +63,7 @@ class Map(object):
         for i in range(1, self.num_rows - 1):
             for j in range(1, self.num_cols - 1):
                 t = self.__content[i][j].type
-                if t != PointType.SNAKE_HEAD and t != PointType.SNAKE_BODY:
+                if t.value < PointType.HEAD_L.value:
                     return False
         return True
 

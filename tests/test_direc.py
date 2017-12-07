@@ -4,7 +4,7 @@
 
 """Unit tests for class Direction."""
 
-from snake.base.direc import Direc
+from snake.base import Direc
 
 
 def test_opposite():
