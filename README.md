@@ -6,9 +6,9 @@ There are some pertinent discussions [here](https://www.reddit.com/r/programming
 
 ## Build Status
 
-| Linux | Windows |
-|:-----:|:-------:|
-|[![Build Status](https://travis-ci.org/chuyangliu/Snake.svg?branch=dev_refactor)](https://travis-ci.org/chuyangliu/Snake)|[![Build status](https://ci.appveyor.com/api/projects/status/d4agff8ef7d9tfxh/branch/master?svg=true)](https://ci.appveyor.com/project/chuyangliu/snake/branch/master)|
+| Linux | Windows | Python |
+|:-----:|:-------:|:------:|
+|[![](https://travis-ci.org/chuyangliu/Snake.svg?branch=dev_refactor)](https://travis-ci.org/chuyangliu/Snake)|[![](https://ci.appveyor.com/api/projects/status/d4agff8ef7d9tfxh/branch/master?svg=true)](https://ci.appveyor.com/project/chuyangliu/snake/branch/master)|![](https://img.shields.io/badge/python-3.5%2C%203.6-blue.svg)|
 
 ## Demo
 
