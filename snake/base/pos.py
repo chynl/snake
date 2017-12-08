@@ -7,7 +7,7 @@
 from snake.base.direc import Direc
 
 
-class Pos(object):
+class Pos:
     """Integer coordinate in 2D plane.
 
     The origin of the coordinate system is at the top-left corner,

@@ -9,7 +9,7 @@ from snake.base.pos import Pos
 from snake.base.point import PointType, Point
 
 
-class Map(object):
+class Map:
     """2D game map."""
 
     def __init__(self, num_rows, num_cols):

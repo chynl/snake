@@ -25,7 +25,7 @@ class PointType(Enum):
     BODY_VER = 109
 
 
-class Point(object):
+class Point:
     """Point on the game map."""
     def __init__(self):
         self.__type = PointType.EMPTY

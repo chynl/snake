@@ -9,7 +9,7 @@ from snake.base.direc import Direc
 from snake.base.point import PointType
 
 
-class Snake(object):
+class Snake:
     """Snake of the game."""
 
     def __init__(self, m, direc, init_bodies, init_types):

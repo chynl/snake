@@ -12,8 +12,7 @@ class GameWindow(tk.Tk):
         super().title("Snake")
         super().resizable(width=False, height=False)
         self.__map = m
-        self.__canvas = tk.Canvas(self, bg='black', width=300, height=300,
-                                  highlightthickness=0)
+        self.__canvas = tk.Canvas(self, bg='black', width=300, height=300, highlightthickness=0)
         self.__canvas.pack()
 
     def render(self):
