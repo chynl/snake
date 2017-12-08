@@ -21,17 +21,19 @@ class Map(object):
         self.__num_rows = num_rows
         self.__num_cols = num_cols
         self.__capacity = (num_rows - 2) * (num_cols - 2)
-        self.__food = None
         self.__content = [[Point() for _ in range(num_cols)]
                           for _ in range(num_rows)]
-        # Add boundary walls
-        for i in range(num_rows):
-            if i == 0 or i == num_rows - 1:
-                for j in range(num_cols):
+        self.reset()
+
+    def reset(self):
+        self.__food = None
+        for i in range(self.__num_rows):
+            for j in range(self.__num_cols):
+                if i == 0 or i == self.__num_rows - 1 or \
+                   j == 0 or j == self.__num_cols - 1:
                     self.__content[i][j].type = PointType.WALL
-            else:
-                self.__content[i][0].type = PointType.WALL
-                self.__content[i][-1].type = PointType.WALL
+                else:
+                    self.__content[i][j].type = PointType.EMPTY
 
     def point(self, pos):
         """Return a point on the map.

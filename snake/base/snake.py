@@ -37,10 +37,6 @@ class Snake(object):
     def direc(self):
         return self.__direc
 
-    @direc.setter
-    def direc(self, val):
-        self.__direc = val
-
     def len(self):
         return len(self.__bodies)
 
@@ -56,23 +52,22 @@ class Snake(object):
         else:
             return self.__bodies[-1]
 
-    def move(self, direc):
-        if self.__dead or direc == Direc.NONE \
-           or Direc.opposite(direc) == self.__direc:
+    def move(self, new_direc):
+        if self.__dead or new_direc == Direc.NONE \
+           or Direc.opposite(new_direc) == self.__direc:
             return
-        old_head_type, new_head_type = self.__new_types(self.__direc, direc)
+        old_head_type, new_head_type = self.__new_types(self.__direc, new_direc)
         self.__map.point(self.head()).type = old_head_type
-        new_head = self.head().adj(direc)
+        new_head = self.head().adj(new_direc)
         self.__bodies.appendleft(new_head)
         if not self.__map.is_safe(new_head):
             self.__dead = True
+        if self.__map.point(new_head).type == PointType.FOOD:
+            self.__map.rm_food()
         else:
-            if self.__map.point(new_head).type == PointType.FOOD:
-                self.__map.rm_food()
-            else:
-                self.__rm_tail()
+            self.__rm_tail()
         self.__map.point(new_head).type = new_head_type
-        self.__direc = direc
+        self.__direc = new_direc
 
     def __rm_tail(self):
         self.__map.point(self.tail()).type = PointType.EMPTY
