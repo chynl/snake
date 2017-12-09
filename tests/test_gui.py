@@ -112,11 +112,4 @@ def test_gui():
     for content in contents:
         game_map.point(content[0]).type = content[1]
 
-    window = GameWindow(game_map, game_conf)
-
-    def render():
-        while True:
-            window.render()
-
-    window.after(100, render)
-    window.mainloop()
+    GameWindow(game_map, game_conf).show()

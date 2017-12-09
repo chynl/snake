@@ -18,6 +18,9 @@ class GameConf:
         self.window_height = 300
         self.grid_pad_ratio = 0.25
 
+        # Delay
+        self.draw_interval = 10  # ms
+
         # Switch
         self.show_grid_line = False
 
@@ -51,9 +54,4 @@ class Game:
         self.__window = GameWindow(self.__map, conf)
 
     def run(self):
-        self.__window.after(100, self.__game_loop)
-        self.__window.mainloop()
-
-    def __game_loop(self):
-        while True:
-            self.__window.render()
+        self.__window.show()

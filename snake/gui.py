@@ -22,7 +22,14 @@ class GameWindow(tk.Tk):
         self.__grid_width = conf.window_width / conf.map_cols
         self.__grid_height = conf.window_height / conf.map_rows
 
-    def render(self):
+    def show(self):
+        def draw():
+            self.__update_contents()
+            self.after(self.__conf.draw_interval, draw)
+        self.after(100, draw)
+        self.mainloop()
+
+    def __update_contents(self):
         self.__draw_bg()
         for i in range(self.__conf.map_rows):
             for j in range(self.__conf.map_cols):
