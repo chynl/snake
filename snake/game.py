@@ -52,8 +52,11 @@ class Game:
         self.__pause = False
 
     def run(self):
-        Thread(target=self.__game_loop, name='GameLoopThread').start()
+        self.__start_game_loop()
         self.__window.show()
+
+    def __start_game_loop(self):
+        Thread(target=self.__game_loop, name='GameLoopThread').start()
 
     def __game_loop(self):
         while not self.__window.destroyed and not self.__snake.dead:
@@ -69,6 +72,7 @@ class Game:
             ('<a>', lambda e: self.__update_direc(Direc.LEFT)),
             ('<s>', lambda e: self.__update_direc(Direc.DOWN)),
             ('<d>', lambda e: self.__update_direc(Direc.RIGHT)),
+            ('<r>', lambda e: self.__restart()),
             ('<space>', lambda e: self.__toggle_pause())
         )
 
@@ -80,3 +84,12 @@ class Game:
 
     def __toggle_pause(self):
         self.__pause = not self.__pause
+
+    def __restart(self):
+        self.__snake.dead = True
+        time.sleep(0.5)
+        self.__map.reset()
+        self.__snake = Snake(self.__map, self.__conf.init_direc,
+                             self.__conf.init_bodies, self.__conf.init_types)
+        self.__pause = False
+        self.__start_game_loop()

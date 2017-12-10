@@ -34,6 +34,10 @@ class Snake:
     def dead(self):
         return self.__dead
 
+    @dead.setter
+    def dead(self, val):
+        self.__dead = val
+
     @property
     def direc(self):
         return self.__direc
