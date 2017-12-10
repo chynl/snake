@@ -31,7 +31,7 @@ class GameConf:
         self.color_grid_line = '#424242'
         self.color_bg = '#000000'
         self.color_wall = '#F5F5F5'
-        self.color_food = '#F5F5F5'
+        self.color_food = '#FFF59D'
         self.color_head = '#F5F5F5'
         self.color_body = '#F5F5F5'
 
@@ -59,9 +59,9 @@ class Game:
     def __game_loop(self):
         while not self.__window.destroyed and not self.__snake.dead:
             time.sleep(self.__conf.interval_move)
+            if not self.__map.has_food():
+                self.__map.create_rand_food()
             if not self.__pause:
-                if not self.__map.has_food():
-                    self.__map.create_rand_food()
                 self.__snake.move()
 
     def __keybindings(self):

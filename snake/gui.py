@@ -86,13 +86,41 @@ class GameWindow(tk.Tk):
                                            fill=self.__conf.color_wall,
                                            outline='')
         elif t == PointType.FOOD:
-            food_pad_ratio = 0.75 * self.__pad_ratio()
-            self.__canvas.create_oval(x + food_pad_ratio * self.__grid_width,
-                                      y + food_pad_ratio * self.__grid_height,
-                                      x + (1 - food_pad_ratio) * self.__grid_width,
-                                      y + (1 - food_pad_ratio) * self.__grid_height,
-                                      fill=self.__conf.color_food,
-                                      outline='')
+            food_pad_ratio = 0.9 * self.__pad_ratio()
+            self.__canvas.create_rectangle(x + food_pad_ratio * self.__grid_width,
+                                           y + food_pad_ratio * self.__grid_height,
+                                           x + (1 - food_pad_ratio) * self.__grid_width,
+                                           y + (1 - food_pad_ratio) * self.__grid_height,
+                                           fill=self.__conf.color_food,
+                                           outline='')
+        elif t == PointType.HEAD_L:
+            self.__canvas.create_rectangle(x + self.__pad_ratio() * self.__grid_width,
+                                           y + self.__pad_ratio() * self.__grid_height,
+                                           x + self.__grid_width,
+                                           y + (1 - self.__pad_ratio()) * self.__grid_height,
+                                           fill=self.__conf.color_head,
+                                           outline='')
+        elif t == PointType.HEAD_U:
+            self.__canvas.create_rectangle(x + self.__pad_ratio() * self.__grid_width,
+                                           y + self.__pad_ratio() * self.__grid_height,
+                                           x + (1 - self.__pad_ratio()) * self.__grid_width,
+                                           y + self.__grid_height,
+                                           fill=self.__conf.color_head,
+                                           outline='')
+        elif t == PointType.HEAD_R:
+            self.__canvas.create_rectangle(x,
+                                           y + self.__pad_ratio() * self.__grid_height,
+                                           x + (1 - self.__pad_ratio()) * self.__grid_width,
+                                           y + (1 - self.__pad_ratio()) * self.__grid_height,
+                                           fill=self.__conf.color_head,
+                                           outline='')
+        elif t == PointType.HEAD_D:
+            self.__canvas.create_rectangle(x + self.__pad_ratio() * self.__grid_width,
+                                           y,
+                                           x + (1 - self.__pad_ratio()) * self.__grid_width,
+                                           y + (1 - self.__pad_ratio()) * self.__grid_height,
+                                           fill=self.__conf.color_head,
+                                           outline='')
         elif t == PointType.BODY_LU:
             self.__canvas.create_rectangle(x,
                                            y + self.__pad_ratio() * self.__grid_height,
@@ -145,14 +173,14 @@ class GameWindow(tk.Tk):
                                            y + (1 - self.__pad_ratio()) * self.__grid_height,
                                            fill=self.__conf.color_body,
                                            outline='')
-        elif t == PointType.BODY_HOR or t == PointType.HEAD_L or t == PointType.HEAD_R:
+        elif t == PointType.BODY_HOR:
             self.__canvas.create_rectangle(x,
                                            y + self.__pad_ratio() * self.__grid_height,
                                            x + self.__grid_width,
                                            y + (1 - self.__pad_ratio()) * self.__grid_height,
                                            fill=self.__conf.color_body,
                                            outline='')
-        elif t == PointType.BODY_VER or t == PointType.HEAD_U or t == PointType.HEAD_D:
+        elif t == PointType.BODY_VER:
             self.__canvas.create_rectangle(x + self.__pad_ratio() * self.__grid_width,
                                            y,
                                            x + (1 - self.__pad_ratio()) * self.__grid_width,
