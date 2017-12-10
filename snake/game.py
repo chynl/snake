@@ -52,7 +52,7 @@ class GameConf:
             "w: move up\n"
             "a: move left\n"
             "s: move down\n"
-            "d: move left\n"
+            "d: move right\n"
             "r: restart\n"
             "space: pause/resume\n"
             "esc: exit\n\n"
