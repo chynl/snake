@@ -2,8 +2,6 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=C0103,C0111
 
-import time
-from threading import Thread
 from snake.base import Direc, Pos, PointType, Map, Snake
 from snake.gui import GameWindow
 
