@@ -28,11 +28,13 @@ class GameWindow(tk.Tk):
             for kb in keybindings:
                 self.bind(kb[0], kb[1])
 
-    def show(self):
-        def draw():
-            self.__update_contents()
-            self.after(self.__conf.interval_draw, draw)
-        self.after(100, draw)
+    def show(self, func=None):
+        def cb():
+            if func is not None:
+                func()
+            self.__update_map()
+            self.after(self.__conf.interval_draw, cb)
+        self.after(100, cb)
         self.mainloop()
 
     @property
@@ -43,7 +45,7 @@ class GameWindow(tk.Tk):
         self.destroy()
         self.__destroyed = True
 
-    def __update_contents(self):
+    def __update_map(self):
         self.__draw_bg()
         for i in range(self.__conf.map_rows):
             for j in range(self.__conf.map_cols):

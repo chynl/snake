@@ -16,13 +16,12 @@ class GameConf:
         # Size
         self.map_rows = 20
         self.map_cols = 20
-        self.window_width = 300
-        self.window_height = 300
+        self.window_width = 400
+        self.window_height = 400
         self.grid_pad_ratio = 0.25
 
         # Delay
-        self.interval_draw = 10   # ms
-        self.interval_move = 0.15  # s
+        self.interval_draw = 100   # ms
 
         # Switch
         self.show_grid_line = False
@@ -50,19 +49,15 @@ class Game:
                              conf.init_bodies, conf.init_types)
         self.__window = GameWindow(self.__map, conf, self.__keybindings())
         self.__pause = False
-        self.__game_loop_thread = Thread(target=self.__game_loop, name='GameLoopThread')
 
     def run(self):
-        self.__game_loop_thread.start()
-        self.__window.show()
+        self.__window.show(self.__game_main)
 
-    def __game_loop(self):
-        while not self.__window.destroyed and not self.__snake.dead:
-            time.sleep(self.__conf.interval_move)
-            if not self.__map.has_food():
-                self.__map.create_rand_food()
-            if not self.__pause:
-                self.__snake.move()
+    def __game_main(self):
+        if not self.__map.has_food():
+            self.__map.create_rand_food()
+        if not self.__pause:
+            self.__snake.move()
 
     def __keybindings(self):
         return (
@@ -70,7 +65,7 @@ class Game:
             ('<a>', lambda e: self.__update_direc(Direc.LEFT)),
             ('<s>', lambda e: self.__update_direc(Direc.DOWN)),
             ('<d>', lambda e: self.__update_direc(Direc.RIGHT)),
-            ('<r>', lambda e: self.__restart()),
+            ('<r>', lambda e: self.__reset()),
             ('<space>', lambda e: self.__toggle_pause())
         )
 
@@ -83,12 +78,9 @@ class Game:
     def __toggle_pause(self):
         self.__pause = not self.__pause
 
-    def __restart(self):
+    def __reset(self):
         self.__snake.dead = True
-        self.__game_loop_thread.join()
         self.__map.reset()
         self.__snake = Snake(self.__map, self.__conf.init_direc,
                              self.__conf.init_bodies, self.__conf.init_types)
         self.__pause = False
-        self.__game_loop_thread = Thread(target=self.__game_loop, name='GameLoopThread')
-        self.__game_loop_thread.start()
