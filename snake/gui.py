@@ -23,6 +23,7 @@ class GameWindow(tk.Tk):
         self.__canvas.pack()
         self.__destroyed = False
         self.bind('<Escape>', lambda e: self.__quit())
+        self.protocol('WM_DELETE_WINDOW', self.__quit)
         if keybindings is not None:
             for kb in keybindings:
                 self.bind(kb[0], kb[1])

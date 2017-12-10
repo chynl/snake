@@ -20,12 +20,12 @@ class Direc(Enum):
     def opposite(direc):
         """Return the opposite direction."""
         if direc == Direc.LEFT:
-            return direc.RIGHT
+            return Direc.RIGHT
         elif direc == Direc.RIGHT:
-            return direc.LEFT
+            return Direc.LEFT
         elif direc == Direc.UP:
-            return direc.DOWN
+            return Direc.DOWN
         elif direc == Direc.DOWN:
-            return direc.UP
+            return Direc.UP
         else:
-            return direc.NONE
+            return Direc.NONE

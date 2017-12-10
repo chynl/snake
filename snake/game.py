@@ -73,9 +73,10 @@ class Game:
         )
 
     def __update_direc(self, new_direc):
-        self.__snake.direc = new_direc
-        if self.__pause:
-            self.__snake.move()
+        if Direc.opposite(new_direc) != self.__snake.direc:
+            self.__snake.direc_next = new_direc
+            if self.__pause:
+                self.__snake.move()
 
     def __toggle_pause(self):
         self.__pause = not self.__pause

@@ -31,20 +31,17 @@ def test_move_eat():
     m.create_food(Pos(1, 3))
     assert m.has_food()
     s.move(Direc.RIGHT)
-    s.move(Direc.LEFT)  # Opposite move direc is expected to be disgarded
     assert not m.has_food()
     assert s.head() == Pos(1, 3) and s.tail() == Pos(1, 1)
     assert m.point(s.tail()).type == PointType.BODY_HOR
     assert m.point(Pos(1, 2)).type == PointType.BODY_HOR
     assert m.point(s.head()).type == PointType.HEAD_R
     s.move(Direc.DOWN)
-    s.move(Direc.UP)
     assert s.head() == Pos(2, 3) and s.tail() == Pos(1, 2)
     assert m.point(s.tail()).type == PointType.BODY_HOR
     assert m.point(Pos(1, 3)).type == PointType.BODY_DL
     assert m.point(s.head()).type == PointType.HEAD_D
     s.move(Direc.LEFT)
-    s.move(Direc.RIGHT)
     assert s.head() == Pos(2, 2) and s.tail() == Pos(1, 3)
     assert m.point(s.tail()).type == PointType.BODY_DL
     assert m.point(Pos(2, 3)).type == PointType.BODY_LU
@@ -70,7 +67,6 @@ def test_move_eat():
     assert m.point(Pos(3, 2)).type == PointType.BODY_HOR
     assert m.point(s.head()).type == PointType.HEAD_R
     s.move(Direc.UP)
-    s.move(Direc.DOWN)
     assert s.head() == Pos(2, 3) and s.tail() == Pos(3, 2)
     assert m.point(s.tail()).type == PointType.BODY_HOR
     assert m.point(Pos(3, 3)).type == PointType.BODY_LU

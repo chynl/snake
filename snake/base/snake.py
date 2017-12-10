@@ -24,6 +24,7 @@ class Snake:
         """
         self.__dead = False
         self.__direc = direc
+        self.__direc_next = None
         self.__map = m
         self.__bodies = deque(init_bodies)
         for i, pos in enumerate(init_bodies):
@@ -37,9 +38,13 @@ class Snake:
     def direc(self):
         return self.__direc
 
-    @direc.setter
-    def direc(self, val):
-        self.__direc = val
+    @property
+    def direc_next(self):
+        return self.__direc_next
+
+    @direc_next.setter
+    def direc_next(self, val):
+        self.__direc_next = val
 
     def len(self):
         return len(self.__bodies)
@@ -57,14 +62,15 @@ class Snake:
             return self.__bodies[-1]
 
     def move(self, new_direc=None):
-        if new_direc is None:
-            new_direc = self.__direc
-        if self.__dead or new_direc == Direc.NONE \
-           or Direc.opposite(new_direc) == self.__direc:
+        if new_direc is not None:
+            self.__direc_next = new_direc
+        elif self.__direc_next is None:
+            self.__direc_next = self.__direc
+        if self.__dead or self.__direc_next == Direc.NONE:
             return
-        old_head_type, new_head_type = self.__new_types(self.__direc, new_direc)
+        old_head_type, new_head_type = self.__new_types(self.__direc, self.__direc_next)
         self.__map.point(self.head()).type = old_head_type
-        new_head = self.head().adj(new_direc)
+        new_head = self.head().adj(self.__direc_next)
         self.__bodies.appendleft(new_head)
         if not self.__map.is_safe(new_head):
             self.__dead = True
@@ -73,7 +79,7 @@ class Snake:
         else:
             self.__rm_tail()
         self.__map.point(new_head).type = new_head_type
-        self.__direc = new_direc
+        self.__direc = self.__direc_next
 
     def __rm_tail(self):
         self.__map.point(self.tail()).type = PointType.EMPTY
