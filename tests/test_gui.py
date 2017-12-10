@@ -16,6 +16,7 @@ def test_gui():
     game_conf.map_rows = 15
     game_conf.map_cols = 15
     game_conf.show_grid_line = True
+    game_conf.show_info_panel = False
 
     game_map = Map(game_conf.map_rows + 2, game_conf.map_cols + 2)
     contents = (
@@ -107,9 +108,9 @@ def test_gui():
         (Pos(6, 7), PointType.BODY_HOR),
         (Pos(6, 8), PointType.BODY_HOR),
         (Pos(6, 9), PointType.BODY_HOR),
-        (Pos(6, 10), PointType.HEAD_R),
+        (Pos(6, 10), PointType.HEAD_R)
     )
     for content in contents:
         game_map.point(content[0]).type = content[1]
 
-    GameWindow(game_map, game_conf).show()
+    GameWindow(game_conf, game_map).show()

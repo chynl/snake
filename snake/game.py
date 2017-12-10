@@ -16,8 +16,10 @@ class GameConf:
         # Size
         self.map_rows = 20
         self.map_cols = 20
-        self.window_width = 400
-        self.window_height = 400
+        self.map_width = 400      # pixels
+        self.map_height = 400     # pixels
+        self.window_width = 600   # pixels
+        self.window_height = 400  # pixels
         self.grid_pad_ratio = 0.25
 
         # Delay
@@ -25,10 +27,12 @@ class GameConf:
 
         # Switch
         self.show_grid_line = False
+        self.show_info_panel = True
 
         # Color
-        self.color_grid_line = '#424242'
         self.color_bg = '#000000'
+        self.color_txt = '#F5F5F5'
+        self.color_line = '#424242'
         self.color_wall = '#F5F5F5'
         self.color_food = '#FFF59D'
         self.color_head = '#F5F5F5'
@@ -39,6 +43,25 @@ class GameConf:
         self.init_bodies = [Pos(1, 3), Pos(1, 2), Pos(1, 1)]
         self.init_types = [PointType.HEAD_R, PointType.BODY_HOR, PointType.BODY_HOR]
 
+        # Font
+        self.info_font = ('Helvetica', 10)
+
+        # Info
+        self.info_str = (
+            "[ keys ]\n"
+            "w: move up\n"
+            "a: move left\n"
+            "s: move down\n"
+            "d: move left\n"
+            "r: restart\n"
+            "space: pause/resume\n"
+            "esc: exit\n\n"
+            "[ length ]\n"
+            "%03d/%3d\n\n"
+            "[ status ]\n"
+            "%s"
+        )
+        self.info_status = ['alive', 'dead']
 
 class Game:
 
@@ -47,7 +70,7 @@ class Game:
         self.__map = Map(conf.map_rows + 2, conf.map_cols + 2)
         self.__snake = Snake(self.__map, conf.init_direc,
                              conf.init_bodies, conf.init_types)
-        self.__window = GameWindow(self.__map, conf, self.__keybindings())
+        self.__window = GameWindow(conf, self.__map, self.__snake, self.__keybindings())
         self.__pause = False
 
     def run(self):
@@ -79,8 +102,6 @@ class Game:
         self.__pause = not self.__pause
 
     def __reset(self):
-        self.__snake.dead = True
-        self.__map.reset()
-        self.__snake = Snake(self.__map, self.__conf.init_direc,
-                             self.__conf.init_bodies, self.__conf.init_types)
+        self.__pause = True
+        self.__snake.reset()
         self.__pause = False

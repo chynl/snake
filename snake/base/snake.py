@@ -12,23 +12,30 @@ from snake.base.point import PointType
 class Snake:
     """Snake of the game."""
 
-    def __init__(self, m, direc, init_bodies, init_types):
+    def __init__(self, m, init_direc, init_bodies, init_types):
         """Initialize a Snake object.
 
         Args:
             m (base.map.Map): The map that the snake moves on.
-            direc (base.direc.Direc): Initial move direction.
+            init_direc (base.direc.Direc): Initial move direction.
             init_bodies (list of base.pos.Pos): Initial snake bodies positions.
             init_types (list of base.point.PointType): Types of each position in init_bodies.
 
         """
-        self.__dead = False
-        self.__direc = direc
-        self.__direc_next = None
         self.__map = m
-        self.__bodies = deque(init_bodies)
-        for i, pos in enumerate(init_bodies):
-            self.__map.point(pos).type = init_types[i]
+        self.__init_direc = init_direc
+        self.__init_bodies = init_bodies
+        self.__init_types = init_types
+        self.reset()
+
+    def reset(self):
+        self.__dead = False
+        self.__direc = self.__init_direc
+        self.__direc_next = Direc.NONE
+        self.__map.reset()
+        self.__bodies = deque(self.__init_bodies)
+        for i, pos in enumerate(self.__init_bodies):
+            self.__map.point(pos).type = self.__init_types[i]
 
     @property
     def dead(self):
@@ -68,8 +75,6 @@ class Snake:
     def move(self, new_direc=None):
         if new_direc is not None:
             self.__direc_next = new_direc
-        elif self.__direc_next is None:
-            self.__direc_next = self.__direc
         if self.__dead or self.__direc_next == Direc.NONE:
             return
         old_head_type, new_head_type = self.__new_types(self.__direc, self.__direc_next)

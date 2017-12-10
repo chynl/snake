@@ -8,19 +8,19 @@ from snake.base import Pos, PointType
 
 class GameWindow(tk.Tk):
 
-    def __init__(self, m, conf, keybindings=None):
+    def __init__(self, conf, m, s=None, keybindings=None):
         super().__init__()
         super().title("Snake")
         super().resizable(width=False, height=False)
-        self.__map = m
+        super().configure(background=conf.color_bg)
+        if conf.show_info_panel:
+            super().geometry("%dx%d" % (conf.window_width, conf.window_height))
         self.__conf = conf
-        self.__grid_width = conf.window_width / conf.map_cols
-        self.__grid_height = conf.window_height / conf.map_rows
-        self.__canvas = tk.Canvas(self, bg=conf.color_bg,
-                                  width=conf.window_width,
-                                  height=conf.window_height,
-                                  highlightthickness=0)
-        self.__canvas.pack()
+        self.__map = m
+        self.__snake = s
+        self.__grid_width = conf.map_width / conf.map_cols
+        self.__grid_height = conf.map_height / conf.map_rows
+        self.__init_widges()
         self.__init_keybindings(keybindings)
         self.__init_draw_params()
 
@@ -28,10 +28,25 @@ class GameWindow(tk.Tk):
         def cb():
             if func is not None:
                 func()
-            self.__update_map()
+            self.__update_contents()
             self.after(self.__conf.interval_draw, cb)
         self.after(100, cb)
         self.mainloop()
+
+    def __init_widges(self):
+        self.__canvas = tk.Canvas(self, bg=self.__conf.color_bg,
+                                  width=self.__conf.map_width,
+                                  height=self.__conf.map_height,
+                                  highlightthickness=0)
+        self.__canvas.pack(side=tk.LEFT)
+        if self.__conf.show_info_panel:
+            self.__info_var = tk.StringVar()
+            tk.Message(self,
+                       textvariable=self.__info_var,
+                       fg=self.__conf.color_txt,
+                       bg=self.__conf.color_bg,
+                       font=self.__conf.info_font) \
+            .place(x=self.__conf.map_width, y=0)
 
     def __init_keybindings(self, keybindings):
         self.bind('<Escape>', lambda e: self.destroy())
@@ -52,21 +67,19 @@ class GameWindow(tk.Tk):
         self.__dy1_food = food_pad_ratio * self.__grid_height
         self.__dy2_food = (1 - food_pad_ratio) * self.__grid_height
 
-    def __update_map(self):
+    def __update_contents(self):
         self.__canvas.delete(tk.ALL)
         self.__draw_bg()
-        for i in range(self.__conf.map_rows):
-            for j in range(self.__conf.map_cols):
-                self.__draw_grid(j * self.__grid_width, i * self.__grid_height,
-                                 self.__map.point(Pos(i + 1, j + 1)).type)
+        if self.__conf.show_grid_line:
+            self.__draw_grid_line()
+        if self.__conf.show_info_panel:
+            self.__draw_info_panel()
+        self.__draw_map_contents()
         self.update()
 
     def __draw_bg(self):
-        self.__canvas.create_rectangle(0, 0,
-                                       self.__conf.window_width, self.__conf.window_height,
+        self.__canvas.create_rectangle(0, 0, self.__conf.map_width, self.__conf.map_height,
                                        fill=self.__conf.color_bg, outline='')
-        if self.__conf.show_grid_line:
-            self.__draw_grid_line()
 
     def __draw_grid_line(self):
         for i in range(1, self.__conf.map_rows):
@@ -74,11 +87,26 @@ class GameWindow(tk.Tk):
                 x = j * self.__grid_width
                 y = i * self.__grid_height
                 self.__canvas.create_line(x, 0,
-                                          x, self.__conf.window_height,
-                                          fill=self.__conf.color_grid_line)
+                                          x, self.__conf.map_height,
+                                          fill=self.__conf.color_line)
                 self.__canvas.create_line(0, y,
-                                          self.__conf.window_width, y,
-                                          fill=self.__conf.color_grid_line)
+                                          self.__conf.map_width, y,
+                                          fill=self.__conf.color_line)
+
+    def __draw_info_panel(self):
+        self.__canvas.create_line(self.__conf.map_width - 1, 0,
+                                  self.__conf.map_width - 1, self.__conf.map_height,
+                                  fill=self.__conf.color_line)
+        self.__info_var.set(self.__conf.info_str %
+                            (self.__snake.len(),
+                             self.__map.capacity,
+                             self.__conf.info_status[self.__snake.dead]))
+
+    def __draw_map_contents(self):
+        for i in range(self.__conf.map_rows):
+            for j in range(self.__conf.map_cols):
+                self.__draw_grid(j * self.__grid_width, i * self.__grid_height,
+                                 self.__map.point(Pos(i + 1, j + 1)).type)
 
     def __draw_grid(self, x, y, t):
         if t == PointType.WALL:
