@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=C0103,C0111
 
+import time
+from threading import Thread
 from snake.base import Direc, Pos, PointType, Map, Snake
 from snake.gui import GameWindow
 
@@ -19,7 +21,8 @@ class GameConf:
         self.grid_pad_ratio = 0.25
 
         # Delay
-        self.draw_interval = 10  # ms
+        self.interval_draw = 10   # ms
+        self.interval_move = 0.15  # s
 
         # Switch
         self.show_grid_line = False
@@ -41,17 +44,38 @@ class GameConf:
 class Game:
 
     def __init__(self, conf):
-        """Initialize a Game object.
-
-        Args:
-            conf (snake.game.GameConf): Game configuration.
-
-        """
         self.__conf = conf
         self.__map = Map(conf.map_rows + 2, conf.map_cols + 2)
         self.__snake = Snake(self.__map, conf.init_direc,
                              conf.init_bodies, conf.init_types)
-        self.__window = GameWindow(self.__map, conf)
+        self.__window = GameWindow(self.__map, conf, self.__keybindings())
+        self.__pause = False
 
     def run(self):
+        Thread(target=self.__game_loop, name='GameLoopThread').start()
         self.__window.show()
+
+    def __game_loop(self):
+        while not self.__window.destroyed and not self.__snake.dead:
+            time.sleep(self.__conf.interval_move)
+            if not self.__pause:
+                if not self.__map.has_food():
+                    self.__map.create_rand_food()
+                self.__snake.move()
+
+    def __keybindings(self):
+        return (
+            ('<w>', lambda e: self.__update_direc(Direc.UP)),
+            ('<a>', lambda e: self.__update_direc(Direc.LEFT)),
+            ('<s>', lambda e: self.__update_direc(Direc.DOWN)),
+            ('<d>', lambda e: self.__update_direc(Direc.RIGHT)),
+            ('<space>', lambda e: self.__toggle_pause())
+        )
+
+    def __update_direc(self, new_direc):
+        self.__snake.direc = new_direc
+        if self.__pause:
+            self.__snake.move()
+
+    def __toggle_pause(self):
+        self.__pause = not self.__pause

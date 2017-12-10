@@ -53,16 +53,13 @@ def test_predicate():
 def test_food():
     m = Map(5, 5)
     assert not m.has_food()
-    m.add_food(Pos(1, 1))
-    m.add_food(Pos(2, 2))
+    m.create_food(Pos(1, 1))
     assert m.has_food()
     m.rm_food()
     assert not m.has_food()
-    fd1 = m.add_rand_food()
-    fd2 = m.add_rand_food()
+    fd = m.create_rand_food()
     assert m.has_food()
-    assert m.point(fd1).type == PointType.FOOD
-    assert fd2 is None
+    assert m.point(fd).type == PointType.FOOD
     m.rm_food()
     for i in range(1, m.num_rows - 1):
         for j in range(1, m.num_cols - 1):

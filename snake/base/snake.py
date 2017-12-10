@@ -37,6 +37,10 @@ class Snake:
     def direc(self):
         return self.__direc
 
+    @direc.setter
+    def direc(self, val):
+        self.__direc = val
+
     def len(self):
         return len(self.__bodies)
 
@@ -52,7 +56,9 @@ class Snake:
         else:
             return self.__bodies[-1]
 
-    def move(self, new_direc):
+    def move(self, new_direc=None):
+        if new_direc is None:
+            new_direc = self.__direc
         if self.__dead or new_direc == Direc.NONE \
            or Direc.opposite(new_direc) == self.__direc:
             return

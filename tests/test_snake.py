@@ -28,7 +28,7 @@ def test_move_eat():
               [Pos(1, 2), Pos(1, 1)],
               [PointType.HEAD_R, PointType.BODY_HOR])
     assert s.len() == 2
-    m.add_food(Pos(1, 3))
+    m.create_food(Pos(1, 3))
     assert m.has_food()
     s.move(Direc.RIGHT)
     s.move(Direc.LEFT)  # Opposite move direc is expected to be disgarded
@@ -120,7 +120,7 @@ def test_move_eat():
     food_pos = [Pos(1, 2), Pos(2, 2), Pos(3, 2), Pos(3, 3), Pos(2, 3), Pos(1, 3)]
     move_direc = [Direc.RIGHT, Direc.DOWN, Direc.DOWN, Direc.RIGHT, Direc.UP, Direc.UP]
     for i, pos in enumerate(food_pos):
-        m.add_food(pos)
+        m.create_food(pos)
         s.move(move_direc[i])
     assert m.is_full()
     assert s.len() == 9 and not s.dead

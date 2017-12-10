@@ -8,26 +8,39 @@ from snake.base import Pos, PointType
 
 class GameWindow(tk.Tk):
 
-    def __init__(self, m, conf):
+    def __init__(self, m, conf, keybindings=None):
         super().__init__()
         super().title("Snake")
         super().resizable(width=False, height=False)
         self.__map = m
         self.__conf = conf
+        self.__grid_width = conf.window_width / conf.map_cols
+        self.__grid_height = conf.window_height / conf.map_rows
         self.__canvas = tk.Canvas(self, bg=conf.color_bg,
                                   width=conf.window_width,
                                   height=conf.window_height,
                                   highlightthickness=0)
         self.__canvas.pack()
-        self.__grid_width = conf.window_width / conf.map_cols
-        self.__grid_height = conf.window_height / conf.map_rows
+        self.__destroyed = False
+        self.bind('<Escape>', lambda e: self.__quit())
+        if keybindings is not None:
+            for kb in keybindings:
+                self.bind(kb[0], kb[1])
 
     def show(self):
         def draw():
             self.__update_contents()
-            self.after(self.__conf.draw_interval, draw)
+            self.after(self.__conf.interval_draw, draw)
         self.after(100, draw)
         self.mainloop()
+
+    @property
+    def destroyed(self):
+        return self.__destroyed
+
+    def __quit(self):
+        self.destroy()
+        self.__destroyed = True
 
     def __update_contents(self):
         self.__draw_bg()

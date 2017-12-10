@@ -23,6 +23,7 @@ class Map:
         self.__capacity = (num_rows - 2) * (num_cols - 2)
         self.__content = [[Point() for _ in range(num_cols)]
                           for _ in range(num_rows)]
+        self.__food = None
         self.reset()
 
     def reset(self):
@@ -77,12 +78,11 @@ class Map:
             self.point(self.__food).type = PointType.EMPTY
             self.__food = None
 
-    def add_food(self, pos):
-        if not self.has_food():
-            self.point(pos).type = PointType.FOOD
-            self.__food = pos
+    def create_food(self, pos):
+        self.point(pos).type = PointType.FOOD
+        self.__food = pos
 
-    def add_rand_food(self):
+    def create_rand_food(self):
         empty_pos = []
         for i in range(1, self.__num_rows - 1):
             for j in range(1, self.__num_cols - 1):
@@ -92,7 +92,7 @@ class Map:
                 elif t == PointType.FOOD:
                     return None  # Stop if food exists
         food = random.choice(empty_pos)
-        self.add_food(food)
+        self.create_food(food)
         return food
 
     @property
