@@ -97,10 +97,14 @@ class GameWindow(tk.Tk):
         self.__canvas.create_line(self.__conf.map_width - 1, 0,
                                   self.__conf.map_width - 1, self.__conf.map_height,
                                   fill=self.__conf.color_line)
+        if self.__snake.dead:
+            status_str = self.__conf.info_status[1]
+        elif self.__map.is_full():
+            status_str = self.__conf.info_status[2]
+        else:
+            status_str = self.__conf.info_status[0]
         self.__info_var.set(self.__conf.info_str %
-                            (self.__snake.len(),
-                             self.__map.capacity,
-                             self.__conf.info_status[self.__snake.dead]))
+                            (self.__snake.len(), self.__map.capacity, status_str))
 
     def __draw_map_contents(self):
         for i in range(self.__conf.map_rows):

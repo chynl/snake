@@ -61,7 +61,7 @@ class GameConf:
             "[ status ]\n"
             "%s"
         )
-        self.info_status = ['alive', 'dead']
+        self.info_status = ['eating', 'dead', 'full']
 
 class Game:
 
