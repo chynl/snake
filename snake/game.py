@@ -50,13 +50,11 @@ class Game:
                              conf.init_bodies, conf.init_types)
         self.__window = GameWindow(self.__map, conf, self.__keybindings())
         self.__pause = False
+        self.__game_loop_thread = Thread(target=self.__game_loop, name='GameLoopThread')
 
     def run(self):
-        self.__start_game_loop()
+        self.__game_loop_thread.start()
         self.__window.show()
-
-    def __start_game_loop(self):
-        Thread(target=self.__game_loop, name='GameLoopThread').start()
 
     def __game_loop(self):
         while not self.__window.destroyed and not self.__snake.dead:
@@ -87,9 +85,10 @@ class Game:
 
     def __restart(self):
         self.__snake.dead = True
-        time.sleep(0.5)
+        self.__game_loop_thread.join()
         self.__map.reset()
         self.__snake = Snake(self.__map, self.__conf.init_direc,
                              self.__conf.init_bodies, self.__conf.init_types)
         self.__pause = False
-        self.__start_game_loop()
+        self.__game_loop_thread = Thread(target=self.__game_loop, name='GameLoopThread')
+        self.__game_loop_thread.start()
