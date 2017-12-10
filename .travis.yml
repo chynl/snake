@@ -16,4 +16,4 @@ install:
   - pip install -r requirements.txt
 
 script:
-  - python -m pytest -v
+  - python -m pytest -v --ignore=tests/gui/

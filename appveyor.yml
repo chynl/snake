@@ -17,4 +17,4 @@ install:
 build: off
 
 test_script:
-  - "%PYTHON%\\python.exe -m pytest -v"
+  - "%PYTHON%\\python.exe -m pytest -v --ignore=tests/gui/"

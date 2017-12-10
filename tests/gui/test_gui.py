@@ -2,16 +2,12 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=C0111
 
-"""GUI Tests."""
-
-import pytest
 from snake.base import Pos, PointType, Map
 from snake.game import GameConf
 from snake.gui import GameWindow
 
 
-@pytest.mark.skip()
-def test_gui():
+def test_game_window():
     game_conf = GameConf()
     game_conf.map_rows = 15
     game_conf.map_cols = 15
