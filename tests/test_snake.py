@@ -119,7 +119,7 @@ def test_move_eat():
         m.create_food(pos)
         s.move(move_direc[i])
     assert m.is_full()
-    assert s.len() == 9 and not s.dead
+    assert s.len() == 9 and s.steps == 25 and not s.dead
 
 
 def test_dead():

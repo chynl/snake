@@ -104,7 +104,9 @@ class GameWindow(tk.Tk):
         else:
             status_str = self.__conf.info_status[0]
         self.__info_var.set(self.__conf.info_str %
-                            (self.__snake.len(), self.__map.capacity, status_str))
+                            (status_str,
+                             self.__snake.len(), self.__map.capacity,
+                             self.__snake.steps))
 
     def __draw_map_contents(self):
         for i in range(self.__conf.map_rows):

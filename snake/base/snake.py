@@ -29,6 +29,7 @@ class Snake:
         self.reset()
 
     def reset(self):
+        self.__steps = 0
         self.__dead = False
         self.__direc = self.__init_direc
         self.__direc_next = self.__init_direc
@@ -36,6 +37,10 @@ class Snake:
         self.__bodies = deque(self.__init_bodies)
         for i, pos in enumerate(self.__init_bodies):
             self.__map.point(pos).type = self.__init_types[i]
+
+    @property
+    def steps(self):
+        return self.__steps
 
     @property
     def dead(self):
@@ -87,6 +92,7 @@ class Snake:
             self.__rm_tail()
         self.__map.point(new_head).type = new_head_type
         self.__direc = self.__direc_next
+        self.__steps += 1
 
     def __rm_tail(self):
         self.__map.point(self.tail()).type = PointType.EMPTY

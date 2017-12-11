@@ -54,10 +54,12 @@ class GameConf:
             "r: restart\n"
             "space: pause/resume\n"
             "esc: exit\n\n"
+            "[ status ]\n"
+            "%s\n\n"
             "[ length ]\n"
             "%03d/%3d\n\n"
-            "[ status ]\n"
-            "%s"
+            "[ steps ]\n"
+            "%03d"
         )
         self.info_status = ['eating', 'dead', 'full']
 
