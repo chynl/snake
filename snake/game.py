@@ -16,7 +16,7 @@ class GameConf:
         self.map_cols = 20
         self.map_width = 400      # pixels
         self.map_height = 400     # pixels
-        self.window_width = 600   # pixels
+        self.window_width = 550   # pixels
         self.window_height = 400  # pixels
         self.grid_pad_ratio = 0.25
 
