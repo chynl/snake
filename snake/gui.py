@@ -8,7 +8,7 @@ from snake.base import Pos, PointType
 
 class GameWindow(tk.Tk):
 
-    def __init__(self, conf, m, s=None, keybindings=None):
+    def __init__(self, conf, m, s=None, on_exit=None, keybindings=None):
         super().__init__()
         super().title("Snake")
         super().resizable(width=False, height=False)
@@ -21,13 +21,19 @@ class GameWindow(tk.Tk):
         self.__grid_width = conf.map_width / conf.map_cols
         self.__grid_height = conf.map_height / conf.map_rows
         self.__init_widgets()
-        self.__init_keybindings(keybindings)
         self.__init_draw_params()
 
-    def show(self, func=None):
+        def on_destroy():
+            if callable(on_exit):
+                on_exit()
+            self.destroy()
+
+        self.__init_keybindings(keybindings, on_destroy)
+
+    def show(self, game_loop=None):
         def cb():
-            if func is not None:
-                func()
+            if callable(game_loop):
+                game_loop()
             self.__update_contents()
             self.after(self.__conf.interval_draw, cb)
         self.after(100, cb)
@@ -48,10 +54,10 @@ class GameWindow(tk.Tk):
                        font=self.__conf.font_info) \
             .place(x=self.__conf.map_width, y=0)
 
-    def __init_keybindings(self, keybindings):
-        self.bind('<Escape>', lambda e: self.destroy())
-        self.protocol('WM_DELETE_WINDOW', self.destroy)
-        if keybindings is not None:
+    def __init_keybindings(self, keybindings, on_destroy):
+        self.bind('<Escape>', lambda e: on_destroy())
+        self.protocol('WM_DELETE_WINDOW', on_destroy)
+        if keybindings:
             for kb in keybindings:
                 self.bind(kb[0], kb[1])
 
