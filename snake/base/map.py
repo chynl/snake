@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# pylint: disable=C0103,C0111,W0212
+# pylint: disable=C0103,C0111,W0201,W0212
 
 """Definition of class Map."""
 
@@ -65,7 +65,8 @@ class Map:
         return self.is_inside(pos) and self.point(pos).type == PointType.EMPTY
 
     def is_safe(self, pos):
-        return self.is_inside(pos) and (self.point(pos).type == PointType.EMPTY or self.point(pos).type == PointType.FOOD)
+        return self.is_inside(pos) and (self.point(pos).type == PointType.EMPTY or \
+                                        self.point(pos).type == PointType.FOOD)
 
     def is_full(self):
         """Check if the map is filled with the snake's bodies."""
