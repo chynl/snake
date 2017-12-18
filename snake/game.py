@@ -42,7 +42,7 @@ class GameConf:
         self.init_types = [PointType.HEAD_R, PointType.BODY_HOR, PointType.BODY_HOR]
 
         # Font
-        self.info_font = ('Helvetica', 10)
+        self.font_info = ('Helvetica', 10)
 
         # Info
         self.info_str = (
@@ -60,8 +60,6 @@ class GameConf:
             "%03d\n\n"
             "[ length ]\n"
             "%03d/%3d (" + str(self.map_rows) + "x" + str(self.map_cols) + ")\n\n"
-            "[ time ]\n"
-            "%02d:%02d:%02d\n\n"
         )
         self.info_status = ['eating', 'dead', 'full']
 
@@ -72,8 +70,15 @@ class Game:
         self.__map = Map(conf.map_rows + 2, conf.map_cols + 2)
         self.__snake = Snake(self.__map, conf.init_direc,
                              conf.init_bodies, conf.init_types)
-        self.__window = GameWindow(conf, self.__map, self.__snake, self.__keybindings())
         self.__pause = False
+        self.__window = GameWindow(conf, self.__map, self.__snake, (
+            ('<w>', lambda e: self.__update_direc(Direc.UP)),
+            ('<a>', lambda e: self.__update_direc(Direc.LEFT)),
+            ('<s>', lambda e: self.__update_direc(Direc.DOWN)),
+            ('<d>', lambda e: self.__update_direc(Direc.RIGHT)),
+            ('<r>', lambda e: self.__reset()),
+            ('<space>', lambda e: self.__toggle_pause())
+        ))
 
     def run(self):
         self.__window.show(self.__game_main)
@@ -83,16 +88,6 @@ class Game:
             self.__map.create_rand_food()
         if not self.__pause:
             self.__snake.move()
-
-    def __keybindings(self):
-        return (
-            ('<w>', lambda e: self.__update_direc(Direc.UP)),
-            ('<a>', lambda e: self.__update_direc(Direc.LEFT)),
-            ('<s>', lambda e: self.__update_direc(Direc.DOWN)),
-            ('<d>', lambda e: self.__update_direc(Direc.RIGHT)),
-            ('<r>', lambda e: self.__reset()),
-            ('<space>', lambda e: self.__toggle_pause())
-        )
 
     def __update_direc(self, new_direc):
         if Direc.opposite(new_direc) != self.__snake.direc:

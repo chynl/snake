@@ -4,7 +4,6 @@
 
 """Definition of class Snake."""
 
-import time
 from collections import deque
 from snake.base.direc import Direc
 from snake.base.point import PointType
@@ -31,7 +30,6 @@ class Snake:
 
     def reset(self):
         self.__steps = 0
-        self.__time_beg = time.perf_counter()
         self.__dead = False
         self.__direc = self.__init_direc
         self.__direc_next = self.__init_direc
@@ -63,12 +61,6 @@ class Snake:
     @direc_next.setter
     def direc_next(self, val):
         self.__direc_next = val
-
-    def cost_time(self):
-        seconds = int(time.perf_counter() - self.__time_beg)
-        m, s = divmod(seconds, 60)
-        h, m = divmod(m, 60)
-        return h, m, s
 
     def len(self):
         return len(self.__bodies)

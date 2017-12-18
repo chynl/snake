@@ -20,7 +20,7 @@ class GameWindow(tk.Tk):
         self.__snake = s
         self.__grid_width = conf.map_width / conf.map_cols
         self.__grid_height = conf.map_height / conf.map_rows
-        self.__init_widges()
+        self.__init_widgets()
         self.__init_keybindings(keybindings)
         self.__init_draw_params()
 
@@ -33,7 +33,7 @@ class GameWindow(tk.Tk):
         self.after(100, cb)
         self.mainloop()
 
-    def __init_widges(self):
+    def __init_widgets(self):
         self.__canvas = tk.Canvas(self, bg=self.__conf.color_bg,
                                   width=self.__conf.map_width,
                                   height=self.__conf.map_height,
@@ -45,7 +45,7 @@ class GameWindow(tk.Tk):
                        textvariable=self.__info_var,
                        fg=self.__conf.color_txt,
                        bg=self.__conf.color_bg,
-                       font=self.__conf.info_font) \
+                       font=self.__conf.font_info) \
             .place(x=self.__conf.map_width, y=0)
 
     def __init_keybindings(self, keybindings):
@@ -104,12 +104,10 @@ class GameWindow(tk.Tk):
             status_str = self.__conf.info_status[2]
         else:
             status_str = self.__conf.info_status[0]
-        cost_time = self.__snake.cost_time()
         self.__info_var.set(self.__conf.info_str %
                             (status_str,
                              self.__snake.steps,
-                             self.__snake.len(), self.__map.capacity,
-                             cost_time[0], cost_time[1], cost_time[2]))
+                             self.__snake.len(), self.__map.capacity))
 
     def __draw_map_contents(self):
         for i in range(self.__conf.map_rows):
