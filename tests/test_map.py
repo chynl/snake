@@ -21,6 +21,17 @@ def test_init():
             else:
                 assert m.point(Pos(i, j)).type == PointType.EMPTY
 
+def test_copy():
+    m = Map(5, 5)
+    m.point(Pos(1, 1)).type = PointType.FOOD
+    m_copy = m.copy()
+    assert id(m) != id(m_copy)
+    assert m.num_rows == m_copy.num_rows
+    assert m.num_cols == m_copy.num_cols
+    assert m.capacity == m_copy.capacity
+    for i in range(m.num_rows):
+        for j in range(m.num_cols):
+            assert m.point(Pos(i, j)).type == m_copy.point(Pos(i, j)).type
 
 def test_predicate():
     m = Map(5, 5)

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# pylint: disable=C0103,C0111
+# pylint: disable=C0103,C0111,W0212
 
 """Definition of class Map."""
 
@@ -23,7 +23,6 @@ class Map:
         self.__capacity = (num_rows - 2) * (num_cols - 2)
         self.__content = [[Point() for _ in range(num_cols)]
                           for _ in range(num_rows)]
-        self.__food = None
         self.reset()
 
     def reset(self):
@@ -35,6 +34,13 @@ class Map:
                     self.__content[i][j].type = PointType.WALL
                 else:
                     self.__content[i][j].type = PointType.EMPTY
+
+    def copy(self):
+        m_copy = Map(self.__num_rows, self.__num_cols)
+        for i in range(self.__num_rows):
+            for j in range(self.__num_cols):
+                m_copy.__content[i][j].type = self.__content[i][j].type
+        return m_copy
 
     def point(self, pos):
         """Return a point on the map.

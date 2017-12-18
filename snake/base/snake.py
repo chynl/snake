@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# pylint: disable=C0103,C0111,W0201
+# pylint: disable=C0103,C0111,W0201,W0212
 
 """Definition of class Snake."""
 
@@ -38,6 +38,16 @@ class Snake:
         for i, pos in enumerate(self.__init_bodies):
             self.__map.point(pos).type = self.__init_types[i]
 
+    def copy(self):
+        m_copy = self.__map.copy()
+        s_copy = Snake(m_copy, Direc.NONE, [], [])
+        s_copy.__steps = self.__steps
+        s_copy.__dead = self.__dead
+        s_copy.__direc = self.__direc
+        s_copy.__direc_next = self.__direc_next
+        s_copy.__bodies = deque(self.__bodies)
+        return s_copy, m_copy
+
     @property
     def steps(self):
         return self.__steps
@@ -61,6 +71,10 @@ class Snake:
     @direc_next.setter
     def direc_next(self, val):
         self.__direc_next = val
+
+    @property
+    def bodies(self):
+        return self.__bodies
 
     def len(self):
         return len(self.__bodies)
