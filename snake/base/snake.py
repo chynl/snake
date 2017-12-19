@@ -64,6 +64,10 @@ class Snake:
         return s_copy, m_copy
 
     @property
+    def map(self):
+        return self.__map
+
+    @property
     def steps(self):
         return self.__steps
 
