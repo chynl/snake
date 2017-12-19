@@ -40,8 +40,8 @@ class GameConf:
 
         # Initial snake
         self.init_direc = Direc.RIGHT
-        self.init_bodies = [Pos(1, 3), Pos(1, 2), Pos(1, 1)]
-        self.init_types = [PointType.HEAD_R, PointType.BODY_HOR, PointType.BODY_HOR]
+        self.init_bodies = None  # Randomly initialize
+        self.init_types = None
 
         # Font
         self.font_info = ('Helvetica', 10)

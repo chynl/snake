@@ -4,20 +4,22 @@
 
 """Definition of class Snake."""
 
+import random
 from collections import deque
 from snake.base.direc import Direc
+from snake.base.pos import Pos
 from snake.base.point import PointType
 
 
 class Snake:
     """Snake of the game."""
 
-    def __init__(self, m, init_direc, init_bodies, init_types):
+    def __init__(self, m, init_direc=Direc.RIGHT, init_bodies=None, init_types=None):
         """Initialize a Snake object.
 
         Args:
             m (base.map.Map): The map that the snake moves on.
-            init_direc (base.direc.Direc): Initial move direction.
+            init_direc (base.direc.Direc): Initial direction.
             init_bodies (list of base.pos.Pos): Initial snake bodies positions.
             init_types (list of base.point.PointType): Types of each position in init_bodies.
 
@@ -29,14 +31,27 @@ class Snake:
         self.reset()
 
     def reset(self):
+        rand_init = False
+        if self.__init_bodies is None:  # Randomly initialize
+            rand_init = True
+            head_row = random.randrange(1, self.__map.num_rows - 1)
+            head_col = random.randrange(3, self.__map.num_cols - 1)
+            self.__init_bodies = [Pos(head_row, head_col),
+                                  Pos(head_row, head_col - 1),
+                                  Pos(head_row, head_col - 2)]
+            self.__init_types = [PointType.HEAD_R, PointType.BODY_HOR, PointType.BODY_HOR]
+
         self.__steps = 0
         self.__dead = False
         self.__direc = self.__init_direc
-        self.__direc_next = self.__init_direc
+        self.__direc_next = Direc.NONE
         self.__map.reset()
         self.__bodies = deque(self.__init_bodies)
         for i, pos in enumerate(self.__init_bodies):
             self.__map.point(pos).type = self.__init_types[i]
+
+        if rand_init:
+            self.__init_bodies = self.__init_types = None
 
     def copy(self):
         m_copy = self.__map.copy()
