@@ -98,9 +98,12 @@ class Map:
                     empty_pos.append(Pos(i, j))
                 elif t == PointType.FOOD:
                     return None  # Stop if food exists
-        food = random.choice(empty_pos)
-        self.create_food(food)
-        return food
+        if empty_pos:
+            food = random.choice(empty_pos)
+            self.create_food(food)
+            return food
+        else:
+            return None
 
     @property
     def num_rows(self):

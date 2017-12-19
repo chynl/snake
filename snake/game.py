@@ -59,9 +59,9 @@ class GameConf:
             "[ status ]\n"
             "%s\n\n"
             "[ steps ]\n"
-            "%03d\n\n"
+            "%d\n\n"
             "[ length ]\n"
-            "%03d/%3d (" + str(self.map_rows) + "x" + str(self.map_cols) + ")\n\n"
+            "%d/%d (" + str(self.map_rows) + "x" + str(self.map_cols) + ")\n\n"
         )
         self.info_status = ['eating', 'dead', 'full']
 
