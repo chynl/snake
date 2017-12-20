@@ -6,6 +6,7 @@ import sys
 import random
 from collections import deque
 from snake.base import Direc
+from snake.solver.base import BaseSolver
 
 
 class _TableCell:
@@ -26,11 +27,10 @@ class _TableCell:
         self.visit = False
 
 
-class PathSolver:
+class PathSolver(BaseSolver):
 
     def __init__(self, snake):
-        self.__snake = snake
-        self.__map = snake.map
+        super().__init__(snake)
         self.__table = [[_TableCell() for _ in range(snake.map.num_cols)]
                         for _ in range(snake.map.num_rows)]
 
@@ -50,7 +50,7 @@ class PathSolver:
         """
         self.__reset_table()
 
-        head = self.__snake.head()
+        head = self.snake.head()
         self.__table[head.x][head.y].dist = 0
         queue = deque()
         queue.append(head)
@@ -62,7 +62,7 @@ class PathSolver:
 
             # Arrange the order of traverse to make the path as straight as possible
             if cur == head:
-                first_direc = self.__snake.direc
+                first_direc = self.snake.direc
             else:
                 first_direc = self.__table[cur.x][cur.y].parent.direc_to(cur)
             adjs = cur.all_adj()
@@ -98,7 +98,7 @@ class PathSolver:
             return deque()
 
         self.__reset_table()
-        cur = head = self.__snake.head()
+        cur = head = self.snake.head()
 
         # Set all positions on the shortest path to 'visited'
         self.__table[cur.x][cur.y].visit = True
@@ -152,4 +152,4 @@ class PathSolver:
         return path
 
     def __is_valid(self, pos):
-        return self.__map.is_safe(pos) and not self.__table[pos.x][pos.y].visit
+        return self.map.is_safe(pos) and not self.__table[pos.x][pos.y].visit
