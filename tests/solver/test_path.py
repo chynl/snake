@@ -17,8 +17,32 @@ def test_shortest():
     solver = PathSolver(s)
     act_path = solver.shortest_path_to(food)
     act_path = solver.shortest_path_to(food)  # Check idempotence
-    expect_path = [Direc.RIGHT, Direc.RIGHT, Direc.DOWN, Direc.DOWN, Direc.DOWN]
+    expect_path = [
+        Direc.RIGHT, Direc.RIGHT, Direc.DOWN, Direc.DOWN, Direc.DOWN
+    ]
+    assert len(act_path) == len(expect_path)
     for i, direc in enumerate(act_path):
         assert direc == expect_path[i]
     assert solver.table[5][1].dist == 5
     assert solver.table[5][1].dist == solver.table[5][5].dist
+    # Empty path
+    assert not solver.shortest_path_to(s.tail())
+
+def test_longest():
+    m = Map(6, 6)
+    m.create_food(Pos(4, 4))
+    s = Snake(m, Direc.RIGHT,
+              [Pos(1, 3), Pos(1, 2)],
+              [PointType.HEAD_R, PointType.BODY_HOR])
+    solver = PathSolver(s)
+    act_path = solver.longest_path_to(Pos(1, 1))
+    act_path = solver.longest_path_to(Pos(1, 1))  # Check idempotence
+    expect_path = [
+        Direc.RIGHT, Direc.DOWN, Direc.DOWN, Direc.DOWN, Direc.LEFT, Direc.LEFT, Direc.LEFT,
+        Direc.UP, Direc.RIGHT, Direc.RIGHT, Direc.UP, Direc.LEFT, Direc.LEFT, Direc.UP
+    ]
+    assert len(act_path) == len(expect_path)
+    for i, direc in enumerate(act_path):
+        assert direc == expect_path[i]
+    # Empty path
+    assert not solver.longest_path_to(s.tail())
