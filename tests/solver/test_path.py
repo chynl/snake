@@ -28,6 +28,7 @@ def test_shortest():
     # Empty path
     assert not solver.shortest_path_to(s.tail())
 
+
 def test_longest():
     m = Map(6, 6)
     m.create_food(Pos(4, 4))
