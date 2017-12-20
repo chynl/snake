@@ -28,9 +28,9 @@ class Snake:
         self.__init_direc = init_direc
         self.__init_bodies = init_bodies
         self.__init_types = init_types
-        self.reset()
+        self.reset(False)
 
-    def reset(self):
+    def reset(self, reset_map=True):
         rand_init = False
         if self.__init_bodies is None:  # Randomly initialize
             rand_init = True
@@ -45,8 +45,10 @@ class Snake:
         self.__dead = False
         self.__direc = self.__init_direc
         self.__direc_next = Direc.NONE
-        self.__map.reset()
         self.__bodies = deque(self.__init_bodies)
+
+        if reset_map:
+            self.__map.reset()
         for i, pos in enumerate(self.__init_bodies):
             self.__map.point(pos).type = self.__init_types[i]
 
@@ -107,6 +109,10 @@ class Snake:
         if not self.__bodies:
             return None
         return self.__bodies[-1]
+
+    def move_path(self, path):
+        for p in path:
+            self.move(p)
 
     def move(self, new_direc=None):
         if new_direc is not None:

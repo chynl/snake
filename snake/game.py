@@ -15,8 +15,8 @@ class GameConf:
         """Initialize a default configuration."""
 
         # Size
-        self.map_rows = 20
-        self.map_cols = 20
+        self.map_rows = 14
+        self.map_cols = 14
         self.map_width = 400      # pixels
         self.map_height = 400     # pixels
         self.window_width = 550   # pixels
@@ -24,10 +24,11 @@ class GameConf:
         self.grid_pad_ratio = 0.25
 
         # Delay
-        self.interval_draw = 100   # ms
+        self.interval_draw = 40  # ms
 
         # Switch
         self.enable_AI = True
+        self.show_gui = True
         self.show_grid_line = False
         self.show_info_panel = True
 
@@ -84,19 +85,49 @@ class Game:
             ('<space>', lambda e: self.__toggle_pause())
         ))
         self.__solver = GreedySolver(self.__snake)
+        self.__episode = 1
         self.__init_log_file()
 
     def run(self):
-        self.__window.show(self.__game_main)
+        if self.__conf.show_gui:
+            self.__window.show(self.__game_main)
+        else:
+            self.__run_batch_episodes()
+
+    def __run_batch_episodes(self):
+        episodes = int(input("Please input the number of episodes: "))
+        print("")
+        tot_suc, tot_suc_steps = 0, 0
+        for _ in range(episodes):
+            print("Episode %d - " % self.__episode, end="")
+            while True:
+                self.__game_main()
+                if self.__map.is_full():
+                    tot_suc += 1
+                    tot_suc_steps += self.__snake.steps
+                    print("SUC  (steps: %d)" % self.__snake.steps)
+                    break
+                if self.__snake.dead or self.__snake.steps >= 10000:
+                    print("FAIL  (steps: %d)" % self.__snake.steps)
+                    break
+            self.__reset()
+        suc_ratio = tot_suc / (self.__episode - 1)
+        avg_suc_steps = 0
+        if tot_suc != 0:
+            avg_suc_steps = tot_suc_steps // tot_suc
+        print("\n[Summary]\nTotal: %d  SUC: %d (%.2f%%)  Avg SUC steps: %d\n" % \
+              (self.__episode - 1, tot_suc, 100 * suc_ratio, avg_suc_steps))
+        self.__on_exit()
 
     def __game_main(self):
         if not self.__map.has_food():
             self.__map.create_rand_food()
-        if not self.__pause and not self.__snake.dead:
+        if not self.__pause and not self.__snake.dead and not self.__map.is_full():
             if self.__conf.enable_AI:
                 self.__update_direc(self.__solver.next_direc())
+            if self.__conf.show_gui and self.__snake.direc_next != Direc.NONE:
+                self.__write_logs()
             self.__snake.move()
-            self.__write_logs()
 
     def __update_direc(self, new_direc):
         if Direc.opposite(new_direc) != self.__snake.direc:
@@ -109,11 +140,14 @@ class Game:
 
     def __reset(self):
         self.__pause = True
+        self.__write_logs()
         self.__snake.reset()
+        self.__episode += 1
         self.__pause = False
 
     def __on_exit(self):
         if self.__log_file:
+            self.__write_logs()
             self.__log_file.close()
 
     def __init_log_file(self):
@@ -130,11 +164,13 @@ class Game:
                 self.__log_file.close()
 
     def __write_logs(self):
-        self.__log_file.write("Step %d:\n" % self.__snake.steps)
+        self.__log_file.write("[ Episode %d / Step %d ]\n" % \
+                              (self.__episode, self.__snake.steps))
         # Map content
         for i in range(self.__map.num_rows):
             for j in range(self.__map.num_cols):
-                t = self.__map.point(Pos(i, j)).type
+                pos = Pos(i, j)
+                t = self.__map.point(pos).type
                 if t == PointType.EMPTY:
                     self.__log_file.write("  ")
                 elif t == PointType.WALL:
@@ -144,8 +180,11 @@ class Game:
                 elif t == PointType.HEAD_L or t == PointType.HEAD_U or \
                     t == PointType.HEAD_R or t == PointType.HEAD_D:
                     self.__log_file.write("H ")
+                elif pos == self.__snake.tail():
+                    self.__log_file.write("T ")
                 else:
                     self.__log_file.write("B ")
             self.__log_file.write("\n")
-        self.__log_file.write("Last direc: %s\n" % str(self.__snake.direc))
+        self.__log_file.write("[ last/next direc: %s/%s ]\n" % \
+                              (self.__snake.direc, self.__snake.direc_next))
         self.__log_file.write("\n")

@@ -34,7 +34,7 @@ def test_arithmetic():
 def test_dist():
     p1 = Pos(-5, 20)
     p2 = Pos(10, 8)
-    assert Pos.manhattan_dis(p1, p2) == 27
+    assert Pos.manhattan_dist(p1, p2) == 27
 
 
 def test_adj():

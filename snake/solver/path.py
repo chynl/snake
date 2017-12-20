@@ -5,7 +5,7 @@
 import sys
 import random
 from collections import deque
-from snake.base import Direc
+from snake.base import Direc, PointType
 from snake.solver.base import BaseSolver
 
 
@@ -37,6 +37,22 @@ class PathSolver(BaseSolver):
     @property
     def table(self):
         return self.__table
+
+    def shortest_path_to_food(self):
+        food = self.map.food
+        ori_type = self.map.point(food).type
+        self.map.point(food).type = PointType.EMPTY
+        path = self.shortest_path_to(food)
+        self.map.point(food).type = ori_type  # Restore origin type
+        return path
+
+    def longest_path_to_tail(self):
+        tail = self.snake.tail()
+        ori_type = self.map.point(tail).type
+        self.map.point(tail).type = PointType.EMPTY
+        path = self.longest_path_to(tail)
+        self.map.point(tail).type = ori_type  # Restore origin type
+        return path
 
     def shortest_path_to(self, des):
         """Find the shortest path from the snake's head to the destination.

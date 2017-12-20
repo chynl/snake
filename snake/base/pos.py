@@ -47,7 +47,7 @@ class Pos:
         return hash((self.x, self.y))
 
     @staticmethod
-    def manhattan_dis(p1, p2):
+    def manhattan_dist(p1, p2):
         return abs(p1.x - p2.x) + abs(p1.y - p2.y)
 
     def direc_to(self, adj_pos):
