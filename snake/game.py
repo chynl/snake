@@ -6,6 +6,7 @@ import os
 import errno
 from snake.base import Direc, Pos, PointType, Map, Snake
 from snake.gui import GameWindow
+from snake.solver import GreedySolver
 
 
 class GameConf:
@@ -26,6 +27,7 @@ class GameConf:
         self.interval_draw = 100   # ms
 
         # Switch
+        self.enable_AI = True
         self.show_grid_line = False
         self.show_info_panel = True
 
@@ -81,6 +83,7 @@ class Game:
             ('<r>', lambda e: self.__reset()),
             ('<space>', lambda e: self.__toggle_pause())
         ))
+        self.__solver = GreedySolver(self.__snake)
         self.__init_log_file()
 
     def run(self):
@@ -90,6 +93,8 @@ class Game:
         if not self.__map.has_food():
             self.__map.create_rand_food()
         if not self.__pause and not self.__snake.dead:
+            if self.__conf.enable_AI:
+                self.__update_direc(self.__solver.next_direc())
             self.__snake.move()
             self.__write_logs()
 
