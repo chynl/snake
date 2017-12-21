@@ -15,22 +15,22 @@ class GameConf:
         """Initialize a default configuration."""
 
         # Size
-        self.map_rows = 14
-        self.map_cols = 14
+        self.map_rows = 10
+        self.map_cols = 10
         self.map_width = 400      # pixels
         self.map_height = 400     # pixels
         self.window_width = 550   # pixels
         self.window_height = 400  # pixels
         self.grid_pad_ratio = 0.25
 
-        # Delay
-        self.interval_draw = 40  # ms
-
         # Switch
         self.enable_AI = True
         self.show_gui = True
         self.show_grid_line = False
         self.show_info_panel = True
+
+        # Delay
+        self.interval_draw = 40  # ms
 
         # Color
         self.color_bg = '#000000'
@@ -95,6 +95,7 @@ class Game:
             self.__run_batch_episodes()
 
     def __run_batch_episodes(self):
+        STEPS_LIMIT = 10000
         episodes = int(input("Please input the number of episodes: "))
         print("")
         tot_suc, tot_suc_steps = 0, 0
@@ -107,8 +108,10 @@ class Game:
                     tot_suc_steps += self.__snake.steps
                     print("SUC  (steps: %d)" % self.__snake.steps)
                     break
-                if self.__snake.dead or self.__snake.steps >= 10000:
+                if self.__snake.dead or self.__snake.steps >= STEPS_LIMIT:
                     print("FAIL  (steps: %d)" % self.__snake.steps)
+                    if self.__snake.steps >= STEPS_LIMIT:
+                        self.__write_logs()  # Write the last step
                     break
             self.__reset()
         suc_ratio = tot_suc / (self.__episode - 1)
@@ -120,14 +123,23 @@ class Game:
         self.__on_exit()
 
     def __game_main(self):
+        """Main function in the game loop."""
         if not self.__map.has_food():
             self.__map.create_rand_food()
-        if not self.__pause and not self.__snake.dead and not self.__map.is_full():
-            if self.__conf.enable_AI:
-                self.__update_direc(self.__solver.next_direc())
-            if self.__conf.show_gui and self.__snake.direc_next != Direc.NONE:
-                self.__write_logs()
-            self.__snake.move()
+
+        if self.__pause or self.__episode_end():
+            return
+
+        if self.__conf.enable_AI:
+            self.__update_direc(self.__solver.next_direc())
+
+        if self.__conf.show_gui and self.__snake.direc_next != Direc.NONE:
+            self.__write_logs()
+
+        self.__snake.move()
+
+        if self.__episode_end():
+            self.__write_logs()  # Write the last step
 
     def __update_direc(self, new_direc):
         if Direc.opposite(new_direc) != self.__snake.direc:
@@ -138,16 +150,15 @@ class Game:
     def __toggle_pause(self):
         self.__pause = not self.__pause
 
+    def __episode_end(self):
+        return self.__snake.dead or self.__map.is_full()
+
     def __reset(self):
-        self.__pause = True
-        self.__write_logs()
         self.__snake.reset()
         self.__episode += 1
-        self.__pause = False
 
     def __on_exit(self):
         if self.__log_file:
-            self.__write_logs()
             self.__log_file.close()
 
     def __init_log_file(self):
@@ -166,7 +177,6 @@ class Game:
     def __write_logs(self):
         self.__log_file.write("[ Episode %d / Step %d ]\n" % \
                               (self.__episode, self.__snake.steps))
-        # Map content
         for i in range(self.__map.num_rows):
             for j in range(self.__map.num_cols):
                 pos = Pos(i, j)

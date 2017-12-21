@@ -39,19 +39,19 @@ class PathSolver(BaseSolver):
         return self.__table
 
     def shortest_path_to_food(self):
-        food = self.map.food
-        ori_type = self.map.point(food).type
-        self.map.point(food).type = PointType.EMPTY
-        path = self.shortest_path_to(food)
-        self.map.point(food).type = ori_type  # Restore origin type
-        return path
+        return self.path_to(self.map.food, "shortest")
 
     def longest_path_to_tail(self):
-        tail = self.snake.tail()
-        ori_type = self.map.point(tail).type
-        self.map.point(tail).type = PointType.EMPTY
-        path = self.longest_path_to(tail)
-        self.map.point(tail).type = ori_type  # Restore origin type
+        return self.path_to(self.snake.tail(), "longest")
+
+    def path_to(self, des, path_type):
+        ori_type = self.map.point(des).type
+        self.map.point(des).type = PointType.EMPTY
+        if path_type == "shortest":
+            path = self.shortest_path_to(des)
+        elif path_type == "longest":
+            path = self.longest_path_to(des)
+        self.map.point(des).type = ori_type  # Restore origin type
         return path
 
     def shortest_path_to(self, des):
