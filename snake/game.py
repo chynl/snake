@@ -6,7 +6,7 @@ import os
 import errno
 from snake.base import Direc, Pos, PointType, Map, Snake
 from snake.gui import GameWindow
-from snake.solver import GreedySolver
+from snake.solver import GreedySolver, HamiltonSolver
 
 
 class GameConf:
@@ -16,15 +16,19 @@ class GameConf:
 
         # Size
         self.map_rows = 10
-        self.map_cols = 10
+        self.map_cols = self.map_rows
         self.map_width = 400      # pixels
         self.map_height = 400     # pixels
         self.window_width = 550   # pixels
         self.window_height = 400  # pixels
         self.grid_pad_ratio = 0.25
 
-        # Switch
+        # AI
         self.enable_AI = True
+        self.solver_name = 'GreedySolver'
+        #self.solver_name = 'HamiltonSolver'
+
+        # Switch
         self.show_gui = True
         self.show_grid_line = False
         self.show_info_panel = True
@@ -42,8 +46,8 @@ class GameConf:
         self.color_body = '#F5F5F5'
 
         # Initial snake
-        self.init_direc = Direc.RIGHT
-        self.init_bodies = None  # Randomly initialize
+        self.init_direc = None  # Randomly initialize
+        self.init_bodies = None
         self.init_types = None
 
         # Font
@@ -76,7 +80,7 @@ class Game:
         self.__snake = Snake(self.__map, conf.init_direc,
                              conf.init_bodies, conf.init_types)
         self.__pause = False
-        self.__window = GameWindow(conf, self.__map, self.__snake, self.__on_exit, (
+        self.__window = GameWindow(conf, self.__map, "Snake", self.__snake, self.__on_exit, (
             ('<w>', lambda e: self.__update_direc(Direc.UP)),
             ('<a>', lambda e: self.__update_direc(Direc.LEFT)),
             ('<s>', lambda e: self.__update_direc(Direc.DOWN)),
@@ -84,7 +88,7 @@ class Game:
             ('<r>', lambda e: self.__reset()),
             ('<space>', lambda e: self.__toggle_pause())
         ))
-        self.__solver = GreedySolver(self.__snake)
+        self.__solver = globals()[self.__conf.solver_name](self.__snake)
         self.__episode = 1
         self.__init_log_file()
 

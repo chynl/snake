@@ -14,7 +14,7 @@ from snake.base.point import PointType
 class Snake:
     """Snake of the game."""
 
-    def __init__(self, m, init_direc=Direc.RIGHT, init_bodies=None, init_types=None):
+    def __init__(self, m, init_direc=None, init_bodies=None, init_types=None):
         """Initialize a Snake object.
 
         Args:
@@ -32,14 +32,28 @@ class Snake:
 
     def reset(self, reset_map=True):
         rand_init = False
-        if self.__init_bodies is None:  # Randomly initialize
+        if self.__init_direc is None:  # Randomly initialize
             rand_init = True
-            head_row = random.randrange(1, self.__map.num_rows - 1)
-            head_col = random.randrange(3, self.__map.num_cols - 1)
-            self.__init_bodies = [Pos(head_row, head_col),
-                                  Pos(head_row, head_col - 1),
-                                  Pos(head_row, head_col - 2)]
-            self.__init_types = [PointType.HEAD_R, PointType.BODY_HOR, PointType.BODY_HOR]
+            head_row = random.randrange(2, self.__map.num_rows - 2)
+            head_col = random.randrange(2, self.__map.num_cols - 2)
+            head = Pos(head_row, head_col)
+
+            self.__init_direc = random.choice([Direc.LEFT, Direc.UP, Direc.RIGHT, Direc.DOWN])
+            self.__init_bodies = [head, head.adj(Direc.opposite(self.__init_direc))]
+
+            self.__init_types = []
+            if self.__init_direc == Direc.LEFT:
+                self.__init_types.append(PointType.HEAD_L)
+            elif self.__init_direc == Direc.UP:
+                self.__init_types.append(PointType.HEAD_U)
+            elif self.__init_direc == Direc.RIGHT:
+                self.__init_types.append(PointType.HEAD_R)
+            elif self.__init_direc == Direc.DOWN:
+                self.__init_types.append(PointType.HEAD_D)
+            if self.__init_direc == Direc.LEFT or self.__init_direc == Direc.RIGHT:
+                self.__init_types.append(PointType.BODY_HOR)
+            elif self.__init_direc == Direc.UP or self.__init_direc == Direc.DOWN:
+                self.__init_types.append(PointType.BODY_VER)
 
         self.__steps = 0
         self.__dead = False
@@ -53,7 +67,7 @@ class Snake:
             self.__map.point(pos).type = self.__init_types[i]
 
         if rand_init:
-            self.__init_bodies = self.__init_types = None
+            self.__init_direc = self.__init_bodies = self.__init_types = None
 
     def copy(self):
         m_copy = self.__map.copy()

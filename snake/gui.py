@@ -8,18 +8,18 @@ from snake.base import Pos, PointType
 
 class GameWindow(tk.Tk):
 
-    def __init__(self, conf, m, s=None, on_exit=None, keybindings=None):
+    def __init__(self, conf, m, title, snake=None, on_exit=None, keybindings=None):
         super().__init__()
-        super().title("Snake")
+        super().title(title)
         super().resizable(width=False, height=False)
         super().configure(background=conf.color_bg)
         if conf.show_info_panel:
             super().geometry("%dx%d" % (conf.window_width, conf.window_height))
         self.__conf = conf
         self.__map = m
-        self.__snake = s
-        self.__grid_width = conf.map_width / conf.map_cols
-        self.__grid_height = conf.map_height / conf.map_rows
+        self.__snake = snake
+        self.__grid_width = conf.map_width / (m.num_rows - 2)
+        self.__grid_height = conf.map_height / (m.num_cols - 2)
         self.__init_widgets()
         self.__init_draw_params()
 
@@ -88,8 +88,8 @@ class GameWindow(tk.Tk):
                                        fill=self.__conf.color_bg, outline='')
 
     def __draw_grid_line(self):
-        for i in range(1, self.__conf.map_rows):
-            for j in range(1, self.__conf.map_cols):
+        for i in range(1, self.__map.num_rows - 2):
+            for j in range(1, self.__map.num_cols - 2):
                 x = j * self.__grid_width
                 y = i * self.__grid_height
                 self.__canvas.create_line(x, 0,
@@ -116,8 +116,8 @@ class GameWindow(tk.Tk):
                              self.__snake.len(), self.__map.capacity))
 
     def __draw_map_contents(self):
-        for i in range(self.__conf.map_rows):
-            for j in range(self.__conf.map_cols):
+        for i in range(self.__map.num_rows - 2):
+            for j in range(self.__map.num_cols - 2):
                 self.__draw_grid(j * self.__grid_width, i * self.__grid_height,
                                  self.__map.point(Pos(i + 1, j + 1)).type)
 

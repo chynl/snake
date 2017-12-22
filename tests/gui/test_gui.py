@@ -10,7 +10,7 @@ from snake.gui import GameWindow
 def test_game_window():
     game_conf = GameConf()
     game_conf.map_rows = 15
-    game_conf.map_cols = 15
+    game_conf.map_cols = game_conf.map_rows
     game_conf.show_grid_line = True
     game_conf.show_info_panel = False
 
@@ -109,4 +109,4 @@ def test_game_window():
     for content in contents:
         game_map.point(content[0]).type = content[1]
 
-    GameWindow(game_conf, game_map).show()
+    GameWindow(game_conf, game_map, "Basic Elements").show()
