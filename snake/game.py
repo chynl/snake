@@ -46,9 +46,9 @@ class GameConf:
         self.color_body = '#F5F5F5'
 
         # Initial snake
-        self.init_direc = None  # Randomly initialize
-        self.init_bodies = None
-        self.init_types = None
+        self.init_direc = Direc.RIGHT
+        self.init_bodies = [Pos(1, 2), Pos(1, 1)]
+        self.init_types = [PointType.HEAD_R, PointType.BODY_HOR]
 
         # Font
         self.font_info = ('Helvetica', 10)
@@ -63,6 +63,8 @@ class GameConf:
             "r: restart\n"
             "space: pause/resume\n"
             "esc: exit\n\n"
+            "[ solver ]\n"
+            "%s\n\n"
             "[ status ]\n"
             "%s\n\n"
             "[ steps ]\n"

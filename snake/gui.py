@@ -111,7 +111,8 @@ class GameWindow(tk.Tk):
         else:
             status_str = self.__conf.info_status[0]
         self.__info_var.set(self.__conf.info_str %
-                            (status_str,
+                            (self.__conf.solver_name[:-6].lower(),
+                             status_str,
                              self.__snake.steps,
                              self.__snake.len(), self.__map.capacity))
 
