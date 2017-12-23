@@ -40,19 +40,40 @@ class GameWindow(tk.Tk):
         self.mainloop()
 
     def __init_widgets(self):
-        self.__canvas = tk.Canvas(self, bg=self.__conf.color_bg,
+        self.__canvas = tk.Canvas(self,
+                                  bg=self.__conf.color_bg,
                                   width=self.__conf.map_width,
                                   height=self.__conf.map_height,
                                   highlightthickness=0)
         self.__canvas.pack(side=tk.LEFT)
         if self.__conf.show_info_panel:
+            frm = tk.Frame(self, bg=self.__conf.color_bg)
+            frm.pack(side=tk.RIGHT, anchor=tk.N)
             self.__info_var = tk.StringVar()
-            tk.Message(self,
+            tk.Message(frm,
                        textvariable=self.__info_var,
                        fg=self.__conf.color_txt,
                        bg=self.__conf.color_bg,
-                       font=self.__conf.font_info) \
-            .place(x=self.__conf.map_width, y=0)
+                       font=self.__conf.font_info).pack(side=tk.TOP, anchor=tk.W)
+            scale = tk.Scale(frm,
+                             label="[ move_delay ]",
+                             font=self.__conf.font_info,
+                             fg=self.__conf.color_txt,
+                             bg=self.__conf.color_bg,
+                             highlightthickness=0,
+                             from_=0,
+                             to=self.__conf.interval_draw_max,
+                             orient=tk.HORIZONTAL,
+                             length=self.__conf.window_width - self.__conf.map_width,
+                             showvalue=False,
+                             tickinterval=0,
+                             resolution=1,
+                             command=self.__update_speed)
+            scale.pack(side=tk.TOP, anchor=tk.W)
+            scale.set(self.__conf.interval_draw)
+
+    def __update_speed(self, speed):
+        self.__conf.interval_draw = int(speed)
 
     def __init_keybindings(self, keybindings, on_destroy):
         self.bind('<Escape>', lambda e: on_destroy())
@@ -103,7 +124,6 @@ class GameWindow(tk.Tk):
         self.__canvas.create_line(self.__conf.map_width - 1, 0,
                                   self.__conf.map_width - 1, self.__conf.map_height,
                                   fill=self.__conf.color_line)
-        # Info str
         if self.__snake.dead:
             status_str = self.__conf.info_status[1]
         elif self.__map.is_full():

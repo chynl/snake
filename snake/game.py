@@ -34,7 +34,8 @@ class GameConf:
         self.show_info_panel = True
 
         # Delay
-        self.interval_draw = 40  # ms
+        self.interval_draw = 40       # ms
+        self.interval_draw_max = 200  # ms
 
         # Color
         self.color_bg = '#000000'
@@ -51,7 +52,7 @@ class GameConf:
         self.init_types = [PointType.HEAD_R, PointType.BODY_HOR]
 
         # Font
-        self.font_info = ('Helvetica', 10)
+        self.font_info = ('Helvetica', 9)
 
         # Info
         self.info_str = (
@@ -70,7 +71,7 @@ class GameConf:
             "[ steps ]\n"
             "%d\n\n"
             "[ length ]\n"
-            "%d/%d (" + str(self.map_rows) + "x" + str(self.map_cols) + ")\n\n"
+            "%d/%d (" + str(self.map_rows) + "x" + str(self.map_cols) + ")\n"
         )
         self.info_status = ['eating', 'dead', 'full']
 
