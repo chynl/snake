@@ -34,7 +34,7 @@ class GameConf:
         self.show_info_panel = True
 
         # Delay
-        self.interval_draw = 50       # ms
+        self.interval_draw = 40       # ms
         self.interval_draw_max = 200  # ms
 
         # Color
@@ -59,12 +59,12 @@ class GameConf:
             "<w/a/s/d>: up/left/down/right\n"
             "<space>: pause/resume\n"
             "<r>: restart    <esc>: exit\n"
-            "------------\n"
+            "---------------------------------\n"
             "solver: %s\n"
             "status: %s\n"
             "steps: %d\n"
             "length: %d/%d (" + str(self.map_rows) + "x" + str(self.map_cols) + ")\n"
-            "------------\n"
+            "---------------------------------\n"
             "move delay:"
         )
         self.info_status = ['eating', 'dead', 'full']
