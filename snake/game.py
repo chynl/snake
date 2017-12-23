@@ -17,10 +17,11 @@ class GameConf:
         # Size
         self.map_rows = 10
         self.map_cols = self.map_rows
-        self.map_width = 400      # pixels
-        self.map_height = 400     # pixels
-        self.window_width = 550   # pixels
-        self.window_height = 400  # pixels
+        self.map_width = 190  # pixels
+        self.map_height = self.map_width
+        self.info_panel_width = 170  # pixels
+        self.window_width = self.map_width + self.info_panel_width
+        self.window_height = self.map_height
         self.grid_pad_ratio = 0.25
 
         # AI
@@ -33,8 +34,8 @@ class GameConf:
         self.show_info_panel = True
 
         # Delay
-        self.interval_draw = 40       # ms
-        self.interval_draw_max = 250  # ms
+        self.interval_draw = 50       # ms
+        self.interval_draw_max = 200  # ms
 
         # Color
         self.color_bg = '#000000'
@@ -55,22 +56,16 @@ class GameConf:
 
         # Info
         self.info_str = (
-            "[ keys ]\n"
-            "w: move up\n"
-            "a: move left\n"
-            "s: move down\n"
-            "d: move right\n"
-            "r: restart\n"
-            "space: pause/resume\n"
-            "esc: exit\n\n"
-            "[ solver ]\n"
-            "%s\n\n"
-            "[ status ]\n"
-            "%s\n\n"
-            "[ steps ]\n"
-            "%d\n\n"
-            "[ length ]\n"
-            "%d/%d (" + str(self.map_rows) + "x" + str(self.map_cols) + ")\n"
+            "<w/a/s/d>: up/left/down/right\n"
+            "<space>: pause/resume\n"
+            "<r>: restart    <esc>: exit\n"
+            "------------\n"
+            "solver: %s\n"
+            "status: %s\n"
+            "steps: %d\n"
+            "length: %d/%d (" + str(self.map_rows) + "x" + str(self.map_cols) + ")\n"
+            "------------\n"
+            "move delay:"
         )
         self.info_status = ['eating', 'dead', 'full']
 

@@ -56,7 +56,6 @@ class GameWindow(tk.Tk):
                        bg=self.__conf.color_bg,
                        font=self.__conf.font_info).pack(side=tk.TOP, anchor=tk.W)
             scale = tk.Scale(frm,
-                             label="[ move_delay ]",
                              font=self.__conf.font_info,
                              fg=self.__conf.color_txt,
                              bg=self.__conf.color_bg,
