@@ -38,9 +38,25 @@ class HamiltonSolver(BaseSolver):
         return self.__table
 
     def next_direc(self):
-        """Generate the next direction of the snake."""
         head = self.snake.head()
-        return self.__table[head.x][head.y].direc
+        nxt_direc = self.__table[head.x][head.y].direc
+
+        # Take shorcuts when the snake is not too long
+        if self.map.capacity - self.snake.len() > 10:
+            path = self.__path_solver.shortest_path_to_food()
+            if path:
+                tail, nxt, food = self.snake.tail(), head.adj(path[0]), self.map.food
+                tail_idx = self.__table[tail.x][tail.y].idx
+                head_idx = self.__table[head.x][head.y].idx
+                nxt_idx = self.__table[nxt.x][nxt.y].idx
+                food_idx = self.__table[food.x][food.y].idx
+                head_idx_rel = self.__relative_dist(tail_idx, head_idx, self.map.capacity)
+                nxt_idx_rel = self.__relative_dist(tail_idx, nxt_idx, self.map.capacity)
+                food_idx_rel = self.__relative_dist(tail_idx, food_idx, self.map.capacity)
+                if nxt_idx_rel > head_idx_rel and nxt_idx_rel <= food_idx_rel:
+                    nxt_direc = path[0]
+
+        return nxt_direc
 
     def __build_cycle(self):
         """Build a hamiltonian cycle on the map."""
@@ -54,3 +70,8 @@ class HamiltonSolver(BaseSolver):
         tail = self.snake.tail()
         self.__table[tail.x][tail.y].idx = cnt
         self.__table[tail.x][tail.y].direc = self.snake.direc
+
+    def __relative_dist(self, ori, x, size):
+        if ori > x:
+            x += size
+        return x - ori

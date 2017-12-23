@@ -25,8 +25,7 @@ class GameConf:
 
         # AI
         self.enable_AI = True
-        self.solver_name = 'GreedySolver'
-        #self.solver_name = 'HamiltonSolver'
+        self.solver_name = 'HamiltonSolver'
 
         # Switch
         self.show_gui = True
@@ -35,7 +34,7 @@ class GameConf:
 
         # Delay
         self.interval_draw = 40       # ms
-        self.interval_draw_max = 200  # ms
+        self.interval_draw_max = 250  # ms
 
         # Color
         self.color_bg = '#000000'
@@ -104,7 +103,7 @@ class Game:
     def __run_batch_episodes(self):
         STEPS_LIMIT = 10000
         episodes = int(input("Please input the number of episodes: "))
-        print("")
+        print("\nMap size: %dx%d\n" % (self.__conf.map_rows, self.__conf.map_cols))
         tot_suc, tot_suc_steps = 0, 0
         for _ in range(episodes):
             print("Episode %d - " % self.__episode, end="")

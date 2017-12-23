@@ -4,4 +4,10 @@
 
 from snake.game import GameConf, Game
 
-Game(GameConf()).run()
+
+conf = GameConf()
+
+#conf.solver_name = "GreedySolver"
+conf.solver_name = "HamiltonSolver"
+
+Game(conf).run()
