@@ -24,10 +24,11 @@ class _TableCell:
 
 class HamiltonSolver(BaseSolver):
 
-    def __init__(self, snake):
+    def __init__(self, snake, shortcuts=True):
         if snake.map.num_rows % 2 != 0 or snake.map.num_cols % 2 != 0:
             raise ValueError("num_rows and num_cols must be even.")
         super().__init__(snake)
+        self.__shortcuts = shortcuts
         self.__path_solver = PathSolver(snake)
         self.__table = [[_TableCell() for _ in range(snake.map.num_cols)]
                         for _ in range(snake.map.num_rows)]
@@ -42,7 +43,7 @@ class HamiltonSolver(BaseSolver):
         nxt_direc = self.__table[head.x][head.y].direc
 
         # Take shorcuts when the snake is not too long
-        if self.map.capacity - self.snake.len() > 10:
+        if self.__shortcuts and self.map.capacity - self.snake.len() > 10:
             path = self.__path_solver.shortest_path_to_food()
             if path:
                 tail, nxt, food = self.snake.tail(), head.adj(path[0]), self.map.food

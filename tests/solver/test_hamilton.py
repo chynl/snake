@@ -13,7 +13,7 @@ def test_cycle():
     s = Snake(m, Direc.RIGHT,
               [Pos(1, 2), Pos(1, 1)],
               [PointType.HEAD_R, PointType.BODY_HOR])
-    solver = HamiltonSolver(s)
+    solver = HamiltonSolver(s, False)
     table = solver.table
     cnt = 0
     ori_head = s.head()
