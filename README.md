@@ -10,13 +10,13 @@ This project focuses on the artificial intelligence of the [Snake](https://en.wi
 
 ## Installation
 
-- Requirements: Python 3.5+ with [Tkinter](https://wiki.python.org/moin/TkInter) installed.
+Requirements: Python 3.5+ with [Tkinter](https://wiki.python.org/moin/TkInter) installed.
 
-- Run:
-
-    ```
-    $ python3 run.py
-    ```
+```
+$ pip3 install -r requirements.txt
+$ python3 run.py        # Run the game
+$ python3 -m pytest -v  # Run tests
+```
 
 ## Outline
 
