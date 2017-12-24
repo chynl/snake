@@ -51,11 +51,13 @@ class HamiltonSolver(BaseSolver):
                 head_idx = self.__table[head.x][head.y].idx
                 nxt_idx = self.__table[nxt.x][nxt.y].idx
                 food_idx = self.__table[food.x][food.y].idx
-                head_idx_rel = self.__relative_dist(tail_idx, head_idx, self.map.capacity)
-                nxt_idx_rel = self.__relative_dist(tail_idx, nxt_idx, self.map.capacity)
-                food_idx_rel = self.__relative_dist(tail_idx, food_idx, self.map.capacity)
-                if nxt_idx_rel > head_idx_rel and nxt_idx_rel <= food_idx_rel:
-                    nxt_direc = path[0]
+                # Exclude one exception
+                if not (len(path) == 1 and abs(food_idx - tail_idx) == 1):
+                    head_idx_rel = self.__relative_dist(tail_idx, head_idx, self.map.capacity)
+                    nxt_idx_rel = self.__relative_dist(tail_idx, nxt_idx, self.map.capacity)
+                    food_idx_rel = self.__relative_dist(tail_idx, food_idx, self.map.capacity)
+                    if nxt_idx_rel > head_idx_rel and nxt_idx_rel <= food_idx_rel:
+                        nxt_direc = path[0]
 
         return nxt_direc
 
