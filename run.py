@@ -7,7 +7,7 @@ from snake.game import GameConf, Game
 
 conf = GameConf()
 
-#conf.solver_name = "GreedySolver"
 conf.solver_name = "HamiltonSolver"
+#conf.solver_name = "GreedySolver"
 
 Game(conf).run()
