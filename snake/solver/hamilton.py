@@ -43,7 +43,7 @@ class HamiltonSolver(BaseSolver):
         nxt_direc = self.__table[head.x][head.y].direc
 
         # Take shorcuts when the snake is not too long
-        if self.__shortcuts and self.map.capacity - self.snake.len() > 10:
+        if self.__shortcuts and self.snake.len() < 0.5 * self.map.capacity:
             path = self.__path_solver.shortest_path_to_food()
             if path:
                 tail, nxt, food = self.snake.tail(), head.adj(path[0]), self.map.food

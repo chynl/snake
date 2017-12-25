@@ -98,7 +98,8 @@ class Game:
     def __run_batch_episodes(self):
         STEPS_LIMIT = 10000
         episodes = int(input("Please input the number of episodes: "))
-        print("\nMap size: %dx%d\n" % (self.__conf.map_rows, self.__conf.map_cols))
+        print("\nMap size: %dx%d" % (self.__conf.map_rows, self.__conf.map_cols))
+        print("Solver: %s\n" % self.__conf.solver_name[:-6].lower())
         tot_suc, tot_suc_steps = 0, 0
         for _ in range(episodes):
             print("Episode %d - " % self.__episode, end="")
