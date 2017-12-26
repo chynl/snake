@@ -2,9 +2,7 @@
 
 [![][travis-badge]][travis-build] [![][appveyor-badge]][appveyor-build] ![][python-badge]
 
-This project focuses on the artificial intelligence of the [Snake][snake-wiki] game. The snake's goal is to eat the food continuously and fill the map with its bodies ASAP.
-
-The [old version][snake-proj-old] of this project is written in C++. Now it has been rewritten using Python for a user-friendly GUI and the simplicity in the implementations of algorithms.
+This project focuses on the artificial intelligence of the [Snake][snake-wiki] game. The snake's goal is to eat the food continuously and fill the map with its bodies ASAP. The [old version][snake-proj-old] of this project is written in C++. Now it has been rewritten using Python for a user-friendly GUI and the simplicity in the implementations of algorithms.
 
 ***[Algorithm Details >][algorithms-doc]***
 
@@ -20,7 +18,7 @@ Test results (N=1000):
 | Solver | Demo | Success Rate | Average Steps |
 | :----: | :--: | :----------: | :-----------: |
 |Hamilton|![][demo-hamilton]|100.0%|1776|
-|Greedy|![][demo-greedy]|27.4%|1575|
+|[Greedy][greedy-doc]|![][demo-greedy]|27.4%|1575|
 
 ## Installation
 
@@ -53,6 +51,7 @@ See the [LICENSE](./LICENSE) file for license rights and limitations.
 [snake-wiki]: https://en.wikipedia.org/wiki/Snake_(video_game)
 [tkinter-doc]: https://docs.python.org/3.6/library/tkinter.html
 [algorithms-doc]: ./docs/algorithms.md
+[greedy-doc]: ./docs/algorithms.md#greedy-solver
 
 [demo-hamilton]: ./docs/images/solver_hamilton.gif
 [demo-greedy]: ./docs/images/solver_greedy.gif
