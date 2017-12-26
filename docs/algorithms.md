@@ -8,6 +8,9 @@
         - [Shortest Path](#shortest-path)
         - [Longest Path](#longest-path)
     - [Greedy Solver](#greedy-solver)
+    - [Hamilton Solver](#hamilton-solver)
+        - [Build a Hamiltonian Cycle](#build-a-hamiltonian-cycle)
+        - [Take Shortcuts](#take-shortcuts)
 - [References](#references)
 
 <!-- /TOC -->
@@ -56,11 +59,30 @@ Concretely, to find the snake **S1**'s next moving direction **D**, the solver f
 4. Compute the longest path **P3** from **S1**'s head to its tail. If **P3** exists, let **D** be the first direction in path **P3**. Otherwise, go to step 5.
 5. Let **D** be the direction that makes **S1** the farthest from the food.
 
+<a id="markdown-hamilton-solver" name="hamilton-solver"></a>
+### Hamilton Solver
+
+[Hamilton Solver][hamiltonsolver-src] builds a hamiltonian cycle on the game map first and then directs the snake to eat the food along the cycle path. To reduce the average steps the snake takes to success, the solver enables the snake to take shortcuts if possible. The solver depends on [Path Solver](#path-solver) to find the longest path on the game map.
+
+<a id="markdown-build-a-hamiltonian-cycle" name="build-a-hamiltonian-cycle"></a>
+#### Build a Hamiltonian Cycle
+
+Before the snake starts moving, Hamilton Solver finds the [longest path](#longest-path) from the snake's head to its tail, which forms a hamiltonian cycle on the map:
+
+![][build-hamilton-img]
+
+<a id="markdown-take-shortcuts" name="take-shortcuts"></a>
+#### Take Shortcuts
+
+Following a fixed cycle path all the time is tedious. Hamilton Solver directs the snake to take shortcuts according to the rules below. [2]
+
+![][take-shortcuts-img]
+
 <a id="markdown-references" name="references"></a>
 ## References
 
-1. Lockhart, C., Application of temporal difference learning to the game of Snake. *Electronic Theses and Dissertations* 848 (2010).
-
+1. Lockhart, C., Application of temporal difference learning to the game of Snake. *Electronic Theses and Dissertations* 848 (2010). [[Link]][link-ref-1]
+2. Tapsell, J., Nokia 6110 Part 3 – Algorithms. (2015). [[Link]][link-ref-2]
 
 [snake-wiki]: https://en.wikipedia.org/wiki/Snake_(video_game)
 [longest-path-wiki]: https://en.wikipedia.org/wiki/Longest_path_problem
@@ -71,3 +93,8 @@ Concretely, to find the snake **S1**'s next moving direction **D**, the solver f
 [hamiltonsolver-src]: ../snake/solver/hamilton.py
 
 [build-longest-img]: ./images/build_longest.png
+[build-hamilton-img]: ./images/build_hamilton.png
+[take-shortcuts-img]: ./images/take_shortcuts.png
+
+[link-ref-1]: https://doi.org/10.18297/etd/848
+[link-ref-2]: https://johnflux.com/2015/05/02/nokia-6110-part-3-algorithms/

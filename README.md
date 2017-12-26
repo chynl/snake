@@ -17,7 +17,7 @@ Test results (N=1000):
 
 | Solver | Demo | Success Rate | Average Steps |
 | :----: | :--: | :----------: | :-----------: |
-|Hamilton|![][demo-hamilton]|100.0%|1776|
+|[Hamilton][hamilton-doc]|![][demo-hamilton]|100.0%|1776|
 |[Greedy][greedy-doc]|![][demo-greedy]|27.4%|1575|
 
 ## Installation
@@ -52,6 +52,7 @@ See the [LICENSE](./LICENSE) file for license rights and limitations.
 [tkinter-doc]: https://docs.python.org/3.6/library/tkinter.html
 [algorithms-doc]: ./docs/algorithms.md
 [greedy-doc]: ./docs/algorithms.md#greedy-solver
+[hamilton-doc]: ./docs/algorithms.md#hamilton-solver
 
 [demo-hamilton]: ./docs/images/solver_hamilton.gif
 [demo-greedy]: ./docs/images/solver_greedy.gif
