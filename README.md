@@ -20,7 +20,7 @@ Test results (N=1000):
 |Hamilton|![][demo-hamilton]|100.0%|1776|
 |Greedy|![][demo-greedy]|27.4%|1575|
 
-[***Algorithm Details >***][algorithms-doc]
+***[Algorithm Details >][algorithms-doc]***
 
 ## Installation
 
