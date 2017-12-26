@@ -4,9 +4,9 @@
 
 This project focuses on the artificial intelligence of the [Snake][snake-wiki] game. The snake's goal is to eat the food continuously and fill the map with its bodies ASAP.
 
-The [old version][snake-proj-old] of this project is written in C++. Now it has been rewritten using Python for a user-friendly GUI and the brevity in the implementations of algorithms.
+The [old version][snake-proj-old] of this project is written in C++. Now it has been rewritten using Python for a user-friendly GUI and the simplicity in the implementations of algorithms.
 
-## Algorithms
+## Experiments
 
 We use two metrics to evaluate the performance of an AI:
 
@@ -15,10 +15,10 @@ We use two metrics to evaluate the performance of an AI:
 
 Test results (N=1000):
 
-| Solver | Description | Demo | Suc Rate | Avg Steps |
-| :----: | :---------: | :--: | :------: | :-------: |
-|Hamilton|The snake moves along a [hamiltonian cycle][hamiltonian-cycle-wiki] and takes shortcuts if possible.|![][demo-hamilton]|-|-|
-|Greedy|The snake moves along the shortest path to the food if it thinks it is safe. Otherwise, it wanders around until a safe path is found.|![][demo-greedy]|27.4%|1575|
+| Solver | Demo | Suc Rate | Avg Steps |
+| :----: | :--: | :------: | :-------: |
+|Hamilton|![][demo-hamilton]|100.0%|1776|
+|Greedy|![][demo-greedy]|27.4%|1575|
 
 ## Installation
 
@@ -49,7 +49,6 @@ See the [LICENSE](./LICENSE) file for license rights and limitations.
 [python-badge]: https://img.shields.io/badge/python-3.5%2C%203.6-blue.svg
 
 [snake-wiki]: https://en.wikipedia.org/wiki/Snake_(video_game)
-[hamiltonian-cycle-wiki]: https://en.wikipedia.org/wiki/Hamiltonian_path
 [tkinter-doc]: https://docs.python.org/3.6/library/tkinter.html
 
 [demo-hamilton]: ./docs/images/solver_hamilton.gif
