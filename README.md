@@ -6,6 +6,8 @@ This project focuses on the artificial intelligence of the [Snake][snake-wiki] g
 
 The [old version][snake-proj-old] of this project is written in C++. Now it has been rewritten using Python for a user-friendly GUI and the simplicity in the implementations of algorithms.
 
+***[Algorithm Details >][algorithms-doc]***
+
 ## Experiments
 
 We use two metrics to evaluate the performance of an AI:
@@ -19,8 +21,6 @@ Test results (N=1000):
 | :----: | :--: | :----------: | :-----------: |
 |Hamilton|![][demo-hamilton]|100.0%|1776|
 |Greedy|![][demo-greedy]|27.4%|1575|
-
-***[Algorithm Details >][algorithms-doc]***
 
 ## Installation
 
