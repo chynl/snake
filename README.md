@@ -15,10 +15,12 @@ We use two metrics to evaluate the performance of an AI:
 
 Test results (N=1000):
 
-| Solver | Demo | Suc Rate | Avg Steps |
-| :----: | :--: | :------: | :-------: |
+| Solver | Demo | Success Rate | Average Steps |
+| :----: | :--: | :----------: | :-----------: |
 |Hamilton|![][demo-hamilton]|100.0%|1776|
 |Greedy|![][demo-greedy]|27.4%|1575|
+
+[***Algorithm Details >***][algorithms-doc]
 
 ## Installation
 
@@ -50,6 +52,7 @@ See the [LICENSE](./LICENSE) file for license rights and limitations.
 
 [snake-wiki]: https://en.wikipedia.org/wiki/Snake_(video_game)
 [tkinter-doc]: https://docs.python.org/3.6/library/tkinter.html
+[algorithms-doc]: ./docs/algorithms.md
 
 [demo-hamilton]: ./docs/images/solver_hamilton.gif
 [demo-greedy]: ./docs/images/solver_greedy.gif
