@@ -7,3 +7,9 @@ Makefile
 
 *.TMP
 *.html
+
+*.pyc
+__pycache__
+*.cache
+
+logs/

@@ -1,6 +1,4 @@
-sudo: required
-
-language: cpp
+language: python 
 
 os:
   - linux
@@ -10,45 +8,12 @@ branches:
     - master
     - /^(dev)|(dev_.*)$/
 
-env:
-  global:
-    - ARCH_FLAG_x86='-m32'
-    - ARCH_FLAG_x86_64='-m64'
+python:
+  - "3.5"
+  - "3.6"
 
-matrix:
-  include:
-    # gcc
-    - env: BUILD_TYPE=Debug ARCH='x86'
-      compiler: gcc
-    - env: BUILD_TYPE=Release ARCH='x86'
-      compiler: gcc
-    - env: BUILD_TYPE=Debug ARCH='x86_64'
-      compiler: gcc
-    - env: BUILD_TYPE=Release ARCH='x86_64'
-      compiler: gcc
-    # clang
-    - env: BUILD_TYPE=Debug ARCH='x86'
-      compiler: clang
-    - env: BUILD_TYPE=Release ARCH='x86'
-      compiler: clang
-    - env: BUILD_TYPE=Debug ARCH='x86_64'
-      compiler: clang
-    - env: BUILD_TYPE=Release ARCH='x86_64'
-      compiler: clang
-
-before_install:
-  - sudo apt-add-repository -y ppa:ubuntu-toolchain-r/test
-  - sudo apt-get update -qq
-  - sudo apt-get install -y g++-multilib
-  - ${CXX} -v
-
-before_script:
-  - mkdir build && cd build
-  - eval "ARCH_FLAG=\${ARCH_FLAG_${ARCH}}"
-  - cmake
-    -DCMAKE_BUILD_TYPE=${BUILD_TYPE}
-    -DCMAKE_VERBOSE_MAKEFILE=ON
-    ..
+install:
+  - pip install -r requirements.txt
 
 script:
-  - make -j
+  - python -m pytest -v --ignore=tests/gui/
