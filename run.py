@@ -2,12 +2,19 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=C0103,C0111
 
-from snake.game import GameConf, Game
+from snake.game import GameMode, GameConf, Game
 
 
+# Available solvers
+solvers = [
+    "GreedySolver",
+    "HamiltonSolver"
+]
+
+# Game configurations
 conf = GameConf()
+conf.mode = GameMode.NORMAL
+conf.solver_name = solvers[1]
 
-conf.solver_name = "HamiltonSolver"
-#conf.solver_name = "GreedySolver"
-
+# Run the game
 Game(conf).run()

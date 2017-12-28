@@ -4,15 +4,28 @@
 
 import os
 import errno
+from enum import Enum, unique
 from snake.base import Direc, Pos, PointType, Map, Snake
 from snake.gui import GameWindow
 from snake.solver import GreedySolver, HamiltonSolver
+
+
+@unique
+class GameMode(Enum):
+    NORMAL = 0     # AI with GUI
+    BENCHMARK = 1  # Run benchmarks without GUI
 
 
 class GameConf:
 
     def __init__(self):
         """Initialize a default configuration."""
+
+        # Game mode
+        self.mode = GameMode.NORMAL
+
+        # Solver
+        self.solver_name = 'HamiltonSolver'  # Class name of the solver
 
         # Size
         self.map_rows = 10
@@ -24,12 +37,7 @@ class GameConf:
         self.window_height = self.map_height
         self.grid_pad_ratio = 0.25
 
-        # AI
-        self.enable_AI = True
-        self.solver_name = 'HamiltonSolver'
-
         # Switch
-        self.show_gui = True
         self.show_grid_line = False
         self.show_info_panel = True
 
@@ -90,12 +98,12 @@ class Game:
         self.__init_log_file()
 
     def run(self):
-        if self.__conf.show_gui:
+        if self.__conf.mode == GameMode.NORMAL:
             self.__window.show(self.__game_main)
-        else:
-            self.__run_batch_episodes()
+        elif self.__conf.mode == GameMode.BENCHMARK:
+            self.__run_benchmarks()
 
-    def __run_batch_episodes(self):
+    def __run_benchmarks(self):
         STEPS_LIMIT = 10000
         episodes = int(input("Please input the number of episodes: "))
         print("\nMap size: %dx%d" % (self.__conf.map_rows, self.__conf.map_cols))
@@ -132,10 +140,9 @@ class Game:
         if self.__pause or self.__episode_end():
             return
 
-        if self.__conf.enable_AI:
-            self.__update_direc(self.__solver.next_direc())
+        self.__update_direc(self.__solver.next_direc())
 
-        if self.__conf.show_gui and self.__snake.direc_next != Direc.NONE:
+        if self.__conf.mode == GameMode.NORMAL and self.__snake.direc_next != Direc.NONE:
             self.__write_logs()
 
         self.__snake.move()
