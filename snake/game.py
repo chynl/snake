@@ -7,7 +7,7 @@ import errno
 from enum import Enum, unique
 from snake.base import Direc, Pos, PointType, Map, Snake
 from snake.gui import GameWindow
-from snake.solver import GreedySolver, HamiltonSolver
+from snake.solver import GreedySolver, HamiltonSolver, DQNSolver
 
 
 @unique

@@ -5,6 +5,7 @@
 """Definition of class Map."""
 
 import random
+import numpy as np
 from snake.base.pos import Pos
 from snake.base.point import PointType, Point
 
@@ -40,6 +41,22 @@ class Map:
             for j in range(self.__num_cols):
                 m_copy.__content[i][j].type = self.__content[i][j].type
         return m_copy
+
+    @property
+    def num_rows(self):
+        return self.__num_rows
+
+    @property
+    def num_cols(self):
+        return self.__num_cols
+
+    @property
+    def capacity(self):
+        return self.__capacity
+
+    @property
+    def food(self):
+        return self.__food
 
     def point(self, pos):
         """Return a point on the map.
@@ -103,18 +120,21 @@ class Map:
         else:
             return None
 
-    @property
-    def num_rows(self):
-        return self.__num_rows
-
-    @property
-    def num_cols(self):
-        return self.__num_cols
-
-    @property
-    def capacity(self):
-        return self.__capacity
-
-    @property
-    def food(self):
-        return self.__food
+    def observation(self):
+        ob, idx = np.zeros(self.capacity), 0
+        for i in range(1, self.__num_rows - 1):
+            for j in range(1, self.__num_cols - 1):
+                t = self.__content[i][j].type
+                if t == PointType.EMPTY:
+                    ob[idx] = 0
+                elif t == PointType.WALL:
+                    ob[idx] = 1
+                elif t == PointType.FOOD:
+                    ob[idx] = 2
+                elif t == PointType.HEAD_L or t == PointType.HEAD_U or \
+                     t == PointType.HEAD_R or t == PointType.HEAD_D:
+                    ob[idx] = 3
+                else:
+                    ob[idx] = 4
+                idx += 1
+        return ob

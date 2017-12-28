@@ -8,13 +8,14 @@ from snake.game import GameMode, GameConf, Game
 # Available solvers
 solvers = [
     "GreedySolver",
-    "HamiltonSolver"
+    "HamiltonSolver",
+    "DQNSolver"
 ]
 
 # Game configurations
 conf = GameConf()
 conf.mode = GameMode.NORMAL
-conf.solver_name = solvers[1]
+conf.solver_name = solvers[2]
 
 # Run the game
 Game(conf).run()
