@@ -43,6 +43,28 @@ class DQNSolver(BaseSolver):
         tf.summary.FileWriter("logs", self.__sess.graph)
 
     def __build_net(self):
+
+        def __build_layers(state, scope, w_init_, b_init_):
+            with tf.variable_scope(scope):
+                l1 = tf.layers.dense(inputs=state,
+                                     units=100,
+                                     activation=tf.nn.relu,
+                                     kernel_initializer=w_init_,
+                                     bias_initializer=b_init_,
+                                     name="l1")
+                v = tf.layers.dense(inputs=l1,
+                                    units=1,
+                                    kernel_initializer=w_init_,
+                                    bias_initializer=b_init_,
+                                    name="v")
+                a = tf.layers.dense(inputs=l1,
+                                    units=self.__num_actions,
+                                    kernel_initializer=w_init_,
+                                    bias_initializer=b_init_,
+                                    name="a")
+                a_mean = tf.reduce_mean(a, axis=1, keep_dims=True, name="reduce_mean")
+                return v + a - a_mean  # Shape: (None, num_actions)
+
         # Inputs
         self.__state = tf.placeholder(tf.float32, [None, self.__num_features], name="state")
         self.__state_nxt = tf.placeholder(tf.float32, [None, self.__num_features], name="state_nxt")
@@ -51,47 +73,25 @@ class DQNSolver(BaseSolver):
 
         w_init = tf.random_normal_initializer(mean=0, stddev=0.3)
         b_init = tf.constant_initializer(0.1)
+        indices = tf.range(tf.shape(self.__action)[0], dtype=tf.int32)
 
-        # Build eval net
-        with tf.variable_scope("eval_net"):
-            l1 = tf.layers.dense(inputs=self.__state,
-                                 units=20,
-                                 activation=tf.nn.relu,
-                                 kernel_initializer=w_init,
-                                 bias_initializer=b_init,
-                                 name="l1")
-            # Shape: (None, num_actions)
-            self.__q_eval_all = tf.layers.dense(inputs=l1,
-                                                units=self.__num_actions,
-                                                kernel_initializer=w_init,
-                                                bias_initializer=b_init,
-                                                name="q_eval_all")
+        # Eval net
+        self.__q_eval_all = __build_layers(self.__state, "eval_net", w_init, b_init)
 
         with tf.variable_scope("q_eval"):
-            indices = tf.range(tf.shape(self.__action)[0], dtype=tf.int32)
             action_indices = tf.stack([indices, self.__action], axis=1)
             # Shape: (None, )
             self.__q_eval = tf.gather_nd(self.__q_eval_all, action_indices, name="gather_nd")
 
-        # Build target net
-        with tf.variable_scope("target_net"):
-            l1 = tf.layers.dense(inputs=self.__state_nxt,
-                                 units=20,
-                                 activation=tf.nn.relu,
-                                 kernel_initializer=w_init,
-                                 bias_initializer=b_init,
-                                 name="l1")
-            # Shape: (None, num_actions)
-            self.__q_nxt_all = tf.layers.dense(inputs=l1,
-                                               units=self.__num_actions,
-                                               kernel_initializer=w_init,
-                                               bias_initializer=b_init,
-                                               name="q_nxt_all")
+        # Target net
+        self.__q_nxt_all = __build_layers(self.__state_nxt, "target_net", w_init, b_init)
 
         with tf.variable_scope("q_target"):
+            max_actions = tf.argmax(self.__q_eval_all, axis=1, output_type=tf.int32, name="max_actions")
+            action_indices = tf.stack([indices, max_actions], axis=1)
             # Shape: (None, )
             q_target = self.__reward + self.__gamma * \
-                       tf.reduce_max(self.__q_nxt_all, axis=1, name="reduce_max")
+                       tf.gather_nd(self.__q_nxt_all, action_indices, name="gather_nd")
             self.__q_target = tf.stop_gradient(q_target)
 
         with tf.variable_scope("loss"):
