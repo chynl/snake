@@ -22,7 +22,7 @@ Test results (N=1000):
 
 ## Installation
 
-Requirements: Python 3.5+ with [Tkinter][tkinter-doc] installed.
+Requirements: Python 3.5+ (64-bit) with [Tkinter][tkinter-doc] installed.
 
 ```
 $ pip3 install -r requirements.txt
