@@ -14,7 +14,7 @@ solvers = [
 
 # Game configurations
 conf = GameConf()
-conf.mode = GameMode.NORMAL
+conf.mode = GameMode.TRAIN
 conf.solver_name = solvers[2]
 
 # Run the game

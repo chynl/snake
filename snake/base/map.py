@@ -120,7 +120,8 @@ class Map:
         else:
             return None
 
-    def observation(self):
+    def state(self):
+        """Return a vector indicating current state."""
         ob, idx = np.zeros(self.capacity), 0
         for i in range(1, self.__num_rows - 1):
             for j in range(1, self.__num_cols - 1):

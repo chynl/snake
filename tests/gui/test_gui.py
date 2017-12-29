@@ -109,4 +109,4 @@ def test_game_window():
     for content in contents:
         game_map.point(content[0]).type = content[1]
 
-    GameWindow(game_conf, game_map, "Basic Elements").show()
+    GameWindow("Basic Elements", game_conf, game_map).show()

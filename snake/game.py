@@ -14,6 +14,7 @@ from snake.solver import GreedySolver, HamiltonSolver, DQNSolver
 class GameMode(Enum):
     NORMAL = 0     # AI with GUI
     BENCHMARK = 1  # Run benchmarks without GUI
+    TRAIN = 2      # Train DQNSolver
 
 
 class GameConf:
@@ -70,7 +71,7 @@ class GameConf:
             "---------------------------------\n"
             "solver: %s\n"
             "status: %s\n"
-            "steps: %d\n"
+            "episode: %d   step: %d\n"
             "length: %d/%d (" + str(self.map_rows) + "x" + str(self.map_cols) + ")\n"
             "---------------------------------\n"
             "move delay:"
@@ -85,23 +86,34 @@ class Game:
         self.__snake = Snake(self.__map, conf.init_direc,
                              conf.init_bodies, conf.init_types)
         self.__pause = False
-        self.__window = GameWindow(conf, self.__map, "Snake", self.__snake, self.__on_exit, (
-            ('<w>', lambda e: self.__update_direc(Direc.UP)),
-            ('<a>', lambda e: self.__update_direc(Direc.LEFT)),
-            ('<s>', lambda e: self.__update_direc(Direc.DOWN)),
-            ('<d>', lambda e: self.__update_direc(Direc.RIGHT)),
-            ('<r>', lambda e: self.__reset()),
-            ('<space>', lambda e: self.__toggle_pause())
-        ))
         self.__solver = globals()[self.__conf.solver_name](self.__snake)
         self.__episode = 1
         self.__init_log_file()
 
+    @property
+    def snake(self):
+        return self.__snake
+
+    @property
+    def episode(self):
+        return self.__episode
+
     def run(self):
-        if self.__conf.mode == GameMode.NORMAL:
-            self.__window.show(self.__game_main)
-        elif self.__conf.mode == GameMode.BENCHMARK:
+        if self.__conf.mode == GameMode.BENCHMARK:
             self.__run_benchmarks()
+        else:
+            window = GameWindow("Snake", self.__conf, self.__map, self, self.__on_exit, (
+                ('<w>', lambda e: self.__update_direc(Direc.UP)),
+                ('<a>', lambda e: self.__update_direc(Direc.LEFT)),
+                ('<s>', lambda e: self.__update_direc(Direc.DOWN)),
+                ('<d>', lambda e: self.__update_direc(Direc.RIGHT)),
+                ('<r>', lambda e: self.__reset()),
+                ('<space>', lambda e: self.__toggle_pause())
+            ))
+            if self.__conf.mode == GameMode.NORMAL:
+                window.show(self.__game_main)
+            elif self.__conf.mode == GameMode.TRAIN:
+                window.show(self.__game_main_train)
 
     def __run_benchmarks(self):
         STEPS_LIMIT = 10000
@@ -133,7 +145,6 @@ class Game:
         self.__on_exit()
 
     def __game_main(self):
-        """Main function in the game loop."""
         if not self.__map.has_food():
             self.__map.create_rand_food()
 
@@ -149,6 +160,18 @@ class Game:
 
         if self.__episode_end():
             self.__write_logs()  # Write the last step
+
+    def __game_main_train(self):
+        if not self.__map.has_food():
+            self.__map.create_rand_food()
+
+        if self.__pause:
+            return
+
+        self.__solver.train()
+
+        if self.__episode_end():
+            self.__reset()
 
     def __update_direc(self, new_direc):
         if Direc.opposite(new_direc) != self.__snake.direc:

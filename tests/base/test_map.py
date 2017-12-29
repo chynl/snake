@@ -80,9 +80,9 @@ def test_food():
             assert m.point(Pos(i, j)).type == PointType.EMPTY
 
 
-def test_observation():
+def test_state():
     m = Map(6, 6)
     for i, t in enumerate(PointType):
         m.point(Pos(int(i / 4 + 1), i % 4 + 1)).type = t
-    ob = m.observation()
+    ob = m.state()
     assert np.array_equal(ob, np.array([0, 1, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 0, 0, 0]))

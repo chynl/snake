@@ -8,7 +8,7 @@ from snake.base import Pos, PointType
 
 class GameWindow(tk.Tk):
 
-    def __init__(self, conf, m, title, snake=None, on_exit=None, keybindings=None):
+    def __init__(self, title, conf, map_, game=None, on_exit=None, keybindings=None):
         super().__init__()
         super().title(title)
         super().resizable(width=False, height=False)
@@ -16,12 +16,15 @@ class GameWindow(tk.Tk):
         if conf.show_info_panel:
             super().geometry("%dx%d" % (conf.window_width, conf.window_height))
         self.__conf = conf
-        self.__map = m
-        self.__snake = snake
-        self.__grid_width = conf.map_width / (m.num_rows - 2)
-        self.__grid_height = conf.map_height / (m.num_cols - 2)
+        self.__map = map_
+        self.__grid_width = conf.map_width / (map_.num_rows - 2)
+        self.__grid_height = conf.map_height / (map_.num_cols - 2)
         self.__init_widgets()
         self.__init_draw_params()
+
+        if game is not None:
+            self.__game = game
+            self.__snake = game.snake
 
         def on_destroy():
             if callable(on_exit):
@@ -132,7 +135,7 @@ class GameWindow(tk.Tk):
         self.__info_var.set(self.__conf.info_str %
                             (self.__conf.solver_name[:-6].lower(),
                              status_str,
-                             self.__snake.steps,
+                             self.__game.episode, self.__snake.steps,
                              self.__snake.len(), self.__map.capacity))
 
     def __draw_map_contents(self):
