@@ -33,7 +33,7 @@ class DQNSolver(BaseSolver):
         # Epsilon-greedy
         self.__epsilon_max = 1
         self.__epsilon_min = 0.1
-        self.__epsilon_decreasement = 9e-7
+        self.__epsilon_decreasement = 1e-6
         self.__epsilon = self.__epsilon_max
 
         # Frequency (snake steps) for SGD update
@@ -49,9 +49,9 @@ class DQNSolver(BaseSolver):
 
         # Reward values
         self.__reward_dict = {
-            "EMPTY": -0.0001,
-            "DEAD": -0.01,
-            "FOOD": 0.5,
+            "EMPTY": -0.001,
+            "DEAD": -0.1,
+            "FOOD": 0.1,
             "FULL": 1.0
         }
 
@@ -81,15 +81,44 @@ class DQNSolver(BaseSolver):
 
     def __build_net(self):
 
-        def __build_layers(input_state, scope, w_init_, b_init_):
+        def __build_layers(x, scope, w_init_, b_init_):
             with tf.variable_scope(scope):
-                l1 = tf.layers.dense(inputs=input_state,
-                                     units=100,
-                                     activation=tf.nn.relu,
-                                     kernel_initializer=w_init_,
-                                     bias_initializer=b_init_,
-                                     name="l1")
-                q = tf.layers.dense(inputs=l1,
+                x_2d = tf.reshape(x, [-1, 10, 10, 1])
+                conv1 = tf.layers.conv2d(inputs=x_2d,
+                                         filters=32,
+                                         kernel_size=3,
+                                         strides=1,
+                                         padding='valid',
+                                         activation=tf.nn.relu,
+                                         kernel_initializer=w_init_,
+                                         bias_initializer=b_init_,
+                                         name="conv1")
+                conv2 = tf.layers.conv2d(inputs=conv1,
+                                         filters=64,
+                                         kernel_size=3,
+                                         strides=1,
+                                         padding='valid',
+                                         activation=tf.nn.relu,
+                                         kernel_initializer=w_init_,
+                                         bias_initializer=b_init_,
+                                         name="conv2")
+                conv3 = tf.layers.conv2d(inputs=conv2,
+                                         filters=64,
+                                         kernel_size=3,
+                                         strides=1,
+                                         padding='valid',
+                                         activation=tf.nn.relu,
+                                         kernel_initializer=w_init_,
+                                         bias_initializer=b_init_,
+                                         name="conv3")
+                conv3_flat = tf.reshape(conv3, [-1, 4 * 4 * 64])
+                fc1 = tf.layers.dense(inputs=conv3_flat,
+                                      units=512,
+                                      activation=tf.nn.relu,
+                                      kernel_initializer=w_init_,
+                                      bias_initializer=b_init_,
+                                      name="fc1")
+                q = tf.layers.dense(inputs=fc1,
                                     units=self.__num_actions,
                                     kernel_initializer=w_init_,
                                     bias_initializer=b_init_,
@@ -99,18 +128,21 @@ class DQNSolver(BaseSolver):
         # Input tensor for eval net
         self.__state_eval = tf.placeholder(
             tf.float32, [None, self.__num_features], name="state_eval")
+
         # Input tensor for target net
         self.__state_target = tf.placeholder(
             tf.float32, [None, self.__num_features], name="state_target")
+
         # Input tensor for actions taken by agent
         self.__actions_taken = tf.placeholder(
             tf.int32, [None, ], name="actions_taken")
+
         # Input tensor for calculated q target
         self.__q_target = tf.placeholder(
             tf.float32, [None, ], name="q_target")
 
         scope_eval, scope_target = "eval_net", "target_net"
-        w_init = tf.random_normal_initializer(mean=0, stddev=0.3)
+        w_init = tf.truncated_normal_initializer(mean=0, stddev=0.1)
         b_init = tf.constant_initializer(0.1)
 
         # Eval net output / Shape: (None, num_actions)
@@ -120,7 +152,7 @@ class DQNSolver(BaseSolver):
             indices = tf.range(tf.shape(self.__state_eval)[0], dtype=tf.int32)
             action_indices = tf.stack([indices, self.__actions_taken], axis=1)
             # Shape: (None, )
-            self.__q_eval = tf.gather_nd(self.__q_eval_all, action_indices, name="q_eval")
+            self.__q_eval = tf.gather_nd(self.__q_eval_all, action_indices)
 
         # Target net output / Shape: (None, num_actions)
         self.__q_nxt_all = __build_layers(self.__state_target, scope_target, w_init, b_init)
