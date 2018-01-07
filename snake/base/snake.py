@@ -133,6 +133,9 @@ class Snake:
             self.__direc_next = new_direc
         if self.__dead or self.__direc_next == Direc.NONE or self.__map.is_full():
             return
+        if self.__direc_next == Direc.opposite(self.__direc):
+            self.__steps += 1
+            return
         old_head_type, new_head_type = self.__new_types()
         self.__map.point(self.head()).type = old_head_type
         new_head = self.head().adj(self.__direc_next)
