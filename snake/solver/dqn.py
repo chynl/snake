@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=C0111,C0103,E1101
 
+import os
+import json
 from datetime import datetime
 import numpy as np
 import tensorflow as tf
@@ -21,63 +23,86 @@ class DQNSolver(BaseSolver):
     def __init__(self, snake):
         super().__init__(snake)
 
-        # Learning rate
-        self.__lr = 0.00025
+        self.__PARAMS = {
+            "lr": 0.00025,  # Learning rate
+            "momentum": 0.95,  # SGD momentum
 
-        # Gradient momemtum
-        self.__momentum = 0.95
+            "freq_learn": 4,  # Frequency (snake steps) for SGD update
+            "freq_replace": 10000,  # Frequency (learn steps) for target net replacement
+            "freq_save": 5000,  # Frequency (learn steps) for saving model parameters
 
-        # Reward decay
-        self.__gamma = 0.99
+            "gamma": 0.99,  # Reward discount
 
-        # Epsilon-greedy
-        self.__epsilon_max = 0.9
-        self.__epsilon_min = 0.1
-        self.__epsilon_decreasement = 1e-6
-        self.__epsilon = self.__epsilon_max
+            # Reward table
+            "reward_tbl": {
+                "empty": -0.001,
+                "dead": -0.1,
+                "food": 0.5,
+                "full": 1.0
+            },
 
-        # Frequency (snake steps) for SGD update
-        self.__learn_frequency = 4
+            # Epsilon-greedy
+            "epsilon_max": 0.9,
+            "epsilon_min": 0.1,
+            "epsilon_dec": 1e-6,
 
-        # Frequency (learn steps) for replacement of target net parameters
-        self.__replace_target_iter = 10000
-
-        # Actions and features
-        self.__snake_actions = [Direc.LEFT, Direc.UP, Direc.RIGHT, Direc.DOWN]
-        self.__num_actions = len(self.__snake_actions)
-        self.__num_features = snake.map.capacity
-
-        # Reward values
-        self.__reward_dict = {
-            "EMPTY": -0.001,
-            "DEAD": -0.1,
-            "FOOD": 0.5,
-            "FULL": 1.0
+            # Replay memory
+            "mem_size": 1000000,
+            "mem_batch": 32
         }
 
-        # Replay memory
-        self.__mem_size = 1000000
-        self.__mem_batch = 32
+        self.__DIR_LOG = "logs"
+        self.__PATH_VAR = os.path.join(self.__DIR_LOG, "var-{0}.json")
+        self.__PATH_MEM = os.path.join(self.__DIR_LOG, "mem-{0}.npy")
+        self.__PATH_NET = os.path.join(self.__DIR_LOG, "net-{0}")
+
+        self.__SNAKE_ACTIONS = [Direc.LEFT, Direc.UP, Direc.RIGHT, Direc.DOWN]
+        self.__NUM_ACTIONS = len(self.__SNAKE_ACTIONS)
+        self.__NUM_FEATURES = snake.map.capacity
+
+        self.__RESTORE_STEPS = None
+
+        self.__mem = np.zeros((self.__PARAMS["mem_size"], self.__NUM_FEATURES * 2 + 2))
         self.__mem_cnt = 0
-        self.__mem = np.zeros((self.__mem_size, self.__num_features * 2 + 2))
+        self.__epsilon = self.__PARAMS["epsilon_max"]
+        self.__learn_steps = 1
 
-        # Current learning step
-        self.__learn_steps = 0
-
-        # Build two networks and get parameters
-        eval_params, target_params = self.__build_net()
-
-        # Replace target network parameters
-        self.__replace_target = [tf.assign(t, e) for t, e in zip(target_params, eval_params)]
-
-        # Create tensorflow session
+        self.__build_net()
         self.__sess = tf.Session()
         self.__sess.run(tf.global_variables_initializer())
+        tf.summary.FileWriter(self.__DIR_LOG, self.__sess.graph)
 
-        # Write graph logs
-        log_dir = "./logs"
-        tf.summary.FileWriter(log_dir, self.__sess.graph)
-        _log("--logdir=%s" % log_dir)
+        self.__net_saver = tf.train.Saver(self.__eval_params + self.__target_params)
+        if self.__RESTORE_STEPS is not None:
+            self.__load_model()
+
+        _log("Parameters: ", self.__PARAMS)
+
+    def __load_model(self):
+        _log("Loading model ...")
+
+        with open(self.__PATH_VAR.format(self.__RESTORE_STEPS), "r") as f:
+            var = json.load(f)
+        self.__mem_cnt = var["mem_cnt"]
+        self.__epsilon = var["epsilon"]
+        self.__mem = np.load(self.__PATH_MEM.format(self.__RESTORE_STEPS))
+        self.__net_saver.restore(self.__sess, self.__PATH_NET.format(self.__RESTORE_STEPS))
+        self.__learn_steps = self.__RESTORE_STEPS + 1
+
+        _log("epsilon: ", self.__epsilon)
+        _log("mem cnt: {0} | mem shape: {1}".format(self.__mem_cnt, self.__mem.shape))
+        _log("Model loaded")
+
+    def __save_model(self):
+        with open(self.__PATH_VAR.format(self.__learn_steps), "w") as f:
+            json.dump({
+                "mem_cnt": self.__mem_cnt,
+                "epsilon": self.__epsilon,
+            }, f, indent=2)
+        np.save(self.__PATH_MEM.format(self.__learn_steps), self.__mem)
+        self.__net_saver.save(self.__sess,
+                              self.__PATH_NET.format(self.__learn_steps),
+                              write_meta_graph=False)
 
     def __build_net(self):
 
@@ -119,7 +144,7 @@ class DQNSolver(BaseSolver):
                                       bias_initializer=b_init_,
                                       name="fc1")
                 q = tf.layers.dense(inputs=fc1,
-                                    units=self.__num_actions,
+                                    units=self.__NUM_ACTIONS,
                                     kernel_initializer=w_init_,
                                     bias_initializer=b_init_,
                                     name=name)
@@ -127,11 +152,11 @@ class DQNSolver(BaseSolver):
 
         # Input tensor for eval net
         self.__state_eval = tf.placeholder(
-            tf.float32, [None, self.__num_features], name="state_eval")
+            tf.float32, [None, self.__NUM_FEATURES], name="state_eval")
 
         # Input tensor for target net
         self.__state_target = tf.placeholder(
-            tf.float32, [None, self.__num_features], name="state_target")
+            tf.float32, [None, self.__NUM_FEATURES], name="state_target")
 
         # Input tensor for actions taken by agent
         self.__action = tf.placeholder(
@@ -143,16 +168,16 @@ class DQNSolver(BaseSolver):
 
         # Input tensor for calculated eval net output for next state
         self.__q_eval_all_nxt = tf.placeholder(
-            tf.float32, [None, self.__num_actions], name="q_eval_all_nxt")
+            tf.float32, [None, self.__NUM_ACTIONS], name="q_eval_all_nxt")
 
         w_init = tf.truncated_normal_initializer(mean=0, stddev=0.1)
         b_init = tf.constant_initializer(0.1)
 
-        scope_eval, scope_target = "eval_net", "target_net"
+        SCOPE_EVAL, SCOPE_TARGET = "eval_net", "target_net"
 
         # Eval net output / Shape: (None, num_actions)
         self.__q_eval_all = __build_layers(
-            self.__state_eval, scope_eval, "q_eval_all", w_init, b_init)
+            self.__state_eval, SCOPE_EVAL, "q_eval_all", w_init, b_init)
 
         with tf.variable_scope("q_eval"):
             indices = tf.range(tf.shape(self.__state_eval)[0], dtype=tf.int32)
@@ -162,7 +187,7 @@ class DQNSolver(BaseSolver):
 
         # Target net output / Shape: (None, num_actions)
         q_nxt_all = __build_layers(
-            self.__state_target, scope_target, "q_nxt_all", w_init, b_init)
+            self.__state_target, SCOPE_TARGET, "q_nxt_all", w_init, b_init)
 
         with tf.variable_scope("q_target"):
             indices = tf.range(tf.shape(self.__state_target)[0], dtype=tf.int32)
@@ -170,36 +195,41 @@ class DQNSolver(BaseSolver):
             action_indices = tf.stack([indices, max_actions], axis=1)
             # Shape: (None, )
             q_nxt = tf.gather_nd(q_nxt_all, action_indices, name="q_nxt")
-            q_target = self.__reward + self.__gamma * q_nxt
+            q_target = self.__reward + self.__PARAMS["gamma"] * q_nxt
 
         with tf.variable_scope("loss"):
             self.__loss = tf.reduce_mean(tf.squared_difference(q_eval, q_target))
 
         with tf.variable_scope("train"):
             self.__train = tf.train.RMSPropOptimizer(
-                learning_rate=self.__lr, momentum=self.__momentum).minimize(self.__loss)
+                learning_rate=self.__PARAMS["lr"], momentum=self.__PARAMS["momentum"]
+            ).minimize(self.__loss)
 
-        eval_params = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=scope_eval)
-        target_params = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=scope_target)
-
-        return eval_params, target_params
+        # Replace target net params with eval net's
+        with tf.variable_scope("replace"):
+            self.__eval_params = tf.get_collection(
+                tf.GraphKeys.GLOBAL_VARIABLES, scope=SCOPE_EVAL)
+            self.__target_params = tf.get_collection(
+                tf.GraphKeys.GLOBAL_VARIABLES, scope=SCOPE_TARGET)
+            self.__replace_target = [tf.assign(t, e)
+                                     for t, e in zip(self.__target_params, self.__eval_params)]
 
     def next_direc(self):
-        return self.__snake_actions[self.__choose_action()]
+        return self.__SNAKE_ACTIONS[self.__choose_action()]
 
     def train(self):
         action = self.__choose_action()
         state_cur = self.map.state()
         state_nxt, reward = self.__step(action)
         self.__store_transition(state_cur, action, reward, state_nxt)
-        if self.snake.steps % self.__learn_frequency == 0:
+        if self.snake.steps % self.__PARAMS["freq_learn"] == 0:
             self.__learn()
-        if self.__epsilon > self.__epsilon_min:
-            self.__epsilon -= self.__epsilon_decreasement
+        if self.__epsilon > self.__PARAMS["epsilon_min"]:
+            self.__epsilon -= self.__PARAMS["epsilon_dec"]
 
     def __choose_action(self):
         if np.random.uniform() < self.__epsilon:
-            action_idx = np.random.randint(0, self.__num_actions)
+            action_idx = np.random.randint(0, self.__NUM_ACTIONS)
         else:
             state = self.map.state()[np.newaxis, :]
             q_eval_all = self.__sess.run(
@@ -212,26 +242,26 @@ class DQNSolver(BaseSolver):
         return action_idx
 
     def __step(self, action_idx):
-        direc = self.__snake_actions[action_idx]
+        direc = self.__SNAKE_ACTIONS[action_idx]
         nxt_pos = self.snake.head().adj(direc)
         nxt_type = self.map.point(nxt_pos).type
 
         if nxt_type == PointType.EMPTY:
-            reward = self.__reward_dict["EMPTY"]
+            reward = self.__PARAMS["reward_tbl"]["empty"]
         elif nxt_type == PointType.FOOD:
-            reward = self.__reward_dict["FOOD"]
+            reward = self.__PARAMS["reward_tbl"]["food"]
         else:
-            reward = self.__reward_dict["DEAD"]
+            reward = self.__PARAMS["reward_tbl"]["dead"]
 
         self.snake.move(direc)
 
         if self.map.is_full():
-            reward = self.__reward_dict["FULL"]
+            reward = self.__PARAMS["reward_tbl"]["full"]
 
         return self.map.state(), reward
 
     def __store_transition(self, s_cur, a, r, s_nxt):
-        idx = self.__mem_cnt % self.__mem_size
+        idx = self.__mem_cnt % self.__PARAMS["mem_size"]
         self.__mem[idx, :] = np.hstack((s_cur, a, r, s_nxt))
         self.__mem_cnt += 1
 
@@ -239,19 +269,24 @@ class DQNSolver(BaseSolver):
         log_msg = "Learning step %d | Epsilon: %f" % (self.__learn_steps, self.__epsilon)
 
         # Replace target
-        if self.__learn_steps % self.__replace_target_iter == 0:
+        if self.__learn_steps == 1 or self.__learn_steps % self.__PARAMS["freq_replace"] == 0:
             self.__sess.run(self.__replace_target)
             log_msg += " | Target net params replaced"
 
+        # Save model
+        if self.__learn_steps % self.__PARAMS["freq_save"] == 0:
+            self.__save_model()
+            log_msg += " | Model saved"
+
         # Sample batch from memory
-        num_available = min(self.__mem_size, self.__mem_cnt)
-        sample_indices = np.random.choice(
-            num_available, size=min(num_available, self.__mem_batch), replace=False)
+        num_available = min(self.__mem_cnt, self.__PARAMS["mem_size"])
+        num_sample = min(num_available, self.__PARAMS["mem_batch"])
+        sample_indices = np.random.choice(num_available, size=num_sample, replace=False)
         batch = self.__mem[sample_indices, :]
-        batch_state_cur = batch[:, :self.__num_features]
-        batch_action = batch[:, self.__num_features].astype(np.int32)
-        batch_reward = batch[:, self.__num_features + 1]
-        batch_state_nxt = batch[:, -self.__num_features:]
+        batch_state_cur = batch[:, :self.__NUM_FEATURES]
+        batch_action = batch[:, self.__NUM_FEATURES].astype(np.int32)
+        batch_reward = batch[:, self.__NUM_FEATURES + 1]
+        batch_state_nxt = batch[:, -self.__NUM_FEATURES:]
 
         # Compute eval net output for next state (to compute q target)
         q_eval_all_nxt = self.__sess.run(
