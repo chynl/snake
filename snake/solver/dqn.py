@@ -29,7 +29,7 @@ class DQNSolver(BaseSolver):
 
             "freq_learn": 4,  # Frequency (snake steps) for SGD update
             "freq_replace": 10000,  # Frequency (learn steps) for target net replacement
-            "freq_save": 5000,  # Frequency (learn steps) for saving model parameters
+            "freq_save": 10000,  # Frequency (learn steps) for saving model parameters
 
             "gamma": 0.99,  # Reward discount
 
@@ -196,6 +196,7 @@ class DQNSolver(BaseSolver):
             # Shape: (None, )
             q_nxt = tf.gather_nd(q_nxt_all, action_indices, name="q_nxt")
             q_target = self.__reward + self.__PARAMS["gamma"] * q_nxt
+            q_target = tf.stop_gradient(q_target)
 
         with tf.variable_scope("loss"):
             self.__loss = tf.reduce_mean(tf.squared_difference(q_eval, q_target))
