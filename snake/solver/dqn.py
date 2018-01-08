@@ -106,49 +106,54 @@ class DQNSolver(BaseSolver):
 
     def __build_net(self):
 
-        def __build_layers(x, scope, name, w_init_, b_init_):
-            with tf.variable_scope(scope):
-                x_2d = tf.reshape(x, [-1, 10, 10, 1])
-                conv1 = tf.layers.conv2d(inputs=x_2d,
-                                         filters=32,
-                                         kernel_size=3,
-                                         strides=1,
-                                         padding='valid',
-                                         activation=tf.nn.relu,
-                                         kernel_initializer=w_init_,
-                                         bias_initializer=b_init_,
-                                         name="conv1")
-                conv2 = tf.layers.conv2d(inputs=conv1,
-                                         filters=64,
-                                         kernel_size=3,
-                                         strides=1,
-                                         padding='valid',
-                                         activation=tf.nn.relu,
-                                         kernel_initializer=w_init_,
-                                         bias_initializer=b_init_,
-                                         name="conv2")
-                conv3 = tf.layers.conv2d(inputs=conv2,
-                                         filters=64,
-                                         kernel_size=3,
-                                         strides=1,
-                                         padding='valid',
-                                         activation=tf.nn.relu,
-                                         kernel_initializer=w_init_,
-                                         bias_initializer=b_init_,
-                                         name="conv3")
-                conv3_flat = tf.reshape(conv3, [-1, 4 * 4 * 64])
-                fc1 = tf.layers.dense(inputs=conv3_flat,
-                                      units=512,
-                                      activation=tf.nn.relu,
-                                      kernel_initializer=w_init_,
-                                      bias_initializer=b_init_,
-                                      name="fc1")
-                q = tf.layers.dense(inputs=fc1,
+        def __build_layers(x, name, w_init_, b_init_):
+            x_2d = tf.reshape(x, [-1, 10, 10, 1])
+            conv1 = tf.layers.conv2d(inputs=x_2d,
+                                     filters=32,
+                                     kernel_size=3,
+                                     strides=1,
+                                     padding='valid',
+                                     activation=tf.nn.relu,
+                                     kernel_initializer=w_init_,
+                                     bias_initializer=b_init_,
+                                     name="conv1")
+            conv2 = tf.layers.conv2d(inputs=conv1,
+                                     filters=64,
+                                     kernel_size=3,
+                                     strides=1,
+                                     padding='valid',
+                                     activation=tf.nn.relu,
+                                     kernel_initializer=w_init_,
+                                     bias_initializer=b_init_,
+                                     name="conv2")
+            conv3 = tf.layers.conv2d(inputs=conv2,
+                                     filters=64,
+                                     kernel_size=3,
+                                     strides=1,
+                                     padding='valid',
+                                     activation=tf.nn.relu,
+                                     kernel_initializer=w_init_,
+                                     bias_initializer=b_init_,
+                                     name="conv3")
+            conv3_flat = tf.reshape(conv3, [-1, 4 * 4 * 64])
+            fc1 = tf.layers.dense(inputs=conv3_flat,
+                                  units=512,
+                                  activation=tf.nn.relu,
+                                  kernel_initializer=w_init_,
+                                  bias_initializer=b_init_,
+                                  name="fc1")
+            q_all = tf.layers.dense(inputs=fc1,
                                     units=self.__NUM_ACTIONS,
                                     kernel_initializer=w_init_,
                                     bias_initializer=b_init_,
                                     name=name)
-                return q
+            return q_all  # Shape: (None, num_actions)
+
+        def __filter_actions(q_all, actions):
+            indices = tf.range(tf.shape(q_all)[0], dtype=tf.int32)
+            action_indices = tf.stack([indices, actions], axis=1)
+            q = tf.gather_nd(q_all, action_indices)
+            return q  # Shape: (None, )
 
         # Input tensor for eval net
         self.__state_eval = tf.placeholder(
@@ -170,31 +175,26 @@ class DQNSolver(BaseSolver):
         self.__q_eval_all_nxt = tf.placeholder(
             tf.float32, [None, self.__NUM_ACTIONS], name="q_eval_all_nxt")
 
+        SCOPE_EVAL_NET = "eval_net"
+        SCOPE_TARGET_NET = "target_net"
+
         w_init = tf.truncated_normal_initializer(mean=0, stddev=0.1)
         b_init = tf.constant_initializer(0.1)
 
-        SCOPE_EVAL, SCOPE_TARGET = "eval_net", "target_net"
-
-        # Eval net output / Shape: (None, num_actions)
-        self.__q_eval_all = __build_layers(
-            self.__state_eval, SCOPE_EVAL, "q_eval_all", w_init, b_init)
+        with tf.variable_scope(SCOPE_EVAL_NET):
+            # Eval net output
+            self.__q_eval_all = __build_layers(self.__state_eval, "q_eval_all", w_init, b_init)
 
         with tf.variable_scope("q_eval"):
-            indices = tf.range(tf.shape(self.__state_eval)[0], dtype=tf.int32)
-            action_indices = tf.stack([indices, self.__action], axis=1)
-            # Shape: (None, )
-            q_eval = tf.gather_nd(self.__q_eval_all, action_indices)
+            q_eval = __filter_actions(self.__q_eval_all, self.__action)
 
-        # Target net output / Shape: (None, num_actions)
-        q_nxt_all = __build_layers(
-            self.__state_target, SCOPE_TARGET, "q_nxt_all", w_init, b_init)
+        with tf.variable_scope(SCOPE_TARGET_NET):
+            # Target net output
+            q_nxt_all = __build_layers(self.__state_target, "q_nxt_all", w_init, b_init)
 
         with tf.variable_scope("q_target"):
-            indices = tf.range(tf.shape(self.__state_target)[0], dtype=tf.int32)
             max_actions = tf.argmax(self.__q_eval_all_nxt, axis=1, output_type=tf.int32)
-            action_indices = tf.stack([indices, max_actions], axis=1)
-            # Shape: (None, )
-            q_nxt = tf.gather_nd(q_nxt_all, action_indices, name="q_nxt")
+            q_nxt = __filter_actions(q_nxt_all, max_actions)
             q_target = self.__reward + self.__PARAMS["gamma"] * q_nxt
             q_target = tf.stop_gradient(q_target)
 
@@ -209,14 +209,16 @@ class DQNSolver(BaseSolver):
         # Replace target net params with eval net's
         with tf.variable_scope("replace"):
             self.__eval_params = tf.get_collection(
-                tf.GraphKeys.GLOBAL_VARIABLES, scope=SCOPE_EVAL)
+                tf.GraphKeys.GLOBAL_VARIABLES, scope=SCOPE_EVAL_NET)
             self.__target_params = tf.get_collection(
-                tf.GraphKeys.GLOBAL_VARIABLES, scope=SCOPE_TARGET)
-            self.__replace_target = [tf.assign(t, e)
-                                     for t, e in zip(self.__target_params, self.__eval_params)]
+                tf.GraphKeys.GLOBAL_VARIABLES, scope=SCOPE_TARGET_NET)
+            self.__replace_target = [
+                tf.assign(t, e) for t, e in zip(self.__target_params, self.__eval_params)
+            ]
 
     def next_direc(self):
-        return self.__SNAKE_ACTIONS[self.__choose_action()]
+        action_idx = self.__choose_action(use_e_greedy=False)
+        return self.__SNAKE_ACTIONS[action_idx]
 
     def train(self):
         action = self.__choose_action()
@@ -228,8 +230,8 @@ class DQNSolver(BaseSolver):
         if self.__epsilon > self.__PARAMS["epsilon_min"]:
             self.__epsilon -= self.__PARAMS["epsilon_dec"]
 
-    def __choose_action(self):
-        if np.random.uniform() < self.__epsilon:
+    def __choose_action(self, use_e_greedy=True):
+        if use_e_greedy and np.random.uniform() < self.__epsilon:
             action_idx = np.random.randint(0, self.__NUM_ACTIONS)
         else:
             state = self.map.state()[np.newaxis, :]
