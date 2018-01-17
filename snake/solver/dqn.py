@@ -60,20 +60,21 @@ class DQNSolver(BaseSolver):
         self.__NUM_ACTIONS = len(self.__SNAKE_ACTIONS)
         self.__NUM_FEATURES = snake.map.capacity
 
-        self.__RESTORE_STEPS = None
+        self.__RESTORE_STEP = None  # Which learn step to restore
 
         self.__mem = np.zeros((self.__PARAMS["mem_size"], self.__NUM_FEATURES * 2 + 2))
         self.__mem_cnt = 0
         self.__epsilon = self.__PARAMS["epsilon_max"]
-        self.__learn_steps = 1
+        self.__learn_step = 1
 
-        self.__build_net()
+        eval_params, target_params = self.__build_net()
+
         self.__sess = tf.Session()
         self.__sess.run(tf.global_variables_initializer())
         tf.summary.FileWriter(self.__DIR_LOG, self.__sess.graph)
 
-        self.__net_saver = tf.train.Saver(self.__eval_params + self.__target_params)
-        if self.__RESTORE_STEPS is not None:
+        self.__net_saver = tf.train.Saver(eval_params + target_params)
+        if self.__RESTORE_STEP is not None:
             self.__load_model()
 
         _log("Parameters: ", self.__PARAMS)
@@ -81,34 +82,34 @@ class DQNSolver(BaseSolver):
     def __load_model(self):
         _log("Loading model ...")
 
-        with open(self.__PATH_VAR.format(self.__RESTORE_STEPS), "r") as f:
+        with open(self.__PATH_VAR.format(self.__RESTORE_STEP), "r") as f:
             var = json.load(f)
         self.__mem_cnt = var["mem_cnt"]
         self.__epsilon = var["epsilon"]
-        self.__mem = np.load(self.__PATH_MEM.format(self.__RESTORE_STEPS))
-        self.__net_saver.restore(self.__sess, self.__PATH_NET.format(self.__RESTORE_STEPS))
-        self.__learn_steps = self.__RESTORE_STEPS + 1
+        self.__mem = np.load(self.__PATH_MEM.format(self.__RESTORE_STEP))
+        self.__net_saver.restore(self.__sess, self.__PATH_NET.format(self.__RESTORE_STEP))
+        self.__learn_step = self.__RESTORE_STEP + 1
 
         _log("epsilon: ", self.__epsilon)
         _log("mem cnt: {0} | mem shape: {1}".format(self.__mem_cnt, self.__mem.shape))
         _log("Model loaded")
 
     def __save_model(self):
-        with open(self.__PATH_VAR.format(self.__learn_steps), "w") as f:
+        with open(self.__PATH_VAR.format(self.__learn_step), "w") as f:
             json.dump({
                 "mem_cnt": self.__mem_cnt,
                 "epsilon": self.__epsilon,
             }, f, indent=2)
-        np.save(self.__PATH_MEM.format(self.__learn_steps), self.__mem)
+        np.save(self.__PATH_MEM.format(self.__learn_step), self.__mem)
         self.__net_saver.save(self.__sess,
-                              self.__PATH_NET.format(self.__learn_steps),
+                              self.__PATH_NET.format(self.__learn_step),
                               write_meta_graph=False)
 
     def __build_net(self):
 
         def __build_layers(x, name, w_init_, b_init_):
-            x_2d = tf.reshape(x, [-1, 10, 10, 1])
-            conv1 = tf.layers.conv2d(inputs=x_2d,
+            input_2d = tf.reshape(x, [-1, 10, 10, 1], name="input_2d")
+            conv1 = tf.layers.conv2d(inputs=input_2d,
                                      filters=32,
                                      kernel_size=3,
                                      strides=1,
@@ -135,7 +136,7 @@ class DQNSolver(BaseSolver):
                                      kernel_initializer=w_init_,
                                      bias_initializer=b_init_,
                                      name="conv3")
-            conv3_flat = tf.reshape(conv3, [-1, 4 * 4 * 64])
+            conv3_flat = tf.reshape(conv3, [-1, 4 * 4 * 64], name="conv3_flat")
             fc1 = tf.layers.dense(inputs=conv3_flat,
                                   units=512,
                                   activation=tf.nn.relu,
@@ -152,8 +153,7 @@ class DQNSolver(BaseSolver):
         def __filter_actions(q_all, actions):
             indices = tf.range(tf.shape(q_all)[0], dtype=tf.int32)
             action_indices = tf.stack([indices, actions], axis=1)
-            q = tf.gather_nd(q_all, action_indices)
-            return q  # Shape: (None, )
+            return tf.gather_nd(q_all, action_indices)  # Shape: (None, )
 
         # Input tensor for eval net
         self.__state_eval = tf.placeholder(
@@ -171,7 +171,7 @@ class DQNSolver(BaseSolver):
         self.__reward = tf.placeholder(
             tf.float32, [None, ], name="reward")
 
-        # Input tensor for calculated eval net output for next state
+        # Input tensor for eval net output of next state
         self.__q_eval_all_nxt = tf.placeholder(
             tf.float32, [None, self.__NUM_ACTIONS], name="q_eval_all_nxt")
 
@@ -193,6 +193,7 @@ class DQNSolver(BaseSolver):
             q_nxt_all = __build_layers(self.__state_target, "q_nxt_all", w_init, b_init)
 
         with tf.variable_scope("q_target"):
+            # Double DQN: choose max reward actions using eval net
             max_actions = tf.argmax(self.__q_eval_all_nxt, axis=1, output_type=tf.int32)
             q_nxt = __filter_actions(q_nxt_all, max_actions)
             q_target = self.__reward + self.__PARAMS["gamma"] * q_nxt
@@ -208,30 +209,31 @@ class DQNSolver(BaseSolver):
 
         # Replace target net params with eval net's
         with tf.variable_scope("replace"):
-            self.__eval_params = tf.get_collection(
+            eval_params = tf.get_collection(
                 tf.GraphKeys.GLOBAL_VARIABLES, scope=SCOPE_EVAL_NET)
-            self.__target_params = tf.get_collection(
+            target_params = tf.get_collection(
                 tf.GraphKeys.GLOBAL_VARIABLES, scope=SCOPE_TARGET_NET)
             self.__replace_target = [
-                tf.assign(t, e) for t, e in zip(self.__target_params, self.__eval_params)
+                tf.assign(t, e) for t, e in zip(target_params, eval_params)
             ]
 
+        return eval_params, target_params
+
     def next_direc(self):
-        action_idx = self.__choose_action(use_e_greedy=False)
-        return self.__SNAKE_ACTIONS[action_idx]
+        return self.__SNAKE_ACTIONS[self.__choose_action(e_greedy=False)]
 
     def train(self):
         action = self.__choose_action()
         state_cur = self.map.state()
-        state_nxt, reward = self.__step(action)
+        reward, state_nxt = self.__step(action)
         self.__store_transition(state_cur, action, reward, state_nxt)
         if self.snake.steps % self.__PARAMS["freq_learn"] == 0:
             self.__learn()
         if self.__epsilon > self.__PARAMS["epsilon_min"]:
             self.__epsilon -= self.__PARAMS["epsilon_dec"]
 
-    def __choose_action(self, use_e_greedy=True):
-        if use_e_greedy and np.random.uniform() < self.__epsilon:
+    def __choose_action(self, e_greedy=True):
+        if e_greedy and np.random.uniform() < self.__epsilon:
             action_idx = np.random.randint(0, self.__NUM_ACTIONS)
         else:
             state = self.map.state()[np.newaxis, :]
@@ -261,30 +263,30 @@ class DQNSolver(BaseSolver):
         if self.map.is_full():
             reward = self.__PARAMS["reward_tbl"]["full"]
 
-        return self.map.state(), reward
+        return reward, self.map.state()
 
-    def __store_transition(self, s_cur, a, r, s_nxt):
+    def __store_transition(self, state_cur, action, reward, state_nxt):
         idx = self.__mem_cnt % self.__PARAMS["mem_size"]
-        self.__mem[idx, :] = np.hstack((s_cur, a, r, s_nxt))
+        self.__mem[idx, :] = np.hstack((state_cur, action, reward, state_nxt))
         self.__mem_cnt += 1
 
     def __learn(self):
-        log_msg = "Learning step %d | Epsilon: %f" % (self.__learn_steps, self.__epsilon)
+        log_msg = "Learn step %d | Epsilon: %f" % (self.__learn_step, self.__epsilon)
 
         # Replace target
-        if self.__learn_steps == 1 or self.__learn_steps % self.__PARAMS["freq_replace"] == 0:
+        if self.__learn_step == 1 or self.__learn_step % self.__PARAMS["freq_replace"] == 0:
             self.__sess.run(self.__replace_target)
             log_msg += " | Target net params replaced"
 
         # Save model
-        if self.__learn_steps % self.__PARAMS["freq_save"] == 0:
+        if self.__learn_step % self.__PARAMS["freq_save"] == 0:
             self.__save_model()
             log_msg += " | Model saved"
 
         # Sample batch from memory
         num_available = min(self.__mem_cnt, self.__PARAMS["mem_size"])
-        num_sample = min(num_available, self.__PARAMS["mem_batch"])
-        sample_indices = np.random.choice(num_available, size=num_sample, replace=False)
+        num_samples = min(num_available, self.__PARAMS["mem_batch"])
+        sample_indices = np.random.choice(num_available, size=num_samples, replace=False)
         batch = self.__mem[sample_indices, :]
         batch_state_cur = batch[:, :self.__NUM_FEATURES]
         batch_action = batch[:, self.__NUM_FEATURES].astype(np.int32)
@@ -312,5 +314,5 @@ class DQNSolver(BaseSolver):
         )
         log_msg += " | Loss: %f" % loss
 
-        self.__learn_steps += 1
+        self.__learn_step += 1
         _log(log_msg)
