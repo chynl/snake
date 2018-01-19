@@ -14,7 +14,8 @@ from snake.solver import GreedySolver, HamiltonSolver, DQNSolver
 class GameMode(Enum):
     NORMAL = 0     # AI with GUI
     BENCHMARK = 1  # Run benchmarks without GUI
-    TRAIN = 2      # Train DQNSolver
+    TRAIN = 2      # Train DQNSolver without GUI
+    TRAIN_GUI = 3  # Train DQNSolver with GUI
 
 
 class GameConf:
@@ -113,6 +114,9 @@ class Game:
             if self.__conf.mode == GameMode.NORMAL:
                 window.show(self.__game_main)
             elif self.__conf.mode == GameMode.TRAIN:
+                while True:
+                    self.__game_main_train()
+            elif self.__conf.mode == GameMode.TRAIN_GUI:
                 window.show(self.__game_main_train)
 
     def __run_benchmarks(self):

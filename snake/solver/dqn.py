@@ -105,10 +105,16 @@ class _Memory:
 
     PATH_VAR = os.path.join(_DIR_LOG, "mem-var-%d.json")
 
-    def __init__(self, params):
-        self.__PARAMS = params
-        self.__beta = self.__PARAMS["beta_min"]
-        self.__tree = _SumTree(self.__PARAMS["mem_size"])
+    def __init__(self, mem_size, alpha, beta_min, beta_inc, pri_epsilon, abs_err_upper):
+        self.__MEM_SIZE = mem_size
+        self.__ALPHA = alpha
+        self.__BETA_MIN = beta_min
+        self.__BETA_INC = beta_inc
+        self.__PRI_EPSILON = pri_epsilon
+        self.__ABS_ERR_UPPER = abs_err_upper
+
+        self.__beta = self.__BETA_MIN
+        self.__tree = _SumTree(self.__MEM_SIZE)
 
     @property
     def beta(self):
@@ -131,7 +137,7 @@ class _Memory:
     def store(self, transition):
         max_priority = np.max(self.__tree.leaves())
         if max_priority == 0:
-            max_priority = self.__PARAMS["priority_err_abs_upper"]
+            max_priority = self.__ABS_ERR_UPPER
         self.__tree.insert(transition, max_priority)
 
     def sample(self, num_samples):
@@ -141,7 +147,6 @@ class _Memory:
 
         len_seg = self.__tree.sum() / num_samples
         min_prob = min(self.__tree.leaves()) / self.__tree.sum()
-        self.__beta = min(1., self.__beta + self.__PARAMS["beta_inc"])
 
         for i in range(num_samples):
             val = np.random.uniform(len_seg * i, len_seg * (i + 1))
@@ -149,12 +154,14 @@ class _Memory:
             prob = priority / self.__tree.sum()
             IS_weights[i] = np.power(prob / min_prob, -self.__beta)  # Simplified formula
 
+        self.__beta = min(1.0, self.__beta + self.__BETA_INC)
+
         return tree_indices, batch_mem, IS_weights
 
     def update(self, tree_indices, abs_errs):
-        abs_errs += self.__PARAMS["priority_epsilon"]
-        clipped_errors = np.minimum(abs_errs, self.__PARAMS["priority_err_abs_upper"])
-        priorities = np.power(clipped_errors, self.__PARAMS["alpha"])
+        abs_errs += self.__PRI_EPSILON
+        clipped_errors = np.minimum(abs_errs, self.__ABS_ERR_UPPER)
+        priorities = np.power(clipped_errors, self.__ALPHA)
         for idx, priority in zip(tree_indices, priorities):
             self.__tree.update(idx, priority)
 
@@ -167,49 +174,47 @@ class DQNSolver(BaseSolver):
     def __init__(self, snake):
         super().__init__(snake)
 
-        self.__PARAMS = {
-            "lr": 0.00025 / 4,  # Learning rate
-            "momentum": 0.95,  # SGD momentum
-            "gamma": 0.99,  # Reward discount
+        # Rewards
+        self.__RWD_EMPTY = -0.001
+        self.__RWD_DEAD = -0.1
+        self.__RWD_FOOD = 0.5
+        self.__RWD_FULL = 1.0
 
-            # Reward table
-            "reward_tbl": {
-                "empty": -0.001,
-                "dead": -0.1,
-                "food": 0.5,
-                "full": 1.0
-            },
+        # Epsilon-greedy
+        self.__EPSILON_MAX = 1.0
+        self.__EPSILON_MIN = 0.1
+        self.__EPSILON_DEC = 1e-6
 
-            # Epsilon-greedy
-            "epsilon_max": 1.0,
-            "epsilon_min": 0.1,
-            "epsilon_dec": 1e-6,
+        # Memory
+        self.__MEM_SIZE = 1000
+        self.__MEM_BATCH = 32
 
-            # Replay memory
-            "mem_size": 1000,
-            "mem_batch": 32,
+        # Frequency
+        self.__FREQ_LEARN = 4        # Number of new transitions
+        self.__FREQ_REPLACE = 10000  # Learn steps
+        self.__FREQ_SAVE = 10000     # Learn steps
 
-            "freq_learn": 4,  # Frequency (number of new transitions) for SGD update
-            "freq_replace": 10000,  # Frequency (learn steps) for target net replacement
-            "freq_save": 10000,  # Frequency (learn steps) for saving model parameters
+        self.__LR = 0.00025 / 4      # Learning rate
+        self.__MOMENTUM = 0.95       # SGD momentum
+        self.__GAMMA = 0.99          # Reward discount
 
-            # Prioritized experience replay (proportional variant)
-            "alpha": 0.6,  # How much prioritization to use
-            "beta_min": 0.4,  # Importance-sampling (IS)
-            "beta_inc": 1e-6,
-            "priority_epsilon": 1e-6,  # Small positive value to avoid zero priority
-            "priority_err_abs_upper": 1,  # TD-error (absolute value) clip upperbound
-        }
+        self.__ALPHA = 0.6           # How much prioritization to use
+        self.__BETA_MIN = 0.4        # Importance-sampling (IS)
+        self.__BETA_INC = 1e-6
+        self.__PRI_EPSILON = 1e-6    # Small positive value to avoid zero priority
+        self.__ABS_ERR_UPPER = 1     # TD-error (absolute value) clip upperbound
+
+        self.__RESTORE_STEP = None  # Which learn step to restore
 
         self.__SNAKE_ACTIONS = [Direc.LEFT, Direc.UP, Direc.RIGHT, Direc.DOWN]
         self.__NUM_ACTIONS = len(self.__SNAKE_ACTIONS)
         self.__NUM_FEATURES = snake.map.capacity
 
-        self.__RESTORE_STEP = None  # Which learn step to restore
-
-        self.__mem = _Memory(self.__PARAMS)
+        self.__mem = _Memory(mem_size=self.__MEM_SIZE, alpha=self.__ALPHA,
+                             beta_min=self.__BETA_MIN, beta_inc=self.__BETA_INC,
+                             pri_epsilon=self.__PRI_EPSILON, abs_err_upper=self.__ABS_ERR_UPPER)
         self.__mem_cnt = 0
-        self.__epsilon = self.__PARAMS["epsilon_max"]
+        self.__epsilon = self.__EPSILON_MAX
         self.__learn_step = 1
 
         eval_params, target_params = self.__build_net()
@@ -221,8 +226,6 @@ class DQNSolver(BaseSolver):
 
         if self.__RESTORE_STEP is not None:
             self.__load_model()
-
-        _log("params: ", self.__PARAMS)
 
     def __save_model(self):
         self.__mem.save(self.__learn_step)
@@ -340,7 +343,7 @@ class DQNSolver(BaseSolver):
             # Double DQN: choose max reward actions using eval net
             max_actions = tf.argmax(self.__q_eval_all_nxt, axis=1, output_type=tf.int32)
             q_nxt = __filter_actions(q_nxt_all, max_actions)
-            q_target = self.__reward + self.__PARAMS["gamma"] * q_nxt
+            q_target = self.__reward + self.__GAMMA * q_nxt
             q_target = tf.stop_gradient(q_target)
 
         with tf.variable_scope("loss"):
@@ -350,7 +353,7 @@ class DQNSolver(BaseSolver):
 
         with tf.variable_scope("train"):
             self.__train = tf.train.RMSPropOptimizer(
-                learning_rate=self.__PARAMS["lr"], momentum=self.__PARAMS["momentum"]
+                learning_rate=self.__LR, momentum=self.__MOMENTUM
             ).minimize(self.__loss)
 
         # Replace target net params with eval net's
@@ -374,14 +377,13 @@ class DQNSolver(BaseSolver):
         reward, state_nxt = self.__step(action)
         self.__store_transition(state_cur, action, reward, state_nxt)
 
-        if self.__mem_cnt >= self.__PARAMS["mem_size"]:
-            if self.__mem_cnt % self.__PARAMS["freq_learn"] == 0:
+        if self.__mem_cnt >= self.__MEM_SIZE:
+            if self.__mem_cnt % self.__FREQ_LEARN == 0:
                 self.__learn()
         else:
             _log("mem_cnt: %d" % self.__mem_cnt)
 
-        if self.__epsilon > self.__PARAMS["epsilon_min"]:
-            self.__epsilon -= self.__PARAMS["epsilon_dec"]
+        self.__epsilon = max(self.__EPSILON_MIN, self.__epsilon - self.__EPSILON_DEC)
 
     def __choose_action(self, e_greedy=True):
         if e_greedy and np.random.uniform() < self.__epsilon:
@@ -403,16 +405,16 @@ class DQNSolver(BaseSolver):
         nxt_type = self.map.point(nxt_pos).type
 
         if nxt_type == PointType.EMPTY:
-            reward = self.__PARAMS["reward_tbl"]["empty"]
+            reward = self.__RWD_EMPTY
         elif nxt_type == PointType.FOOD:
-            reward = self.__PARAMS["reward_tbl"]["food"]
+            reward = self.__RWD_FOOD
         else:
-            reward = self.__PARAMS["reward_tbl"]["dead"]
+            reward = self.__RWD_DEAD
 
         self.snake.move(direc)
 
         if self.map.is_full():
-            reward = self.__PARAMS["reward_tbl"]["full"]
+            reward = self.__RWD_FULL
 
         return reward, self.map.state()
 
@@ -425,17 +427,17 @@ class DQNSolver(BaseSolver):
                   (self.__learn_step, self.__mem_cnt, self.__epsilon, self.__mem.beta)
 
         # Replace target
-        if self.__learn_step == 1 or self.__learn_step % self.__PARAMS["freq_replace"] == 0:
+        if self.__learn_step == 1 or self.__learn_step % self.__FREQ_REPLACE == 0:
             self.__sess.run(self.__replace_target)
             log_msg += " | target net replaced"
 
         # Save model
-        if self.__learn_step % self.__PARAMS["freq_save"] == 0:
+        if self.__learn_step % self.__FREQ_SAVE == 0:
             self.__save_model()
             log_msg += " | model saved"
 
         # Sample batch from memory
-        tree_indices, batch, IS_weights = self.__mem.sample(self.__PARAMS["mem_batch"])
+        tree_indices, batch, IS_weights = self.__mem.sample(self.__MEM_BATCH)
         batch_state_cur = batch[:, :self.__NUM_FEATURES]
         batch_action = batch[:, self.__NUM_FEATURES].astype(np.int32)
         batch_reward = batch[:, self.__NUM_FEATURES + 1]
