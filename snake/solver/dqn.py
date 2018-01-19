@@ -2,13 +2,18 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=C0111,C0103,E1101
 
-import os
 import json
+import os
 from datetime import datetime
+
 import numpy as np
 import tensorflow as tf
+
 from snake.base import Direc, PointType
 from snake.solver.base import BaseSolver
+
+
+_DIR_LOG = "logs"
 
 
 def _log(*msgs):
@@ -18,19 +23,153 @@ def _log(*msgs):
     print("[%s]" % datetime.now().strftime("%Y-%m-%d %H:%M:%S"), msg_str)
 
 
+class _SumTree:
+
+    PATH_TREE = os.path.join(_DIR_LOG, "sumtree-tree-%d.npy")
+    PATH_DATA = os.path.join(_DIR_LOG, "sumtree-data-%d.npy")
+    PATH_VAR = os.path.join(_DIR_LOG, "sumtree-var-%d.json")
+
+    def __init__(self, capacity):
+        self.__capacity = capacity
+        self.__tree = np.zeros(2 * self.__capacity - 1)
+        self.__data = np.zeros(self.__capacity, dtype=object)
+        self.__data_idx = 0
+
+    @property
+    def tree(self):
+        return self.__tree
+
+    @property
+    def data(self):
+        return self.__data
+
+    def save(self, steps):
+        np.save(_SumTree.PATH_TREE % steps, self.__tree)
+        np.save(_SumTree.PATH_DATA % steps, self.__data)
+        with open(_SumTree.PATH_VAR % steps, "w") as f:
+            json.dump({
+                "capacity": self.__capacity,
+                "data_idx": self.__data_idx,
+            }, f, indent=2)
+
+    def load(self, steps):
+        self.__tree = np.load(_SumTree.PATH_TREE % steps)
+        self.__data = np.load(_SumTree.PATH_DATA % steps)
+        with open(_SumTree.PATH_VAR % steps, "r") as f:
+            var = json.load(f)
+        self.__capacity = var["capacity"]
+        self.__data_idx = var["data_idx"]
+        _log("sum tree loaded | tree shape: {} | data shape: {} | capacity: {} | data_idx: {}"
+             .format(self.__tree.shape, self.__data.shape, self.__capacity, self.__data_idx))
+
+    def sum(self):
+        return self.__tree[0]
+
+    def insert(self, data, priority):
+        self.__data[self.__data_idx] = data
+        tree_idx = self.__data_idx + self.__capacity - 1
+        self.update(tree_idx, priority)
+        self.__data_idx += 1
+        if self.__data_idx >= self.__capacity:
+            self.__data_idx = 0
+
+    def update(self, tree_idx, priority):
+        delta = priority - self.__tree[tree_idx]
+        self.__tree[tree_idx] = priority
+        while tree_idx != 0:
+            tree_idx = (tree_idx - 1) // 2  # Get parent
+            self.__tree[tree_idx] += delta
+
+    def retrieve(self, val):
+        parent = 0
+        while True:
+            left = 2 * parent + 1
+            right = left + 1
+            if left >= len(self.__tree):
+                tree_idx = parent
+                break
+            else:
+                if val <= self.__tree[left]:
+                    parent = left
+                else:
+                    val -= self.__tree[left]
+                    parent = right
+        data_idx = tree_idx - self.__capacity + 1
+        return tree_idx, self.__tree[tree_idx], self.__data[data_idx]
+
+    def leaves(self):
+        return self.__tree[-self.__capacity:]
+
+
+class _Memory:
+
+    PATH_VAR = os.path.join(_DIR_LOG, "mem-var-%d.json")
+
+    def __init__(self, params):
+        self.__PARAMS = params
+        self.__beta = self.__PARAMS["beta_min"]
+        self.__tree = _SumTree(self.__PARAMS["mem_size"])
+
+    @property
+    def beta(self):
+        return self.__beta
+
+    def save(self, steps):
+        self.__tree.save(steps)
+        with open(_Memory.PATH_VAR % steps, "w") as f:
+            json.dump({
+                "beta": self.__beta,
+            }, f, indent=2)
+
+    def load(self, steps):
+        self.__tree.load(steps)
+        with open(_Memory.PATH_VAR % steps, "r") as f:
+            var = json.load(f)
+        self.__beta = var["beta"]
+        _log("memory loaded | beta: %.6f" % (self.__beta))
+
+    def store(self, transition):
+        max_priority = np.max(self.__tree.leaves())
+        if max_priority == 0:
+            max_priority = self.__PARAMS["priority_err_abs_upper"]
+        self.__tree.insert(transition, max_priority)
+
+    def sample(self, num_samples):
+        tree_indices = np.zeros((num_samples, ), dtype=np.int32)
+        batch_mem = np.zeros((num_samples, self.__tree.data[0].size))
+        IS_weights = np.zeros((num_samples, ))  # Importance-sampling (IS) weights
+
+        len_seg = self.__tree.sum() / num_samples
+        min_prob = min(self.__tree.leaves()) / self.__tree.sum()
+        self.__beta = min(1., self.__beta + self.__PARAMS["beta_inc"])
+
+        for i in range(num_samples):
+            val = np.random.uniform(len_seg * i, len_seg * (i + 1))
+            tree_indices[i], priority, batch_mem[i, :] = self.__tree.retrieve(val)
+            prob = priority / self.__tree.sum()
+            IS_weights[i] = np.power(prob / min_prob, -self.__beta)  # Simplified formula
+
+        return tree_indices, batch_mem, IS_weights
+
+    def update(self, tree_indices, abs_errs):
+        abs_errs += self.__PARAMS["priority_epsilon"]
+        clipped_errors = np.minimum(abs_errs, self.__PARAMS["priority_err_abs_upper"])
+        priorities = np.power(clipped_errors, self.__PARAMS["alpha"])
+        for idx, priority in zip(tree_indices, priorities):
+            self.__tree.update(idx, priority)
+
+
 class DQNSolver(BaseSolver):
+
+    PATH_VAR = os.path.join(_DIR_LOG, "solver-var-%d.json")
+    PATH_NET = os.path.join(_DIR_LOG, "solver-net-%d")
 
     def __init__(self, snake):
         super().__init__(snake)
 
         self.__PARAMS = {
-            "lr": 0.00025,  # Learning rate
+            "lr": 0.00025 / 4,  # Learning rate
             "momentum": 0.95,  # SGD momentum
-
-            "freq_learn": 4,  # Frequency (snake steps) for SGD update
-            "freq_replace": 10000,  # Frequency (learn steps) for target net replacement
-            "freq_save": 10000,  # Frequency (learn steps) for saving model parameters
-
             "gamma": 0.99,  # Reward discount
 
             # Reward table
@@ -42,19 +181,25 @@ class DQNSolver(BaseSolver):
             },
 
             # Epsilon-greedy
-            "epsilon_max": 0.9,
+            "epsilon_max": 1.0,
             "epsilon_min": 0.1,
             "epsilon_dec": 1e-6,
 
             # Replay memory
-            "mem_size": 1000000,
-            "mem_batch": 32
-        }
+            "mem_size": 1000,
+            "mem_batch": 32,
 
-        self.__DIR_LOG = "logs"
-        self.__PATH_VAR = os.path.join(self.__DIR_LOG, "var-{0}.json")
-        self.__PATH_MEM = os.path.join(self.__DIR_LOG, "mem-{0}.npy")
-        self.__PATH_NET = os.path.join(self.__DIR_LOG, "net-{0}")
+            "freq_learn": 4,  # Frequency (number of new transitions) for SGD update
+            "freq_replace": 10000,  # Frequency (learn steps) for target net replacement
+            "freq_save": 10000,  # Frequency (learn steps) for saving model parameters
+
+            # Prioritized experience replay (proportional variant)
+            "alpha": 0.6,  # How much prioritization to use
+            "beta_min": 0.4,  # Importance-sampling (IS)
+            "beta_inc": 1e-6,
+            "priority_epsilon": 1e-6,  # Small positive value to avoid zero priority
+            "priority_err_abs_upper": 1,  # TD-error (absolute value) clip upperbound
+        }
 
         self.__SNAKE_ACTIONS = [Direc.LEFT, Direc.UP, Direc.RIGHT, Direc.DOWN]
         self.__NUM_ACTIONS = len(self.__SNAKE_ACTIONS)
@@ -62,48 +207,43 @@ class DQNSolver(BaseSolver):
 
         self.__RESTORE_STEP = None  # Which learn step to restore
 
-        self.__mem = np.zeros((self.__PARAMS["mem_size"], self.__NUM_FEATURES * 2 + 2))
+        self.__mem = _Memory(self.__PARAMS)
         self.__mem_cnt = 0
         self.__epsilon = self.__PARAMS["epsilon_max"]
         self.__learn_step = 1
 
         eval_params, target_params = self.__build_net()
+        self.__net_saver = tf.train.Saver(eval_params + target_params)
 
         self.__sess = tf.Session()
         self.__sess.run(tf.global_variables_initializer())
-        tf.summary.FileWriter(self.__DIR_LOG, self.__sess.graph)
+        tf.summary.FileWriter(_DIR_LOG, self.__sess.graph)
 
-        self.__net_saver = tf.train.Saver(eval_params + target_params)
         if self.__RESTORE_STEP is not None:
             self.__load_model()
 
-        _log("Parameters: ", self.__PARAMS)
-
-    def __load_model(self):
-        _log("Loading model ...")
-
-        with open(self.__PATH_VAR.format(self.__RESTORE_STEP), "r") as f:
-            var = json.load(f)
-        self.__mem_cnt = var["mem_cnt"]
-        self.__epsilon = var["epsilon"]
-        self.__mem = np.load(self.__PATH_MEM.format(self.__RESTORE_STEP))
-        self.__net_saver.restore(self.__sess, self.__PATH_NET.format(self.__RESTORE_STEP))
-        self.__learn_step = self.__RESTORE_STEP + 1
-
-        _log("epsilon: ", self.__epsilon)
-        _log("mem cnt: {0} | mem shape: {1}".format(self.__mem_cnt, self.__mem.shape))
-        _log("Model loaded")
+        _log("params: ", self.__PARAMS)
 
     def __save_model(self):
-        with open(self.__PATH_VAR.format(self.__learn_step), "w") as f:
+        self.__mem.save(self.__learn_step)
+        self.__net_saver.save(self.__sess, DQNSolver.PATH_NET % self.__learn_step,
+                              write_meta_graph=False)
+        with open(DQNSolver.PATH_VAR % self.__learn_step, "w") as f:
             json.dump({
                 "mem_cnt": self.__mem_cnt,
                 "epsilon": self.__epsilon,
             }, f, indent=2)
-        np.save(self.__PATH_MEM.format(self.__learn_step), self.__mem)
-        self.__net_saver.save(self.__sess,
-                              self.__PATH_NET.format(self.__learn_step),
-                              write_meta_graph=False)
+
+    def __load_model(self):
+        self.__mem.load(self.__RESTORE_STEP)
+        self.__net_saver.restore(self.__sess, DQNSolver.PATH_NET % self.__RESTORE_STEP)
+        with open(DQNSolver.PATH_VAR % self.__RESTORE_STEP, "r") as f:
+            var = json.load(f)
+        self.__mem_cnt = var["mem_cnt"]
+        self.__epsilon = var["epsilon"]
+        self.__learn_step = self.__RESTORE_STEP + 1
+        _log("model loaded | RESTORE_STEP: %d | mem_cnt: %d | epsilon: %.6f"
+             % (self.__RESTORE_STEP, self.__mem_cnt, self.__epsilon))
 
     def __build_net(self):
 
@@ -175,6 +315,10 @@ class DQNSolver(BaseSolver):
         self.__q_eval_all_nxt = tf.placeholder(
             tf.float32, [None, self.__NUM_ACTIONS], name="q_eval_all_nxt")
 
+        # Input tensor for importance-sampling weights
+        self.__IS_weights = tf.placeholder(
+            tf.float32, [None, ], name="IS_weights")
+
         SCOPE_EVAL_NET = "eval_net"
         SCOPE_TARGET_NET = "target_net"
 
@@ -200,7 +344,9 @@ class DQNSolver(BaseSolver):
             q_target = tf.stop_gradient(q_target)
 
         with tf.variable_scope("loss"):
-            self.__loss = tf.reduce_mean(tf.squared_difference(q_eval, q_target))
+            self.__loss = tf.reduce_mean(self.__IS_weights \
+                * tf.squared_difference(q_eval, q_target), name="loss")
+            self.__abs_errs = tf.abs(q_eval - q_target, name="abs_errs")  # To update sum tree
 
         with tf.variable_scope("train"):
             self.__train = tf.train.RMSPropOptimizer(
@@ -227,8 +373,13 @@ class DQNSolver(BaseSolver):
         state_cur = self.map.state()
         reward, state_nxt = self.__step(action)
         self.__store_transition(state_cur, action, reward, state_nxt)
-        if self.snake.steps % self.__PARAMS["freq_learn"] == 0:
-            self.__learn()
+
+        if self.__mem_cnt >= self.__PARAMS["mem_size"]:
+            if self.__mem_cnt % self.__PARAMS["freq_learn"] == 0:
+                self.__learn()
+        else:
+            _log("mem_cnt: %d" % self.__mem_cnt)
+
         if self.__epsilon > self.__PARAMS["epsilon_min"]:
             self.__epsilon -= self.__PARAMS["epsilon_dec"]
 
@@ -240,7 +391,7 @@ class DQNSolver(BaseSolver):
             q_eval_all = self.__sess.run(
                 self.__q_eval_all,
                 feed_dict={
-                    self.__state_eval: state
+                    self.__state_eval: state,
                 }
             )
             action_idx = np.argmax(q_eval_all, axis=1)[0]
@@ -266,28 +417,25 @@ class DQNSolver(BaseSolver):
         return reward, self.map.state()
 
     def __store_transition(self, state_cur, action, reward, state_nxt):
-        idx = self.__mem_cnt % self.__PARAMS["mem_size"]
-        self.__mem[idx, :] = np.hstack((state_cur, action, reward, state_nxt))
+        self.__mem.store(np.hstack((state_cur, action, reward, state_nxt)))
         self.__mem_cnt += 1
 
     def __learn(self):
-        log_msg = "Learn step %d | Epsilon: %f" % (self.__learn_step, self.__epsilon)
+        log_msg = "step %d | mem_cnt: %d | epsilon: %.6f | beta: %.6f" % \
+                  (self.__learn_step, self.__mem_cnt, self.__epsilon, self.__mem.beta)
 
         # Replace target
         if self.__learn_step == 1 or self.__learn_step % self.__PARAMS["freq_replace"] == 0:
             self.__sess.run(self.__replace_target)
-            log_msg += " | Target net params replaced"
+            log_msg += " | target net replaced"
 
         # Save model
         if self.__learn_step % self.__PARAMS["freq_save"] == 0:
             self.__save_model()
-            log_msg += " | Model saved"
+            log_msg += " | model saved"
 
         # Sample batch from memory
-        num_available = min(self.__mem_cnt, self.__PARAMS["mem_size"])
-        num_samples = min(num_available, self.__PARAMS["mem_batch"])
-        sample_indices = np.random.choice(num_available, size=num_samples, replace=False)
-        batch = self.__mem[sample_indices, :]
+        tree_indices, batch, IS_weights = self.__mem.sample(self.__PARAMS["mem_batch"])
         batch_state_cur = batch[:, :self.__NUM_FEATURES]
         batch_action = batch[:, self.__NUM_FEATURES].astype(np.int32)
         batch_reward = batch[:, self.__NUM_FEATURES + 1]
@@ -302,17 +450,21 @@ class DQNSolver(BaseSolver):
         )
 
         # Learn
-        _, loss = self.__sess.run(
-            [self.__train, self.__loss],
+        _, loss, abs_errs = self.__sess.run(
+            [self.__train, self.__loss, self.__abs_errs],
             feed_dict={
                 self.__state_eval: batch_state_cur,
                 self.__state_target: batch_state_nxt,
                 self.__action: batch_action,
                 self.__reward: batch_reward,
-                self.__q_eval_all_nxt: q_eval_all_nxt
+                self.__q_eval_all_nxt: q_eval_all_nxt,
+                self.__IS_weights: IS_weights,
             }
         )
-        log_msg += " | Loss: %f" % loss
+        log_msg += " | loss: %.6f" % loss
+
+        # Update sum tree
+        self.__mem.update(tree_indices, abs_errs)
 
         self.__learn_step += 1
         _log(log_msg)
