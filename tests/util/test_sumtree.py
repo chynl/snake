@@ -2,13 +2,13 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=C0103,C0111
 
-"""Unit tests for DQNSolver."""
+"""Unit tests for SumTree."""
 
-from snake.solver.dqn import _SumTree
+from snake.util.sumtree import SumTree
 
 
-def test_sum_tree():
-    tree = _SumTree(8)
+def test_sumtree():
+    tree = SumTree(8)
     data = (
         ("a", 3),
         ("b", 10),
