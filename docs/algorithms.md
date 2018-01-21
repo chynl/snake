@@ -74,14 +74,14 @@ Before the snake starts moving, Hamilton Solver finds the [longest path](#longes
 <a id="markdown-take-shortcuts" name="take-shortcuts"></a>
 #### Take Shortcuts
 
-Following a fixed cycle path all the time is tedious and time-consuming. Hamilton Solver directs the snake to take shortcuts according to the rules below. [1]
+Following a fixed cycle path all the time is tedious and time-consuming. Hamilton Solver directs the snake to take shortcuts according to the rules below. [[1]][ref-shortcuts]
 
 ![][take-shortcuts-img]
 
 <a id="markdown-references" name="references"></a>
 ## References
 
-1. Tapsell, J., Nokia 6110 Part 3 – Algorithms. (2015). [[Link]][link-ref-2]
+1. Tapsell, J., Nokia 6110 Part 3 – Algorithms. (2015). [[Link]][ref-shortcuts]
 
 
 [bfs-wiki]: https://en.wikipedia.org/wiki/Breadth-first_search
@@ -96,5 +96,4 @@ Following a fixed cycle path all the time is tedious and time-consuming. Hamilto
 [build-hamilton-img]: ./images/build_hamilton.png
 [take-shortcuts-img]: ./images/take_shortcuts.png
 
-[link-ref-1]: https://doi.org/10.18297/etd/848
-[link-ref-2]: https://johnflux.com/2015/05/02/nokia-6110-part-3-algorithms/
+[ref-shortcuts]: https://johnflux.com/2015/05/02/nokia-6110-part-3-algorithms/
