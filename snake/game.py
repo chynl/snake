@@ -120,32 +120,42 @@ class Game:
                 window.show(self.__game_main_train)
 
     def __run_benchmarks(self):
-        STEPS_LIMIT = 10000
-        episodes = int(input("Please input the number of episodes: "))
+        STEPS_LIMIT = 5000
+        NUM_EPISODES = int(input("Please input the number of episodes: "))
+
         print("\nMap size: %dx%d" % (self.__conf.map_rows, self.__conf.map_cols))
         print("Solver: %s\n" % self.__conf.solver_name[:-6].lower())
-        tot_suc, tot_suc_steps = 0, 0
-        for _ in range(episodes):
+
+        tot_suc, tot_suc_steps, tot_len = 0, 0, 0
+
+        for _ in range(NUM_EPISODES):
             print("Episode %d - " % self.__episode, end="")
             while True:
                 self.__game_main()
                 if self.__map.is_full():
                     tot_suc += 1
                     tot_suc_steps += self.__snake.steps
-                    print("SUC  (steps: %d)" % self.__snake.steps)
+                    print("SUC (len: %d | steps: %d)"
+                          % (self.__snake.len(), self.__snake.steps))
                     break
-                if self.__snake.dead or self.__snake.steps >= STEPS_LIMIT:
-                    print("FAIL  (steps: %d)" % self.__snake.steps)
-                    if self.__snake.steps >= STEPS_LIMIT:
-                        self.__write_logs()  # Write the last step
+                elif self.__snake.dead:
+                    print("DEAD (len: %d | steps: %d)"
+                          % (self.__snake.len(), self.__snake.steps))
                     break
+                elif self.__snake.steps >= STEPS_LIMIT:
+                    print("STEP LIMIT (len: %d | steps: %d)"
+                          % (self.__snake.len(), self.__snake.steps))
+                    self.__write_logs()  # Write the last step
+                    break
+            tot_len += self.__snake.len()
             self.__reset()
-        suc_ratio = tot_suc / (self.__episode - 1)
-        avg_suc_steps = 0
-        if tot_suc != 0:
-            avg_suc_steps = tot_suc_steps // tot_suc
-        print("\n[Summary]\nTotal: %d  SUC: %d (%.2f%%)  Avg SUC steps: %d\n" % \
-              (self.__episode - 1, tot_suc, 100 * suc_ratio, avg_suc_steps))
+
+        suc_rate = 100 * tot_suc / NUM_EPISODES
+        avg_suc_steps = tot_suc_steps / tot_suc if tot_suc != 0 else -1
+        avg_len = tot_len / NUM_EPISODES
+        print("\n[Summary]\nSuccess: %d (%.2f%%)\nAverage Steps: %.2f\nAverage Length: %.2f\n"
+              % (tot_suc, suc_rate, avg_suc_steps, avg_len))
+
         self.__on_exit()
 
     def __game_main(self):

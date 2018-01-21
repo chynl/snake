@@ -18,9 +18,9 @@
 <a id="markdown-overview" name="overview"></a>
 ## Overview
 
-The [Snake][snake-wiki] game was popularized by its appearance on Nokia cell phones in 1997 but has been recreated in several forms for multiple computing platforms since 1978. The game is very simple: the snake is controlled by the player and is allowed to move inside a 2-dimensional playing field surrounded by walls. At each discrete interval, called a time step or step, the snake must move forward, turn left, or turn right as the game requires that the snake cannot stop moving. The game will randomly generate and place one piece of food in the game field at a time. When the snake moves onto a piece of food, the food is eaten and the snake's length grows by one. The goal is to eat as many pieces of food without ending the game by colliding the snake into itself or the walls. [1]
+The snake is allowed to move inside a 2-dimensional playing field (game map) surrounded by walls. At each discrete interval (a time step), the snake must move forward, turn left, or turn right as the game requires that the snake cannot stop moving. The game will randomly generate and place one piece of food on the game map whenever there is no food on the map. When the snake moves onto a piece of food, the food is eaten and the snake's length grows by one. The goal is to eat as many pieces of food as possible without ending the game by colliding the snake into itself or the walls.
 
-In our game settings, the playing field will be 10 units tall and 10 units wide consisting of 100 available spaces. The snake will initially begin at the top-left corner, facing right, with an initial length of 2 units. Therefore, the snake can eat 98 pieces of food before filling up the entire playing field.
+In our game settings, the game map will be 10 units tall and 10 units wide consisting of 100 available spaces. The snake will initially begin at the top-left corner, facing right, with an initial length of 2 units. Therefore, the snake can eat 98 pieces of food before filling up the entire map.
 
 <a id="markdown-solvers" name="solvers"></a>
 ## Solvers
@@ -74,18 +74,16 @@ Before the snake starts moving, Hamilton Solver finds the [longest path](#longes
 <a id="markdown-take-shortcuts" name="take-shortcuts"></a>
 #### Take Shortcuts
 
-Following a fixed cycle path all the time is tedious and time-consuming. Hamilton Solver directs the snake to take shortcuts according to the rules below. [2]
+Following a fixed cycle path all the time is tedious and time-consuming. Hamilton Solver directs the snake to take shortcuts according to the rules below. [1]
 
 ![][take-shortcuts-img]
 
 <a id="markdown-references" name="references"></a>
 ## References
 
-1. Lockhart, C., Application of temporal difference learning to the game of Snake. *Electronic Theses and Dissertations* 848 (2010). [[Link]][link-ref-1]
-2. Tapsell, J., Nokia 6110 Part 3 – Algorithms. (2015). [[Link]][link-ref-2]
+1. Tapsell, J., Nokia 6110 Part 3 – Algorithms. (2015). [[Link]][link-ref-2]
 
 
-[snake-wiki]: https://en.wikipedia.org/wiki/Snake_(video_game)
 [bfs-wiki]: https://en.wikipedia.org/wiki/Breadth-first_search
 [longest-path-wiki]: https://en.wikipedia.org/wiki/Longest_path_problem
 

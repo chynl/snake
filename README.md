@@ -8,17 +8,18 @@ This project focuses on the artificial intelligence of the [Snake][snake-wiki] g
 
 ## Experiments
 
-We use two metrics to evaluate the performance of an AI:
+We use three metrics to evaluate the performance of an AI:
 
 1. **Success Rate:** Rate of success (i.e., the map is filled with the snake's bodies) after playing the game for N times.
-2. **Average Steps:** Average steps the snake has taken to success.
+2. **Average Steps:** Average steps the snake has moved to success.
+3. **Average Length:** Average length the snake has grown to (max: 100).
 
 Test results (N=1000):
 
-| Solver | Demo | Success Rate | Average Steps |
-| :----: | :--: | :----------: | :-----------: |
-|[Hamilton][hamilton-doc]|![][demo-hamilton]|100.0%|1776|
-|[Greedy][greedy-doc]|![][demo-greedy]|27.4%|1575|
+| Solver | Demo | Success Rate | Average Steps | Average Length |
+| :----: | :--: | :----------: | :-----------: | :------------: |
+|[Hamilton][hamilton-doc]|![][demo-hamilton]|99.70%|1778.39|99.78|
+|[Greedy][greedy-doc]|![][demo-greedy]|22.90%|1566.29|94.29|
 
 ## Installation
 
