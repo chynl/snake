@@ -141,6 +141,7 @@ class DQNSolver(BaseSolver):
         # Frequency
         self.__FREQ_LEARN = 4        # Number of new transitions
         self.__FREQ_REPLACE = 10000  # Learn steps
+        self.__FREQ_LOG = 500        # Learn steps
         self.__FREQ_SAVE = 10000     # Learn steps
 
         self.__LR = 0.00025 / 4      # Learning rate
@@ -153,7 +154,7 @@ class DQNSolver(BaseSolver):
         self.__PRI_EPSILON = 1e-6    # Small positive value to avoid zero priority
         self.__ABS_ERR_UPPER = 1     # TD-error (absolute value) clip upperbound
 
-        self.__RESTORE_STEP = None  # Which learn step to restore
+        self.__RESTORE_STEP = 0      # Which learn step to restore (0 means not restore)
 
         self.__SNAKE_ACTIONS = [Direc.LEFT, Direc.UP, Direc.RIGHT, Direc.DOWN]
         self.__NUM_ACTIONS = len(self.__SNAKE_ACTIONS)
@@ -165,6 +166,7 @@ class DQNSolver(BaseSolver):
         self.__mem_cnt = 0
         self.__epsilon = self.__EPSILON_MAX
         self.__learn_step = 1
+        self.__history_loss = []
 
         eval_params, target_params = self.__build_net()
         self.__net_saver = tf.train.Saver(eval_params + target_params)
@@ -173,7 +175,7 @@ class DQNSolver(BaseSolver):
         self.__sess.run(tf.global_variables_initializer())
         tf.summary.FileWriter(_DIR_LOG, self.__sess.graph)
 
-        if self.__RESTORE_STEP is not None:
+        if self.__RESTORE_STEP > 0:
             self.__load_model()
 
     def __save_model(self):
@@ -320,9 +322,13 @@ class DQNSolver(BaseSolver):
     def next_direc(self):
         return self.__SNAKE_ACTIONS[self.__choose_action(e_greedy=False)]
 
+    def loss_history(self):
+        steps = range(self.__RESTORE_STEP + 1, self.__learn_step)
+        return steps, self.__history_loss
+
     def train(self):
-        action = self.__choose_action()
         state_cur = self.map.state()
+        action = self.__choose_action()
         reward, state_nxt = self.__step(action)
         self.__store_transition(state_cur, action, reward, state_nxt)
 
@@ -333,6 +339,8 @@ class DQNSolver(BaseSolver):
             _log("mem_cnt: %d" % self.__mem_cnt)
 
         self.__epsilon = max(self.__EPSILON_MIN, self.__epsilon - self.__EPSILON_DEC)
+
+        return reward
 
     def __choose_action(self, e_greedy=True):
         if e_greedy and np.random.uniform() < self.__epsilon:
@@ -412,10 +420,13 @@ class DQNSolver(BaseSolver):
                 self.__IS_weights: IS_weights,
             }
         )
+        self.__history_loss.append(loss)
         log_msg += " | loss: %.6f" % loss
 
         # Update sum tree
         self.__mem.update(tree_indices, abs_errs)
 
+        if self.__learn_step == 1 or self.__learn_step % self.__FREQ_LOG == 0:
+            _log(log_msg)
+
         self.__learn_step += 1
-        _log(log_msg)

@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# pylint: disable=C0103,C0111
+# pylint: disable=C0103,C0111,W0201
 
-import os
 import errno
+import os
 from enum import Enum, unique
-from snake.base import Direc, Pos, PointType, Map, Snake
+
+import matplotlib.pyplot as plt
+
+from snake.base import Direc, Map, PointType, Pos, Snake
 from snake.gui import GameWindow
-from snake.solver import GreedySolver, HamiltonSolver, DQNSolver
+from snake.solver import DQNSolver, GreedySolver, HamiltonSolver
 
 
 @unique
@@ -91,6 +94,10 @@ class Game:
         self.__episode = 1
         self.__init_log_file()
 
+        # For DQNSolver
+        self.__tot_reward = 0
+        self.__history_reward = []
+
     @property
     def snake(self):
         return self.__snake
@@ -102,6 +109,13 @@ class Game:
     def run(self):
         if self.__conf.mode == GameMode.BENCHMARK:
             self.__run_benchmarks()
+        elif self.__conf.mode == GameMode.TRAIN:
+            try:
+                while True:
+                    self.__game_main_train()
+            except KeyboardInterrupt:
+                pass
+            self.__plot_history()
         else:
             window = GameWindow("Snake", self.__conf, self.__map, self, self.__on_exit, (
                 ('<w>', lambda e: self.__update_direc(Direc.UP)),
@@ -113,11 +127,9 @@ class Game:
             ))
             if self.__conf.mode == GameMode.NORMAL:
                 window.show(self.__game_main)
-            elif self.__conf.mode == GameMode.TRAIN:
-                while True:
-                    self.__game_main_train()
             elif self.__conf.mode == GameMode.TRAIN_GUI:
                 window.show(self.__game_main_train)
+                self.__plot_history()
 
     def __run_benchmarks(self):
         STEPS_LIMIT = 5000
@@ -182,10 +194,29 @@ class Game:
         if self.__pause:
             return
 
-        self.__solver.train()
+        reward = self.__solver.train()
+        self.__tot_reward += reward
 
         if self.__episode_end():
+            self.__history_reward.append(self.__tot_reward)
+            self.__tot_reward = 0
             self.__reset()
+
+    def __plot_history(self):
+        plt.figure()
+        steps, history_loss = self.__solver.loss_history()
+        plt.plot(steps, history_loss)
+        plt.xlabel("Learn Step")
+        plt.ylabel("Loss")
+        plt.title("Loss")
+
+        plt.figure()
+        plt.plot(range(1, self.__episode), self.__history_reward)
+        plt.xlabel("Episode")
+        plt.ylabel("Reward")
+        plt.title("Total Reward")
+
+        plt.show()
 
     def __update_direc(self, new_direc):
         self.__snake.direc_next = new_direc
