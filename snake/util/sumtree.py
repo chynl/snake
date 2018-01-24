@@ -8,10 +8,14 @@ import numpy as np
 class SumTree:
 
     def __init__(self, capacity):
-        self.__capacity = capacity
-        self.__tree = np.zeros(2 * self.__capacity - 1)
-        self.__data = np.zeros(self.__capacity, dtype=object)
+        self.__CAPACITY = capacity
+        self.__tree = np.zeros(2 * self.__CAPACITY - 1)
+        self.__data = np.zeros(self.__CAPACITY, dtype=object)
         self.__data_idx = 0
+
+    @property
+    def capacity(self):
+        return self.__CAPACITY
 
     @property
     def tree(self):
@@ -26,10 +30,10 @@ class SumTree:
 
     def insert(self, data, priority):
         self.__data[self.__data_idx] = data
-        tree_idx = self.__data_idx + self.__capacity - 1
+        tree_idx = self.__data_idx + self.__CAPACITY - 1
         self.update(tree_idx, priority)
         self.__data_idx += 1
-        if self.__data_idx >= self.__capacity:
+        if self.__data_idx >= self.__CAPACITY:
             self.__data_idx = 0
 
     def update(self, tree_idx, priority):
@@ -40,11 +44,11 @@ class SumTree:
             self.__tree[tree_idx] += delta
 
     def retrieve(self, val):
-        parent = 0
+        tree_idx, parent = None, 0
         while True:
             left = 2 * parent + 1
             right = left + 1
-            if left >= len(self.__tree):
+            if left >= len(self.__tree):  # Leaf
                 tree_idx = parent
                 break
             else:
@@ -53,8 +57,17 @@ class SumTree:
                 else:
                     val -= self.__tree[left]
                     parent = right
-        data_idx = tree_idx - self.__capacity + 1
-        return tree_idx, self.__tree[tree_idx], self.__data[data_idx]
+
+        priority = self.__tree[tree_idx]
+        data = self.__data[tree_idx - self.__CAPACITY + 1]
+
+        return tree_idx, priority, data
+
+    def max_leaf(self):
+        return np.max(self.leaves())
+
+    def min_leaf(self):
+        return np.min(self.leaves())
 
     def leaves(self):
-        return self.__tree[-self.__capacity:]
+        return self.__tree[-self.__CAPACITY:]

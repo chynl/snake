@@ -84,7 +84,7 @@ class _Memory:
         _log("memory loaded | beta: %.6f" % (self.__beta))
 
     def store(self, transition):
-        max_priority = np.max(self.__tree.leaves())
+        max_priority = self.__tree.max_leaf()
         if max_priority == 0:
             max_priority = self.__ABS_ERR_UPPER
         self.__tree.insert(transition, max_priority)
@@ -95,7 +95,7 @@ class _Memory:
         IS_weights = np.zeros((num_samples, ))  # Importance-sampling (IS) weights
 
         len_seg = self.__tree.sum() / num_samples
-        min_prob = min(self.__tree.leaves()) / self.__tree.sum()
+        min_prob = self.__tree.min_leaf() / self.__tree.sum()
 
         for i in range(num_samples):
             val = np.random.uniform(len_seg * i, len_seg * (i + 1))
