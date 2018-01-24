@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# pylint: disable=C0111,C0103,E1101
+# pylint: disable=C0111,C0103,E1101,W0201
 
 import json
 import os
@@ -31,23 +31,24 @@ class _SumTree(SumTree):
     PATH_VAR = os.path.join(_DIR_LOG, "sumtree-var-%d.json")
 
     def save(self, steps):
-        np.save(_SumTree.PATH_TREE % steps, self.__tree)
-        np.save(_SumTree.PATH_DATA % steps, self.__data)
+        np.save(_SumTree.PATH_TREE % steps, self._SumTree__tree)
+        np.save(_SumTree.PATH_DATA % steps, self._SumTree__data)
         with open(_SumTree.PATH_VAR % steps, "w") as f:
             json.dump({
-                "capacity": self.__capacity,
-                "data_idx": self.__data_idx,
+                "capacity": self._SumTree__capacity,
+                "data_idx": self._SumTree__data_idx,
             }, f, indent=2)
 
     def load(self, steps):
-        self.__tree = np.load(_SumTree.PATH_TREE % steps)
-        self.__data = np.load(_SumTree.PATH_DATA % steps)
+        self._SumTree__tree = np.load(_SumTree.PATH_TREE % steps)
+        self._SumTree__data = np.load(_SumTree.PATH_DATA % steps)
         with open(_SumTree.PATH_VAR % steps, "r") as f:
             var = json.load(f)
-        self.__capacity = var["capacity"]
-        self.__data_idx = var["data_idx"]
+        self._SumTree__capacity = var["capacity"]
+        self._SumTree__data_idx = var["data_idx"]
         _log("sum tree loaded | tree shape: {} | data shape: {} | capacity: {} | data_idx: {}"
-             .format(self.__tree.shape, self.__data.shape, self.__capacity, self.__data_idx))
+             .format(self._SumTree__tree.shape, self._SumTree__data.shape,
+                     self._SumTree__capacity, self._SumTree__data_idx))
 
 
 class _Memory:

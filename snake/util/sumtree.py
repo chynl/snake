@@ -8,14 +8,14 @@ import numpy as np
 class SumTree:
 
     def __init__(self, capacity):
-        self.__CAPACITY = capacity
-        self.__tree = np.zeros(2 * self.__CAPACITY - 1)
-        self.__data = np.zeros(self.__CAPACITY, dtype=object)
+        self.__capacity = capacity
+        self.__tree = np.zeros(2 * self.__capacity - 1)
+        self.__data = np.zeros(self.__capacity, dtype=object)
         self.__data_idx = 0
 
     @property
     def capacity(self):
-        return self.__CAPACITY
+        return self.__capacity
 
     @property
     def tree(self):
@@ -30,10 +30,10 @@ class SumTree:
 
     def insert(self, data, priority):
         self.__data[self.__data_idx] = data
-        tree_idx = self.__data_idx + self.__CAPACITY - 1
+        tree_idx = self.__data_idx + self.__capacity - 1
         self.update(tree_idx, priority)
         self.__data_idx += 1
-        if self.__data_idx >= self.__CAPACITY:
+        if self.__data_idx >= self.__capacity:
             self.__data_idx = 0
 
     def update(self, tree_idx, priority):
@@ -59,7 +59,7 @@ class SumTree:
                     parent = right
 
         priority = self.__tree[tree_idx]
-        data = self.__data[tree_idx - self.__CAPACITY + 1]
+        data = self.__data[tree_idx - self.__capacity + 1]
 
         return tree_idx, priority, data
 
@@ -70,4 +70,4 @@ class SumTree:
         return np.min(self.leaves())
 
     def leaves(self):
-        return self.__tree[-self.__CAPACITY:]
+        return self.__tree[-self.__capacity:]
