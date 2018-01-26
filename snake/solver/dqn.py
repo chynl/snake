@@ -125,25 +125,25 @@ class DQNSolver(BaseSolver):
         super().__init__(snake)
 
         # Rewards
-        self.__RWD_EMPTY = -0.001
-        self.__RWD_DEAD = -0.1
-        self.__RWD_FOOD = 0.5
-        self.__RWD_FULL = 1.0
+        self.__RWD_EMPTY = 0
+        self.__RWD_FOOD = 1.0
+        self.__RWD_DEAD = -1.0
+        self.__RWD_CIRCLE = -1.0
 
         # Epsilon-greedy
         self.__EPSILON_MAX = 1.0
         self.__EPSILON_MIN = 0.1
-        self.__EPSILON_DEC = 1e-6
+        self.__EPSILON_DEC = 9e-7
 
         # Memory
-        self.__MEM_SIZE = 1000
+        self.__MEM_SIZE = 1000000
         self.__MEM_BATCH = 32
 
         # Frequency
         self.__FREQ_LEARN = 4        # Number of new transitions
         self.__FREQ_REPLACE = 10000  # Learn steps
         self.__FREQ_LOG = 500        # Learn steps
-        self.__FREQ_SAVE = 10000     # Learn steps
+        self.__FREQ_SAVE = 20000     # Learn steps
 
         self.__LR = 0.00025 / 4      # Learning rate
         self.__MOMENTUM = 0.95       # SGD momentum
@@ -151,7 +151,7 @@ class DQNSolver(BaseSolver):
 
         self.__ALPHA = 0.6           # How much prioritization to use
         self.__BETA_MIN = 0.4        # Importance-sampling (IS)
-        self.__BETA_INC = 1e-6
+        self.__BETA_INC = 1e-7
         self.__PRI_EPSILON = 1e-6    # Small positive value to avoid zero priority
         self.__ABS_ERR_UPPER = 1     # TD-error (absolute value) clip upperbound
 
@@ -165,9 +165,16 @@ class DQNSolver(BaseSolver):
                              beta_min=self.__BETA_MIN, beta_inc=self.__BETA_INC,
                              pri_epsilon=self.__PRI_EPSILON, abs_err_upper=self.__ABS_ERR_UPPER)
         self.__mem_cnt = 0
-        self.__epsilon = self.__EPSILON_MAX
+
         self.__learn_step = 1
+        self.__epsilon = self.__EPSILON_MAX
+
+        self.__tot_reward = 0
+        self.__history_reward = []
         self.__history_loss = []
+
+        self.__last_snake_step = self.snake.steps
+        self.__last_snake_len = self.snake.len()
 
         eval_params, target_params = self.__build_net()
         self.__net_saver = tf.train.Saver(eval_params + target_params)
@@ -324,24 +331,41 @@ class DQNSolver(BaseSolver):
         return self.__SNAKE_ACTIONS[self.__choose_action(e_greedy=False)]
 
     def loss_history(self):
-        steps = range(self.__RESTORE_STEP + 1, self.__learn_step)
+        steps = list(range(self.__RESTORE_STEP + 1, self.__learn_step))
+
+        # Keyboard interrupt may cause len(steps) < len(self.__history_loss)
+        if len(steps) + 1 == len(self.__history_loss):
+            steps.append(self.__learn_step)
+
         return steps, self.__history_loss
+
+    def reward_history(self):
+        episodes = range(1, len(self.__history_reward) + 1)
+        return episodes, self.__history_reward
 
     def train(self):
         state_cur = self.map.state()
         action = self.__choose_action()
         reward, state_nxt = self.__step(action)
+        self.__tot_reward += reward
         self.__store_transition(state_cur, action, reward, state_nxt)
 
         if self.__mem_cnt >= self.__MEM_SIZE:
             if self.__mem_cnt % self.__FREQ_LEARN == 0:
                 self.__learn()
-        else:
+        elif self.__mem_cnt % self.__FREQ_LOG == 0:
             _log("mem_cnt: %d" % self.__mem_cnt)
 
         self.__epsilon = max(self.__EPSILON_MIN, self.__epsilon - self.__EPSILON_DEC)
 
-        return reward
+        episode_end = (self.snake.dead or self.map.is_full() or \
+            Direc.opposite(self.__SNAKE_ACTIONS[action]) == self.snake.direc)
+
+        if episode_end:
+            self.__history_reward.append(self.__tot_reward)
+            self.__tot_reward = 0
+
+        return episode_end
 
     def __choose_action(self, e_greedy=True):
         if e_greedy and np.random.uniform() < self.__epsilon:
@@ -361,18 +385,23 @@ class DQNSolver(BaseSolver):
         direc = self.__SNAKE_ACTIONS[action_idx]
         nxt_pos = self.snake.head().adj(direc)
         nxt_type = self.map.point(nxt_pos).type
-
-        if nxt_type == PointType.EMPTY:
-            reward = self.__RWD_EMPTY
-        elif nxt_type == PointType.FOOD:
-            reward = self.__RWD_FOOD
-        else:
-            reward = self.__RWD_DEAD
-
         self.snake.move(direc)
 
-        if self.map.is_full():
-            reward = self.__RWD_FULL
+        reward = 0
+        if nxt_type == PointType.EMPTY:
+            reward = self.__RWD_EMPTY
+            # Check circling (move 2 times of the map capacity but eat no food)
+            step_diff = self.snake.steps - self.__last_snake_step
+            if step_diff >= 2 * self.map.capacity and \
+               self.snake.len() == self.__last_snake_len:
+                reward = self.__RWD_CIRCLE
+                self.__last_snake_step = self.snake.steps
+        elif nxt_type == PointType.FOOD:
+            reward = self.__RWD_FOOD
+            self.__last_snake_step = self.snake.steps
+            self.__last_snake_len = self.snake.len()
+        else:
+            reward = self.__RWD_DEAD
 
         return reward, self.map.state()
 
@@ -383,16 +412,6 @@ class DQNSolver(BaseSolver):
     def __learn(self):
         log_msg = "step %d | mem_cnt: %d | epsilon: %.6f | beta: %.6f" % \
                   (self.__learn_step, self.__mem_cnt, self.__epsilon, self.__mem.beta)
-
-        # Replace target
-        if self.__learn_step == 1 or self.__learn_step % self.__FREQ_REPLACE == 0:
-            self.__sess.run(self.__replace_target)
-            log_msg += " | target net replaced"
-
-        # Save model
-        if self.__learn_step % self.__FREQ_SAVE == 0:
-            self.__save_model()
-            log_msg += " | model saved"
 
         # Sample batch from memory
         tree_indices, batch, IS_weights = self.__mem.sample(self.__MEM_BATCH)
@@ -422,10 +441,21 @@ class DQNSolver(BaseSolver):
             }
         )
         self.__history_loss.append(loss)
-        log_msg += " | loss: %.6f" % loss
+        log_msg += " | loss: %.6f | avg_reward: %.6f" \
+                   % (loss, np.mean(self.__history_reward))
 
         # Update sum tree
         self.__mem.update(tree_indices, abs_errs)
+
+        # Replace target
+        if self.__learn_step == 1 or self.__learn_step % self.__FREQ_REPLACE == 0:
+            self.__sess.run(self.__replace_target)
+            log_msg += " | target net replaced"
+
+        # Save model
+        if self.__learn_step == 1 or self.__learn_step % self.__FREQ_SAVE == 0:
+            self.__save_model()
+            log_msg += " | model saved"
 
         if self.__learn_step == 1 or self.__learn_step % self.__FREQ_LOG == 0:
             _log(log_msg)

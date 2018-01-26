@@ -131,21 +131,25 @@ class Snake:
     def move(self, new_direc=None):
         if new_direc is not None:
             self.__direc_next = new_direc
-        if self.__dead or self.__direc_next == Direc.NONE or self.__map.is_full():
+
+        if self.__dead or \
+           self.__direc_next == Direc.NONE or \
+           self.__map.is_full() or \
+           self.__direc_next == Direc.opposite(self.__direc):
             return
-        if self.__direc_next == Direc.opposite(self.__direc):
-            self.__steps += 1
-            return
+
         old_head_type, new_head_type = self.__new_types()
         self.__map.point(self.head()).type = old_head_type
         new_head = self.head().adj(self.__direc_next)
         self.__bodies.appendleft(new_head)
+
         if not self.__map.is_safe(new_head):
             self.__dead = True
         if self.__map.point(new_head).type == PointType.FOOD:
             self.__map.rm_food()
         else:
             self.__rm_tail()
+
         self.__map.point(new_head).type = new_head_type
         self.__direc = self.__direc_next
         self.__steps += 1

@@ -122,20 +122,18 @@ class Map:
 
     def state(self):
         """Return a vector indicating current state."""
-        ob, idx = np.zeros(self.capacity), 0
+        ob, idx = np.zeros(self.capacity, dtype=np.int32), 0
         for i in range(1, self.__num_rows - 1):
             for j in range(1, self.__num_cols - 1):
                 t = self.__content[i][j].type
                 if t == PointType.EMPTY:
                     ob[idx] = 0
-                elif t == PointType.WALL:
-                    ob[idx] = 1
                 elif t == PointType.FOOD:
-                    ob[idx] = 2
+                    ob[idx] = 1
                 elif t == PointType.HEAD_L or t == PointType.HEAD_U or \
                      t == PointType.HEAD_R or t == PointType.HEAD_D:
-                    ob[idx] = 3
+                    ob[idx] = 2
                 else:
-                    ob[idx] = 4
+                    ob[idx] = 3
                 idx += 1
         return ob

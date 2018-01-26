@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# pylint: disable=C0103,C0111,W0201
+# pylint: disable=C0103,C0111,W0201,W0703
 
 import errno
 import os
+import traceback
 from enum import Enum, unique
 
 import matplotlib.pyplot as plt
@@ -15,10 +16,10 @@ from snake.solver import DQNSolver, GreedySolver, HamiltonSolver
 
 @unique
 class GameMode(Enum):
-    NORMAL = 0     # AI with GUI
-    BENCHMARK = 1  # Run benchmarks without GUI
-    TRAIN = 2      # Train DQNSolver without GUI
-    TRAIN_GUI = 3  # Train DQNSolver with GUI
+    NORMAL = 0         # AI with GUI
+    BENCHMARK = 1      # Run benchmarks without GUI
+    TRAIN_DQN = 2      # Train DQNSolver without GUI
+    TRAIN_DQN_GUI = 3  # Train DQNSolver with GUI
 
 
 class GameConf:
@@ -94,10 +95,6 @@ class Game:
         self.__episode = 1
         self.__init_log_file()
 
-        # For DQNSolver
-        self.__tot_reward = 0
-        self.__history_reward = []
-
     @property
     def snake(self):
         return self.__snake
@@ -109,12 +106,8 @@ class Game:
     def run(self):
         if self.__conf.mode == GameMode.BENCHMARK:
             self.__run_benchmarks()
-        elif self.__conf.mode == GameMode.TRAIN:
-            try:
-                while True:
-                    self.__game_main_train()
-            except KeyboardInterrupt:
-                pass
+        elif self.__conf.mode == GameMode.TRAIN_DQN:
+            self.__run_dqn_train()
             self.__plot_history()
         else:
             window = GameWindow("Snake", self.__conf, self.__map, self, self.__on_exit, (
@@ -126,9 +119,9 @@ class Game:
                 ('<space>', lambda e: self.__toggle_pause())
             ))
             if self.__conf.mode == GameMode.NORMAL:
-                window.show(self.__game_main)
-            elif self.__conf.mode == GameMode.TRAIN_GUI:
-                window.show(self.__game_main_train)
+                window.show(self.__game_main_normal)
+            elif self.__conf.mode == GameMode.TRAIN_DQN_GUI:
+                window.show(self.__game_main_dqn_train)
                 self.__plot_history()
 
     def __run_benchmarks(self):
@@ -143,7 +136,7 @@ class Game:
         for _ in range(NUM_EPISODES):
             print("Episode %d - " % self.__episode, end="")
             while True:
-                self.__game_main()
+                self.__game_main_normal()
                 if self.__map.is_full():
                     tot_suc += 1
                     tot_suc_steps += self.__snake.steps
@@ -170,7 +163,28 @@ class Game:
 
         self.__on_exit()
 
-    def __game_main(self):
+    def __run_dqn_train(self):
+        try:
+            while True:
+                self.__game_main_dqn_train()
+        except KeyboardInterrupt:
+            pass
+        except Exception:
+            traceback.print_exc()
+
+    def __game_main_dqn_train(self):
+        if not self.__map.has_food():
+            self.__map.create_rand_food()
+
+        if self.__pause:
+            return
+
+        episode_end = self.__solver.train()
+
+        if episode_end:
+            self.__reset()
+
+    def __game_main_normal(self):
         if not self.__map.has_food():
             self.__map.create_rand_food()
 
@@ -187,21 +201,6 @@ class Game:
         if self.__episode_end():
             self.__write_logs()  # Write the last step
 
-    def __game_main_train(self):
-        if not self.__map.has_food():
-            self.__map.create_rand_food()
-
-        if self.__pause:
-            return
-
-        reward = self.__solver.train()
-        self.__tot_reward += reward
-
-        if self.__episode_end():
-            self.__history_reward.append(self.__tot_reward)
-            self.__tot_reward = 0
-            self.__reset()
-
     def __plot_history(self):
         plt.figure()
         steps, history_loss = self.__solver.loss_history()
@@ -211,7 +210,8 @@ class Game:
         plt.title("Loss")
 
         plt.figure()
-        plt.plot(range(1, self.__episode), self.__history_reward)
+        episodes, history_reward = self.__solver.reward_history()
+        plt.plot(episodes, history_reward)
         plt.xlabel("Episode")
         plt.ylabel("Reward")
         plt.title("Total Reward")
