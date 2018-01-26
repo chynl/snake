@@ -128,6 +128,8 @@ class Map:
                 t = self.__content[i][j].type
                 if t == PointType.EMPTY:
                     ob[idx] = 0
+                elif t == PointType.WALL:
+                    ob[idx] = 4
                 elif t == PointType.FOOD:
                     ob[idx] = 1
                 elif t == PointType.HEAD_L or t == PointType.HEAD_U or \
