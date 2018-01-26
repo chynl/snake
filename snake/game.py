@@ -216,6 +216,13 @@ class Game:
         plt.ylabel("Reward")
         plt.title("Total Reward")
 
+        plt.figure()
+        episodes, history_avg_reward = self.__solver.avg_reward_history()
+        plt.plot(episodes, history_avg_reward)
+        plt.xlabel("Learn Step")
+        plt.ylabel("Reward")
+        plt.title("Average Reward")
+
         plt.show()
 
     def __update_direc(self, new_direc):

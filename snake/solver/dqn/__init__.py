@@ -1,119 +1,22 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# pylint: disable=C0111,C0103,E1101,W0201
+# pylint: disable=C0111,C0103,E1101
+
+"""DQN Solver package."""
 
 import json
 import os
-from datetime import datetime
 
 import numpy as np
 import tensorflow as tf
 
 from snake.base import Direc, PointType
-from snake.util.sumtree import SumTree
 from snake.solver.base import BaseSolver
-
+from snake.solver.dqn.snakeaction import SnakeAction
+from snake.solver.dqn.memory import Memory
+from snake.solver.dqn.logger import log
 
 _DIR_LOG = "logs"
-
-
-def _log(*msgs):
-    msg_str = ""
-    for msg in msgs:
-        msg_str += str(msg)
-    print("[%s]" % datetime.now().strftime("%Y-%m-%d %H:%M:%S"), msg_str)
-
-
-class _SumTree(SumTree):
-
-    PATH_TREE = os.path.join(_DIR_LOG, "sumtree-tree-%d.npy")
-    PATH_DATA = os.path.join(_DIR_LOG, "sumtree-data-%d.npy")
-    PATH_VAR = os.path.join(_DIR_LOG, "sumtree-var-%d.json")
-
-    def save(self, steps):
-        np.save(_SumTree.PATH_TREE % steps, self._SumTree__tree)
-        np.save(_SumTree.PATH_DATA % steps, self._SumTree__data)
-        with open(_SumTree.PATH_VAR % steps, "w") as f:
-            json.dump({
-                "capacity": self._SumTree__capacity,
-                "data_idx": self._SumTree__data_idx,
-            }, f, indent=2)
-
-    def load(self, steps):
-        self._SumTree__tree = np.load(_SumTree.PATH_TREE % steps)
-        self._SumTree__data = np.load(_SumTree.PATH_DATA % steps)
-        with open(_SumTree.PATH_VAR % steps, "r") as f:
-            var = json.load(f)
-        self._SumTree__capacity = var["capacity"]
-        self._SumTree__data_idx = var["data_idx"]
-        _log("sum tree loaded | tree shape: {} | data shape: {} | capacity: {} | data_idx: {}"
-             .format(self._SumTree__tree.shape, self._SumTree__data.shape,
-                     self._SumTree__capacity, self._SumTree__data_idx))
-
-
-class _Memory:
-
-    PATH_VAR = os.path.join(_DIR_LOG, "mem-var-%d.json")
-
-    def __init__(self, mem_size, alpha, beta_min, beta_inc, pri_epsilon, abs_err_upper):
-        self.__MEM_SIZE = mem_size
-        self.__ALPHA = alpha
-        self.__BETA_MIN = beta_min
-        self.__BETA_INC = beta_inc
-        self.__PRI_EPSILON = pri_epsilon
-        self.__ABS_ERR_UPPER = abs_err_upper
-
-        self.__beta = self.__BETA_MIN
-        self.__tree = _SumTree(self.__MEM_SIZE)
-
-    @property
-    def beta(self):
-        return self.__beta
-
-    def save(self, steps):
-        self.__tree.save(steps)
-        with open(_Memory.PATH_VAR % steps, "w") as f:
-            json.dump({
-                "beta": self.__beta,
-            }, f, indent=2)
-
-    def load(self, steps):
-        self.__tree.load(steps)
-        with open(_Memory.PATH_VAR % steps, "r") as f:
-            var = json.load(f)
-        self.__beta = var["beta"]
-        _log("memory loaded | beta: %.6f" % (self.__beta))
-
-    def store(self, transition):
-        max_priority = self.__tree.max_leaf()
-        if max_priority == 0:
-            max_priority = self.__ABS_ERR_UPPER
-        self.__tree.insert(transition, max_priority)
-
-    def sample(self, num_samples):
-        tree_indices = np.zeros((num_samples, ), dtype=np.int32)
-        batch_mem = np.zeros((num_samples, self.__tree.data[0].size))
-        IS_weights = np.zeros((num_samples, ))  # Importance-sampling (IS) weights
-
-        len_seg = self.__tree.sum() / num_samples
-        min_prob = self.__tree.min_leaf() / self.__tree.sum()
-
-        for i in range(num_samples):
-            val = np.random.uniform(len_seg * i, len_seg * (i + 1))
-            tree_indices[i], priority, batch_mem[i, :] = self.__tree.retrieve(val)
-            prob = priority / self.__tree.sum()
-            IS_weights[i] = np.power(prob / min_prob, -self.__beta)  # Simplified formula
-
-        self.__beta = min(1.0, self.__beta + self.__BETA_INC)
-
-        return tree_indices, batch_mem, IS_weights
-
-    def update(self, tree_indices, abs_errs):
-        abs_errs += self.__PRI_EPSILON
-        clipped_errors = np.minimum(abs_errs, self.__ABS_ERR_UPPER)
-        priorities = np.power(clipped_errors, self.__ALPHA)
-        for idx, priority in zip(tree_indices, priorities):
-            self.__tree.update(idx, priority)
 
 
 class DQNSolver(BaseSolver):
@@ -145,7 +48,7 @@ class DQNSolver(BaseSolver):
         self.__FREQ_LOG = 500        # Learn steps
         self.__FREQ_SAVE = 20000     # Learn steps
 
-        self.__LR = 0.00025 / 4      # Learning rate
+        self.__LR = 1e-6             # Learning rate
         self.__MOMENTUM = 0.95       # SGD momentum
         self.__GAMMA = 0.99          # Reward discount
 
@@ -155,29 +58,33 @@ class DQNSolver(BaseSolver):
         self.__PRI_EPSILON = 1e-6    # Small positive value to avoid zero priority
         self.__ABS_ERR_UPPER = 1     # TD-error (absolute value) clip upperbound
 
+        self.__NUM_AVG_RWD = 100     # How many latest reward history to compute average
+
         self.__RESTORE_STEP = 0      # Which learn step to restore (0 means not restore)
 
-        self.__SNAKE_ACTIONS = [Direc.LEFT, Direc.UP, Direc.RIGHT, Direc.DOWN]
+        self.__SNAKE_ACTIONS = [SnakeAction.FORWARD, SnakeAction.LEFT, SnakeAction.RIGHT]
         self.__NUM_ACTIONS = len(self.__SNAKE_ACTIONS)
         self.__NUM_FEATURES = snake.map.capacity
 
-        self.__mem = _Memory(mem_size=self.__MEM_SIZE, alpha=self.__ALPHA,
-                             beta_min=self.__BETA_MIN, beta_inc=self.__BETA_INC,
-                             pri_epsilon=self.__PRI_EPSILON, abs_err_upper=self.__ABS_ERR_UPPER)
+        self.__mem = Memory(mem_size=self.__MEM_SIZE, alpha=self.__ALPHA,
+                            beta_min=self.__BETA_MIN, beta_inc=self.__BETA_INC,
+                            pri_epsilon=self.__PRI_EPSILON, abs_err_upper=self.__ABS_ERR_UPPER)
         self.__mem_cnt = 0
 
         self.__learn_step = 1
         self.__epsilon = self.__EPSILON_MAX
 
         self.__tot_reward = 0
-        self.__history_reward = []
         self.__history_loss = []
+        self.__history_reward = []
+        self.__history_avg_reward = []
 
         self.__last_snake_step = self.snake.steps
         self.__last_snake_len = self.snake.len()
 
         eval_params, target_params = self.__build_net()
-        self.__net_saver = tf.train.Saver(eval_params + target_params)
+        self.__net_saver = tf.train.Saver(var_list=eval_params + target_params,
+                                          max_to_keep=10)
 
         self.__sess = tf.Session()
         self.__sess.run(tf.global_variables_initializer())
@@ -204,8 +111,8 @@ class DQNSolver(BaseSolver):
         self.__mem_cnt = var["mem_cnt"]
         self.__epsilon = var["epsilon"]
         self.__learn_step = self.__RESTORE_STEP + 1
-        _log("model loaded | RESTORE_STEP: %d | mem_cnt: %d | epsilon: %.6f"
-             % (self.__RESTORE_STEP, self.__mem_cnt, self.__epsilon))
+        log("model loaded | RESTORE_STEP: %d | mem_cnt: %d | epsilon: %.6f"
+            % (self.__RESTORE_STEP, self.__mem_cnt, self.__epsilon))
 
     def __build_net(self):
 
@@ -328,20 +235,26 @@ class DQNSolver(BaseSolver):
         return eval_params, target_params
 
     def next_direc(self):
-        return self.__SNAKE_ACTIONS[self.__choose_action(e_greedy=False)]
+        """Override super class."""
+        action_idx = self.__choose_action(e_greedy=False)
+        action = self.__SNAKE_ACTIONS[action_idx]
+        return SnakeAction.to_direc(action, self.snake.direc)
 
     def loss_history(self):
         steps = list(range(self.__RESTORE_STEP + 1, self.__learn_step))
-
-        # Keyboard interrupt may cause len(steps) < len(self.__history_loss)
-        if len(steps) + 1 == len(self.__history_loss):
+        if len(steps) + 1 == len(self.__history_loss):  # Keyboard interrupt err
             steps.append(self.__learn_step)
-
         return steps, self.__history_loss
 
     def reward_history(self):
         episodes = range(1, len(self.__history_reward) + 1)
         return episodes, self.__history_reward
+
+    def avg_reward_history(self):
+        steps = list(range(self.__RESTORE_STEP + 1, self.__learn_step))
+        if len(steps) + 1 == len(self.__history_loss):  # Keyboard interrupt err
+            steps.append(self.__learn_step)
+        return steps, self.__history_avg_reward
 
     def train(self):
         state_cur = self.map.state()
@@ -354,12 +267,11 @@ class DQNSolver(BaseSolver):
             if self.__mem_cnt % self.__FREQ_LEARN == 0:
                 self.__learn()
         elif self.__mem_cnt % self.__FREQ_LOG == 0:
-            _log("mem_cnt: %d" % self.__mem_cnt)
+            log("mem_cnt: %d" % self.__mem_cnt)
 
         self.__epsilon = max(self.__EPSILON_MIN, self.__epsilon - self.__EPSILON_DEC)
 
-        episode_end = (self.snake.dead or self.map.is_full() or \
-            Direc.opposite(self.__SNAKE_ACTIONS[action]) == self.snake.direc)
+        episode_end = self.snake.dead or self.map.is_full()
 
         if episode_end:
             self.__history_reward.append(self.__tot_reward)
@@ -368,6 +280,7 @@ class DQNSolver(BaseSolver):
         return episode_end
 
     def __choose_action(self, e_greedy=True):
+        action_idx = None
         if e_greedy and np.random.uniform() < self.__epsilon:
             action_idx = np.random.randint(0, self.__NUM_ACTIONS)
         else:
@@ -378,11 +291,12 @@ class DQNSolver(BaseSolver):
                     self.__state_eval: state,
                 }
             )
-            action_idx = np.argmax(q_eval_all, axis=1)[0]
+            action_idx = np.argmax(q_eval_all[0])
         return action_idx
 
     def __step(self, action_idx):
-        direc = self.__SNAKE_ACTIONS[action_idx]
+        action = self.__SNAKE_ACTIONS[action_idx]
+        direc = SnakeAction.to_direc(action, self.snake.direc)
         nxt_pos = self.snake.head().adj(direc)
         nxt_type = self.map.point(nxt_pos).type
         self.snake.move(direc)
@@ -441,8 +355,14 @@ class DQNSolver(BaseSolver):
             }
         )
         self.__history_loss.append(loss)
-        log_msg += " | loss: %.6f | avg_reward: %.6f" \
-                   % (loss, np.mean(self.__history_reward))
+        log_msg += " | loss: %.6f" % loss
+
+        # Compute average reward
+        avg_reward = 0
+        if self.__history_reward:
+            avg_reward = np.mean(self.__history_reward[-self.__NUM_AVG_RWD:])
+        self.__history_avg_reward.append(avg_reward)
+        log_msg += " | avg_reward: %.6f" % avg_reward
 
         # Update sum tree
         self.__mem.update(tree_indices, abs_errs)
@@ -458,6 +378,6 @@ class DQNSolver(BaseSolver):
             log_msg += " | model saved"
 
         if self.__learn_step == 1 or self.__learn_step % self.__FREQ_LOG == 0:
-            _log(log_msg)
+            log(log_msg)
 
         self.__learn_step += 1
