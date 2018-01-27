@@ -5,9 +5,11 @@
 """Definition of class Map."""
 
 import random
+
 import numpy as np
+
+from snake.base.point import Point, PointType
 from snake.base.pos import Pos
-from snake.base.point import PointType, Point
 
 
 class Map:
@@ -129,29 +131,16 @@ class Map:
                 if t == PointType.EMPTY:
                     ob[idx] = 0
                 elif t == PointType.WALL:
-                    ob[idx] = 1
-                elif t == PointType.FOOD:
-                    ob[idx] = 2
-                elif t == PointType.HEAD_L:
-                    ob[idx] = 3
-                elif t == PointType.HEAD_U:
                     ob[idx] = 4
-                elif t == PointType.HEAD_R:
-                    ob[idx] = 5
-                elif t == PointType.HEAD_D:
-                    ob[idx] = 6
-                elif t == PointType.BODY_LU:
-                    ob[idx] = 7
-                elif t == PointType.BODY_UR:
-                    ob[idx] = 8
-                elif t == PointType.BODY_RD:
-                    ob[idx] = 9
-                elif t == PointType.BODY_DL:
-                    ob[idx] = 10
-                elif t == PointType.BODY_HOR:
-                    ob[idx] = 11
-                elif t == PointType.BODY_VER:
-                    ob[idx] = 12
+                elif t == PointType.FOOD:
+                    ob[idx] = 1
+                elif t == PointType.HEAD_L or t == PointType.HEAD_U or \
+                     t == PointType.HEAD_R or t == PointType.HEAD_D:
+                    ob[idx] = 2
+                elif t == PointType.BODY_LU  or t == PointType.BODY_UR or \
+                     t == PointType.BODY_RD  or t == PointType.BODY_DL or \
+                     t == PointType.BODY_HOR or t == PointType.BODY_VER:
+                    ob[idx] = 3
                 else:
                     raise ValueError("Unsupported point type")
                 idx += 1

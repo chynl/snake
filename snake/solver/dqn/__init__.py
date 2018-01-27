@@ -12,7 +12,6 @@ import tensorflow as tf
 
 from snake.base import Direc, PointType
 from snake.solver.base import BaseSolver
-from snake.solver.dqn.snakeaction import SnakeAction
 from snake.solver.dqn.memory import Memory
 from snake.solver.dqn.logger import log
 
@@ -33,14 +32,14 @@ class DQNSolver(BaseSolver):
         self.__RWD_DEAD = -1.0
         self.__RWD_CIRCLE = -1.0
 
-        # Epsilon-greedy
-        self.__EPSILON_MAX = 1.0
-        self.__EPSILON_MIN = 0.1
-        self.__EPSILON_DEC = 9e-7
-
         # Memory
         self.__MEM_SIZE = 1000000
         self.__MEM_BATCH = 32
+
+        # Epsilon-greedy
+        self.__EPSILON_MAX = 1.0
+        self.__EPSILON_MIN = 0.1
+        self.__EPSILON_DEC = (self.__EPSILON_MAX - self.__EPSILON_MIN) / self.__MEM_SIZE
 
         # Frequency
         self.__FREQ_LEARN = 4        # Number of new transitions
@@ -56,13 +55,13 @@ class DQNSolver(BaseSolver):
         self.__BETA_MIN = 0.4        # Importance-sampling (IS)
         self.__BETA_INC = 1e-7
         self.__PRI_EPSILON = 1e-6    # Small positive value to avoid zero priority
-        self.__ABS_ERR_UPPER = 1     # TD-error (absolute value) clip upperbound
+        self.__ABS_ERR_UPPER = 5     # TD-error (absolute value) clip upperbound
 
         self.__NUM_AVG_RWD = 100     # How many latest reward history to compute average
 
         self.__RESTORE_STEP = 0      # Which learn step to restore (0 means not restore)
 
-        self.__SNAKE_ACTIONS = [SnakeAction.FORWARD, SnakeAction.LEFT, SnakeAction.RIGHT]
+        self.__SNAKE_ACTIONS = [Direc.LEFT, Direc.UP, Direc.RIGHT, Direc.DOWN]
         self.__NUM_ACTIONS = len(self.__SNAKE_ACTIONS)
         self.__NUM_FEATURES = snake.map.capacity
 
@@ -238,7 +237,7 @@ class DQNSolver(BaseSolver):
         """Override super class."""
         action_idx = self.__choose_action(e_greedy=False)
         action = self.__SNAKE_ACTIONS[action_idx]
-        return SnakeAction.to_direc(action, self.snake.direc)
+        return action
 
     def loss_history(self):
         steps = list(range(self.__RESTORE_STEP + 1, self.__learn_step))
@@ -281,8 +280,12 @@ class DQNSolver(BaseSolver):
 
     def __choose_action(self, e_greedy=True):
         action_idx = None
+
         if e_greedy and np.random.uniform() < self.__epsilon:
-            action_idx = np.random.randint(0, self.__NUM_ACTIONS)
+            while True:
+                action_idx = np.random.randint(0, self.__NUM_ACTIONS)
+                if Direc.opposite(self.snake.direc) != self.__SNAKE_ACTIONS[action_idx]:
+                    break
         else:
             state = self.map.state()[np.newaxis, :]
             q_eval_all = self.__sess.run(
@@ -291,12 +294,18 @@ class DQNSolver(BaseSolver):
                     self.__state_eval: state,
                 }
             )
-            action_idx = np.argmax(q_eval_all[0])
+            q_eval_all = q_eval_all[0]
+            # Find indices of actions with 1st and 2nd largest q value
+            action_indices = np.argpartition(q_eval_all, q_eval_all.size - 2)
+            action_idx = action_indices[-1]
+            # If opposite direction, return direction with 2nd largest q value
+            if Direc.opposite(self.snake.direc) == self.__SNAKE_ACTIONS[action_idx]:
+                action_idx = action_indices[-2]
+
         return action_idx
 
     def __step(self, action_idx):
-        action = self.__SNAKE_ACTIONS[action_idx]
-        direc = SnakeAction.to_direc(action, self.snake.direc)
+        direc = self.__SNAKE_ACTIONS[action_idx]
         nxt_pos = self.snake.head().adj(direc)
         nxt_type = self.map.point(nxt_pos).type
         self.snake.move(direc)

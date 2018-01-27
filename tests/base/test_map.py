@@ -85,4 +85,4 @@ def test_state():
     for i, t in enumerate(PointType):
         m.point(Pos(int(i / 4 + 1), i % 4 + 1)).type = t
     ob = m.state()
-    assert np.array_equal(ob, np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 0, 0, 0]))
+    assert np.array_equal(ob, np.array([0, 4, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 0, 0, 0]))
