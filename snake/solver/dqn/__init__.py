@@ -146,7 +146,7 @@ class DQNSolver(BaseSolver):
                                      kernel_initializer=w_init_,
                                      bias_initializer=b_init_,
                                      name="conv3")
-            conv3_flat = tf.reshape(conv3, [-1, 4 * 4 * 64], name="conv3_flat")
+            conv3_flat = tf.reshape(conv3, [-1, 2 * 2 * 64], name="conv3_flat")
             fc1 = tf.layers.dense(inputs=conv3_flat,
                                   units=512,
                                   activation=tf.nn.relu,
