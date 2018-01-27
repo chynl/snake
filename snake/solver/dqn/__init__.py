@@ -116,7 +116,9 @@ class DQNSolver(BaseSolver):
     def __build_net(self):
 
         def __build_layers(x, name, w_init_, b_init_):
-            input_2d = tf.reshape(x, [-1, 10, 10, 1], name="input_2d")
+            input_2d = tf.reshape(tensor=x,
+                                  shape=[-1, self.map.num_rows - 2, self.map.num_cols - 2, 1],
+                                  name="input_2d")
             conv1 = tf.layers.conv2d(inputs=input_2d,
                                      filters=32,
                                      kernel_size=3,

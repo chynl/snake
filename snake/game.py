@@ -34,11 +34,11 @@ class GameConf:
         self.solver_name = 'HamiltonSolver'  # Class name of the solver
 
         # Size
-        self.map_rows = 10
+        self.map_rows = 8
         self.map_cols = self.map_rows
-        self.map_width = 190  # pixels
+        self.map_width = 170  # pixels
         self.map_height = self.map_width
-        self.info_panel_width = 170  # pixels
+        self.info_panel_width = 180  # pixels
         self.window_width = self.map_width + self.info_panel_width
         self.window_height = self.map_height
         self.grid_pad_ratio = 0.25
@@ -48,7 +48,7 @@ class GameConf:
         self.show_info_panel = True
 
         # Delay
-        self.interval_draw = 40       # ms
+        self.interval_draw = 50       # ms
         self.interval_draw_max = 200  # ms
 
         # Color
@@ -73,15 +73,14 @@ class GameConf:
             "<w/a/s/d>: up/left/down/right\n"
             "<space>: pause/resume\n"
             "<r>: restart    <esc>: exit\n"
-            "---------------------------------\n"
-            "solver: %s\n"
-            "status: %s\n"
+            "----------------------------------------\n"
+            "solver: %s   status: %s\n"
             "episode: %d   step: %d\n"
             "length: %d/%d (" + str(self.map_rows) + "x" + str(self.map_cols) + ")\n"
-            "---------------------------------\n"
-            "move delay:"
+            "----------------------------------------\n"
+            "speed:"
         )
-        self.info_status = ['eating', 'dead', 'full']
+        self.info_status = ['eat', 'dead', 'full']
 
 class Game:
 
