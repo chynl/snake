@@ -70,9 +70,13 @@ class HamiltonSolver(BaseSolver):
             self.__table[cur.x][cur.y].direc = direc
             cur = cur.adj(direc)
             cnt += 1
-        tail = self.snake.tail()
-        self.__table[tail.x][tail.y].idx = cnt
-        self.__table[tail.x][tail.y].direc = self.snake.direc
+        # Process snake bodies
+        cur = self.snake.tail()
+        for _ in range(self.snake.len() - 1):
+            self.__table[cur.x][cur.y].idx = cnt
+            self.__table[cur.x][cur.y].direc = self.snake.direc
+            cur = cur.adj(self.snake.direc)
+            cnt += 1
 
     def __relative_dist(self, ori, x, size):
         if ori > x:
