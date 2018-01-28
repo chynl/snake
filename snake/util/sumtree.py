@@ -10,7 +10,7 @@ class SumTree:
     def __init__(self, capacity):
         self.__capacity = capacity
         self.__tree = np.zeros(2 * self.__capacity - 1)
-        self.__data = np.zeros(self.__capacity, dtype=object)
+        self.__data = [None] * self.__capacity
         self.__data_idx = 0
 
     @property
