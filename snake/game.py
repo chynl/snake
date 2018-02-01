@@ -169,6 +169,8 @@ class Game:
             pass
         except Exception:
             traceback.print_exc()
+        finally:
+            self.__on_exit()
 
     def __game_main_dqn_train(self):
         if not self.__map.has_food():
@@ -241,6 +243,8 @@ class Game:
     def __on_exit(self):
         if self.__log_file:
             self.__log_file.close()
+        if self.__solver:
+            self.__solver.close()
 
     def __init_log_file(self):
         try:

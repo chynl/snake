@@ -26,3 +26,7 @@ class BaseSolver:
     def next_direc(self):
         """Generate the next direction of the snake."""
         return NotImplemented
+
+    def close(self):
+        """Release resources."""
+        pass

@@ -84,7 +84,7 @@ class DQNSolver(BaseSolver):
 
         self.__sess = tf.Session()
         self.__sess.run(tf.global_variables_initializer())
-        tf.summary.FileWriter(_DIR_LOG, self.__sess.graph)
+        self.__summary_writer = tf.summary.FileWriter(_DIR_LOG, self.__sess.graph)
 
         if self.__RESTORE_STEP > 0:
             self.__load_model()
@@ -255,6 +255,13 @@ class DQNSolver(BaseSolver):
         if len(steps) + 1 == len(self.__history_loss):  # Keyboard interrupt err
             steps.append(self.__learn_step)
         return steps, self.__history_avg_reward
+
+    def close(self):
+        """Override super class."""
+        if self.__summary_writer:
+            self.__summary_writer.close()
+        if self.__sess:
+            self.__sess.close()
 
     def train(self):
         state_cur = self.map.state()
