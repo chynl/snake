@@ -8,7 +8,7 @@ from snake.base import Pos, PointType
 
 class GameWindow(tk.Tk):
 
-    def __init__(self, title, conf, map_, game=None, on_exit=None, keybindings=None):
+    def __init__(self, title, conf, game_map, game=None, on_exit=None, keybindings=None):
         super().__init__()
         super().title(title)
         super().resizable(width=False, height=False)
@@ -16,9 +16,9 @@ class GameWindow(tk.Tk):
         if conf.show_info_panel:
             super().geometry("%dx%d" % (conf.window_width, conf.window_height))
         self.__conf = conf
-        self.__map = map_
-        self.__grid_width = conf.map_width / (map_.num_rows - 2)
-        self.__grid_height = conf.map_height / (map_.num_cols - 2)
+        self.__map = game_map
+        self.__grid_width = conf.map_width / (game_map.num_rows - 2)
+        self.__grid_height = conf.map_height / (game_map.num_cols - 2)
         self.__init_widgets()
         self.__init_draw_params()
 
@@ -49,15 +49,20 @@ class GameWindow(tk.Tk):
                                   height=self.__conf.map_height,
                                   highlightthickness=0)
         self.__canvas.pack(side=tk.LEFT)
+
         if self.__conf.show_info_panel:
+
+            self.__info_var = tk.StringVar()
+
             frm = tk.Frame(self, bg=self.__conf.color_bg)
             frm.pack(side=tk.RIGHT, anchor=tk.N)
-            self.__info_var = tk.StringVar()
+
             tk.Message(frm,
                        textvariable=self.__info_var,
                        fg=self.__conf.color_txt,
                        bg=self.__conf.color_bg,
                        font=self.__conf.font_info).pack(side=tk.TOP, anchor=tk.W)
+
             scale = tk.Scale(frm,
                              font=self.__conf.font_info,
                              fg=self.__conf.color_txt,
@@ -88,9 +93,9 @@ class GameWindow(tk.Tk):
         pad_ratio = self.__conf.grid_pad_ratio
         food_pad_ratio = 0.9 * pad_ratio
         self.__dx1 = pad_ratio * self.__grid_width
-        self.__dx2 = (1 - pad_ratio) * self.__grid_width
+        self.__dx2 = (1 - pad_ratio) * self.__grid_width + 1
         self.__dy1 = pad_ratio * self.__grid_height
-        self.__dy2 = (1 - pad_ratio) * self.__grid_height
+        self.__dy2 = (1 - pad_ratio) * self.__grid_height + 1
         self.__dx1_food = food_pad_ratio * self.__grid_width
         self.__dx2_food = (1 - food_pad_ratio) * self.__grid_width
         self.__dy1_food = food_pad_ratio * self.__grid_height
@@ -126,15 +131,16 @@ class GameWindow(tk.Tk):
         self.__canvas.create_line(self.__conf.map_width - 1, 0,
                                   self.__conf.map_width - 1, self.__conf.map_height,
                                   fill=self.__conf.color_line)
+
         if self.__snake.dead:
             status_str = self.__conf.info_status[1]
         elif self.__map.is_full():
             status_str = self.__conf.info_status[2]
         else:
             status_str = self.__conf.info_status[0]
+
         self.__info_var.set(self.__conf.info_str %
-                            (self.__conf.solver_name[:-6].lower(),
-                             status_str,
+                            (status_str,
                              self.__game.episode, self.__snake.steps,
                              self.__snake.len(), self.__map.capacity))
 

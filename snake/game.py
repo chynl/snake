@@ -36,9 +36,9 @@ class GameConf:
         # Size
         self.map_rows = 8
         self.map_cols = self.map_rows
-        self.map_width = 170  # pixels
+        self.map_width = 160  # pixels
         self.map_height = self.map_width
-        self.info_panel_width = 180  # pixels
+        self.info_panel_width = 155  # pixels
         self.window_width = self.map_width + self.info_panel_width
         self.window_height = self.map_height
         self.grid_pad_ratio = 0.25
@@ -66,21 +66,20 @@ class GameConf:
         self.init_types = [PointType.HEAD_R] + [PointType.BODY_HOR] * 3
 
         # Font
-        self.font_info = ('Helvetica', 9)
+        self.font_info = ('Arial', 9)
 
         # Info
         self.info_str = (
-            "<w/a/s/d>: up/left/down/right\n"
+            "<w/a/s/d>: snake direction\n"
             "<space>: pause/resume\n"
             "<r>: restart    <esc>: exit\n"
-            "----------------------------------------\n"
-            "solver: %s   status: %s\n"
+            "-----------------------------------\n"
+            "status: %s\n"
             "episode: %d   step: %d\n"
             "length: %d/%d (" + str(self.map_rows) + "x" + str(self.map_cols) + ")\n"
-            "----------------------------------------\n"
-            "speed:"
+            "-----------------------------------"
         )
-        self.info_status = ['eat', 'dead', 'full']
+        self.info_status = ['eating', 'dead', 'full']
 
 class Game:
 
