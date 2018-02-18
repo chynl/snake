@@ -11,6 +11,7 @@
     - [Hamilton Solver](#hamilton-solver)
         - [Build a Hamiltonian Cycle](#build-a-hamiltonian-cycle)
         - [Take Shortcuts](#take-shortcuts)
+    - [DQN Solver](#dqn-solver)
 - [References](#references)
 
 <!-- /TOC -->
@@ -77,6 +78,9 @@ Before the snake starts moving, Hamilton Solver finds the [longest path](#longes
 Following a fixed cycle path all the time is tedious and time-consuming. Hamilton Solver directs the snake to take shortcuts according to the rules below. [[1]][ref-shortcuts]
 
 ![][take-shortcuts-img]
+
+<a id="markdown-dqn-solver" name="dqn-solver"></a>
+### DQN Solver
 
 <a id="markdown-references" name="references"></a>
 ## References

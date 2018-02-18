@@ -6,8 +6,6 @@
 
 import random
 
-import numpy as np
-
 from snake.base.point import Point, PointType
 from snake.base.pos import Pos
 
@@ -121,27 +119,3 @@ class Map:
             return self.create_food(random.choice(empty_pos))
         else:
             return None
-
-    def state(self):
-        """Return a vector indicating current state."""
-        ob, idx = np.zeros(self.capacity, dtype=np.int32), 0
-        for i in range(1, self.__num_rows - 1):
-            for j in range(1, self.__num_cols - 1):
-                t = self.__content[i][j].type
-                if t == PointType.EMPTY:
-                    ob[idx] = 0
-                elif t == PointType.WALL:
-                    ob[idx] = 4
-                elif t == PointType.FOOD:
-                    ob[idx] = 1
-                elif t == PointType.HEAD_L or t == PointType.HEAD_U or \
-                     t == PointType.HEAD_R or t == PointType.HEAD_D:
-                    ob[idx] = 2
-                elif t == PointType.BODY_LU  or t == PointType.BODY_UR or \
-                     t == PointType.BODY_RD  or t == PointType.BODY_DL or \
-                     t == PointType.BODY_HOR or t == PointType.BODY_VER:
-                    ob[idx] = 3
-                else:
-                    raise ValueError("Unsupported point type")
-                idx += 1
-        return ob

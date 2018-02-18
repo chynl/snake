@@ -10,7 +10,9 @@ import os
 import numpy as np
 import tensorflow as tf
 
-from snake.base import Direc, PointType
+import matplotlib.pyplot as plt
+
+from snake.base import Direc, Pos, PointType
 from snake.solver.base import BaseSolver
 from snake.solver.dqn.memory import Memory
 from snake.solver.dqn.logger import log
@@ -40,12 +42,16 @@ class DQNSolver(BaseSolver):
 
         # Epsilon-greedy
         self.__EPSILON_MAX = 1.0
-        self.__EPSILON_MIN = 0.1
+        self.__EPSILON_MIN = 0.01
         self.__EPSILON_DEC = (self.__EPSILON_MAX - self.__EPSILON_MIN) / self.__MAX_LEARN_STEP
 
         self.__LR = 1e-6             # Learning rate
         self.__MOMENTUM = 0.95       # SGD momentum
         self.__GAMMA = 0.99          # Reward discount
+        self.__LEAKY_ALPHA = 0.01    # Leaky relu slope
+
+        self.__TD_UPPER = 1.0        # TD-error clip upper bound
+        self.__TD_LOWER = -1.0       # TD-error clip lower bound
 
         self.__PRI_EPSILON = 0.001   # Small positive value to avoid zero priority
         self.__ALPHA = 0.6           # How much prioritization to use
@@ -58,11 +64,15 @@ class DQNSolver(BaseSolver):
         self.__FREQ_LOG = 500        # Learning steps
         self.__FREQ_SAVE = 20000     # Learning steps
 
-        self.__NUM_AVG_RWD = 100     # How many latest reward history to compute average
+        self.__NUM_AVG_RWD = 50     # How many latest reward history to compute average
 
         self.__SNAKE_ACTIONS = [Direc.LEFT, Direc.UP, Direc.RIGHT, Direc.DOWN]
         self.__NUM_ACTIONS = len(self.__SNAKE_ACTIONS)
-        self.__NUM_FEATURES = snake.map.capacity
+
+        self.__SHAPE_VISUAL_STATE = (self.map.num_rows - 2, self.map.num_cols - 2, 4)
+        self.__NUM_VISUAL_FEATURES = np.prod(self.__SHAPE_VISUAL_STATE)
+        self.__NUM_IMPORTANT_FEATURES = 4
+        self.__NUM_ALL_FEATURES = self.__NUM_VISUAL_FEATURES + self.__NUM_IMPORTANT_FEATURES
 
         self.__mem = Memory(mem_size=self.__MEM_SIZE,
                             alpha=self.__ALPHA,
@@ -77,10 +87,11 @@ class DQNSolver(BaseSolver):
         self.__history_loss = []
         self.__history_reward = []
         self.__history_avg_reward = []
+        self.__max_avg_reward = -1.0
 
-        eval_params, target_params = self.__build_net()
+        eval_params, target_params = self.__build_graph()
         self.__net_saver = tf.train.Saver(var_list=eval_params + target_params,
-                                          max_to_keep=30)
+                                          max_to_keep=200)
 
         self.__sess = tf.Session()
         self.__sess.run(tf.global_variables_initializer())
@@ -108,66 +119,15 @@ class DQNSolver(BaseSolver):
         log("model loaded | RESTORE_STEP: %d | epsilon: %.6f | beta: %.6f"
             % (self.__RESTORE_STEP, self.__epsilon, self.__beta))
 
-    def __build_net(self):
-
-        def __build_layers(x, name, w_init_, b_init_):
-
-            input_2d = tf.reshape(tensor=x,
-                                  shape=[-1, self.map.num_rows - 2, self.map.num_cols - 2, 1],
-                                  name="input_2d")
-
-            conv1 = tf.layers.conv2d(inputs=input_2d,
-                                     filters=32,
-                                     kernel_size=3,
-                                     strides=1,
-                                     padding='valid',
-                                     activation=tf.nn.relu,
-                                     kernel_initializer=w_init_,
-                                     bias_initializer=b_init_,
-                                     name="conv1")
-
-            conv2 = tf.layers.conv2d(inputs=conv1,
-                                     filters=64,
-                                     kernel_size=3,
-                                     strides=1,
-                                     padding='valid',
-                                     activation=tf.nn.relu,
-                                     kernel_initializer=w_init_,
-                                     bias_initializer=b_init_,
-                                     name="conv2")
-
-            conv2_flat = tf.reshape(tensor=conv2,
-                                    shape=[-1, 4 * 4 * 64],
-                                    name="conv2_flat")
-
-            fc1 = tf.layers.dense(inputs=conv2_flat,
-                                  units=512,
-                                  activation=tf.nn.relu,
-                                  kernel_initializer=w_init_,
-                                  bias_initializer=b_init_,
-                                  name="fc1")
-
-            q_all = tf.layers.dense(inputs=fc1,
-                                    units=self.__NUM_ACTIONS,
-                                    kernel_initializer=w_init_,
-                                    bias_initializer=b_init_,
-                                    name=name)
-
-            return q_all  # Shape: (None, num_actions)
-
-        def __filter_actions(q_all, actions):
-            with tf.variable_scope("action_filter"):
-                indices = tf.range(tf.shape(q_all)[0], dtype=tf.int32)
-                action_indices = tf.stack([indices, actions], axis=1)
-                return tf.gather_nd(q_all, action_indices)  # Shape: (None, )
+    def __build_graph(self):
 
         # Input tensor for eval net
         self.__state_eval = tf.placeholder(
-            tf.float32, [None, self.__NUM_FEATURES], name="state_eval")
+            tf.float32, [None, self.__NUM_ALL_FEATURES], name="state_eval")
 
         # Input tensor for target net
         self.__state_target = tf.placeholder(
-            tf.float32, [None, self.__NUM_FEATURES], name="state_target")
+            tf.float32, [None, self.__NUM_ALL_FEATURES], name="state_target")
 
         # Input tensor for actions taken by agent
         self.__action = tf.placeholder(
@@ -192,32 +152,39 @@ class DQNSolver(BaseSolver):
         SCOPE_EVAL_NET = "eval_net"
         SCOPE_TARGET_NET = "target_net"
 
-        w_init = tf.truncated_normal_initializer(mean=0, stddev=0.1)
-        b_init = tf.constant_initializer(0.1)
+        w_init = tf.keras.initializers.he_normal()
+        b_init = tf.constant_initializer(0)
 
         with tf.variable_scope(SCOPE_EVAL_NET):
             # Eval net output
-            self.__q_eval_all = __build_layers(self.__state_eval, "q_eval_all", w_init, b_init)
+            self.__q_eval_all = self.__build_net(self.__state_eval, "q_eval_all", w_init, b_init)
 
         with tf.variable_scope("q_eval"):
-            q_eval = __filter_actions(self.__q_eval_all, self.__action)
+            q_eval = self.__filter_actions(self.__q_eval_all, self.__action)
 
         with tf.variable_scope(SCOPE_TARGET_NET):
             # Target net output
-            q_nxt_all = __build_layers(self.__state_target, "q_nxt_all", w_init, b_init)
+            q_nxt_all = self.__build_net(self.__state_target, "q_nxt_all", w_init, b_init)
 
         with tf.variable_scope("q_target"):
+            # Natural DQN
+            #max_actions = tf.argmax(q_nxt_all, axis=1, output_type=tf.int32)
             # Double DQN: choose max reward actions using eval net
             max_actions = tf.argmax(self.__q_eval_all_nxt, axis=1, output_type=tf.int32)
-            q_nxt = __filter_actions(q_nxt_all, max_actions)
+            q_nxt = self.__filter_actions(q_nxt_all, max_actions)
             q_target = self.__reward + self.__GAMMA * q_nxt * \
                 (1.0 - tf.cast(self.__done, tf.float32))
             q_target = tf.stop_gradient(q_target)
 
         with tf.variable_scope("loss"):
-            self.__loss = tf.reduce_mean(self.__IS_weights \
-                * tf.squared_difference(q_eval, q_target), name="loss")
-            self.__abs_errs = tf.abs(q_eval - q_target, name="abs_errs")  # To update sum tree
+            with tf.variable_scope("td_err"):
+                td_err = tf.clip_by_value(
+                    q_eval - q_target,
+                    clip_value_min=self.__TD_LOWER,
+                    clip_value_max=self.__TD_UPPER,
+                )
+            self.__loss = tf.reduce_mean(self.__IS_weights * tf.square(td_err))
+            self.__td_err_abs = tf.abs(td_err, name="td_err_abs")  # To update sum tree
 
         with tf.variable_scope("train"):
             self.__train = tf.train.RMSPropOptimizer(
@@ -236,25 +203,130 @@ class DQNSolver(BaseSolver):
 
         return eval_params, target_params
 
+    def __build_net(self, features, output_name, w_init_, b_init_):
+
+        visual_state = tf.slice(features,
+                                begin=[0, 0],
+                                size=[-1, self.__NUM_VISUAL_FEATURES],
+                                name="visual_state")
+
+        visual_state_2d = tf.reshape(tensor=visual_state,
+                                     shape=[-1,
+                                            self.__SHAPE_VISUAL_STATE[0],
+                                            self.__SHAPE_VISUAL_STATE[1],
+                                            self.__SHAPE_VISUAL_STATE[2]],
+                                     name="visual_state_2d")
+
+        conv1 = tf.layers.conv2d(inputs=visual_state_2d,
+                                 filters=32,
+                                 kernel_size=3,
+                                 strides=1,
+                                 padding='valid',
+                                 activation=self.__leaky_relu,
+                                 kernel_initializer=w_init_,
+                                 bias_initializer=b_init_,
+                                 name="conv1")
+
+        conv2 = tf.layers.conv2d(inputs=conv1,
+                                 filters=64,
+                                 kernel_size=3,
+                                 strides=1,
+                                 padding='valid',
+                                 activation=self.__leaky_relu,
+                                 kernel_initializer=w_init_,
+                                 bias_initializer=b_init_,
+                                 name="conv2")
+
+        conv3 = tf.layers.conv2d(inputs=conv2,
+                                 filters=128,
+                                 kernel_size=2,
+                                 strides=1,
+                                 padding='valid',
+                                 activation=self.__leaky_relu,
+                                 kernel_initializer=w_init_,
+                                 bias_initializer=b_init_,
+                                 name="conv3")
+
+        conv4 = tf.layers.conv2d(inputs=conv3,
+                                 filters=256,
+                                 kernel_size=2,
+                                 strides=1,
+                                 padding='valid',
+                                 activation=self.__leaky_relu,
+                                 kernel_initializer=w_init_,
+                                 bias_initializer=b_init_,
+                                 name="conv4")
+
+        conv4_flat = tf.reshape(tensor=conv4,
+                                shape=[-1, 2 * 2 * 256],
+                                name="conv4_flat")
+
+        important_state = tf.slice(features,
+                                   begin=[0, self.__NUM_VISUAL_FEATURES],
+                                   size=[-1, self.__NUM_IMPORTANT_FEATURES],
+                                   name="important_state")
+
+        combined_features = tf.concat([conv4_flat, important_state],
+                                      axis=1,
+                                      name="combined_features")
+
+        fc1 = tf.layers.dense(inputs=combined_features,
+                              units=1024,
+                              activation=self.__leaky_relu,
+                              kernel_initializer=w_init_,
+                              bias_initializer=b_init_,
+                              name="fc1")
+
+        fc2 = tf.layers.dense(inputs=fc1,
+                              units=1024,
+                              activation=self.__leaky_relu,
+                              kernel_initializer=w_init_,
+                              bias_initializer=b_init_,
+                              name="fc2")
+
+        q_all = tf.layers.dense(inputs=fc2,
+                                units=self.__NUM_ACTIONS,
+                                kernel_initializer=w_init_,
+                                bias_initializer=b_init_,
+                                name=output_name)
+
+        return q_all  # Shape: (None, num_actions)
+
+    def __leaky_relu(self, features):
+        return tf.nn.leaky_relu(features, alpha=self.__LEAKY_ALPHA)
+
+    def __filter_actions(self, q_all, actions):
+        with tf.variable_scope("action_filter"):
+            indices = tf.range(tf.shape(q_all)[0], dtype=tf.int32)
+            action_indices = tf.stack([indices, actions], axis=1)
+            return tf.gather_nd(q_all, action_indices)  # Shape: (None, )
+
     def next_direc(self):
         """Override super class."""
         return self.__SNAKE_ACTIONS[self.__choose_action(e_greedy=False)]
 
-    def loss_history(self):
-        steps = list(range(self.__RESTORE_STEP + 1, self.__learn_step))
-        if len(steps) + 1 == len(self.__history_loss):  # Keyboard interrupt err
-            steps.append(self.__learn_step)
-        return steps, self.__history_loss
+    def plot(self):
+        plt.figure()
+        plt.plot(range(1, len(self.__history_reward) + 1), self.__history_reward)
+        plt.xlabel("Episode")
+        plt.ylabel("Reward")
+        plt.title("Total Reward")
 
-    def reward_history(self):
-        episodes = range(1, len(self.__history_reward) + 1)
-        return episodes, self.__history_reward
+        plt.figure()
+        steps = np.arange(len(self.__history_loss)) + self.__RESTORE_STEP + 1
+        plt.plot(steps, self.__history_loss)
+        plt.xlabel("Learn Step")
+        plt.ylabel("Loss")
+        plt.title("Loss")
 
-    def avg_reward_history(self):
-        steps = list(range(self.__RESTORE_STEP + 1, self.__learn_step))
-        if len(steps) + 1 == len(self.__history_loss):  # Keyboard interrupt err
-            steps.append(self.__learn_step)
-        return steps, self.__history_avg_reward
+        plt.figure()
+        steps = np.arange(len(self.__history_avg_reward)) + self.__RESTORE_STEP + 1
+        plt.plot(steps, self.__history_avg_reward)
+        plt.xlabel("Learn Step")
+        plt.ylabel("Reward")
+        plt.title("Average Reward")
+
+        plt.show()
 
     def close(self):
         """Override super class."""
@@ -264,7 +336,7 @@ class DQNSolver(BaseSolver):
             self.__sess.close()
 
     def train(self):
-        state_cur = self.map.state()
+        state_cur = self.__state()
         action = self.__choose_action()
         reward, state_nxt, done = self.__step(action)
         self.__store_transition(state_cur, action, reward, state_nxt, done)
@@ -282,6 +354,34 @@ class DQNSolver(BaseSolver):
 
         return done
 
+    def __state(self):
+        """Return a vector indicating current state."""
+        visual_state = np.zeros(self.__SHAPE_VISUAL_STATE, dtype=np.int32)
+        for i in range(1, self.map.num_rows - 1):
+            for j in range(1, self.map.num_cols - 1):
+                t = self.map.point(Pos(i, j)).type
+                if t == PointType.EMPTY:
+                    visual_state[i - 1][j - 1][0] = 1
+                elif t == PointType.FOOD:
+                    visual_state[i - 1][j - 1][1] = 1
+                elif t == PointType.HEAD_L or t == PointType.HEAD_U or \
+                     t == PointType.HEAD_R or t == PointType.HEAD_D:
+                    visual_state[i - 1][j - 1][2] = 1
+                elif t == PointType.BODY_LU  or t == PointType.BODY_UR or \
+                     t == PointType.BODY_RD  or t == PointType.BODY_DL or \
+                     t == PointType.BODY_HOR or t == PointType.BODY_VER:
+                    visual_state[i - 1][j - 1][3] = 1
+                else:
+                    raise ValueError("Unsupported PointType: {}".format(t))
+
+        important_state = np.zeros(self.__NUM_IMPORTANT_FEATURES, dtype=np.int32)
+        head = self.snake.head()
+        for i, direc in enumerate([Direc.LEFT, Direc.UP, Direc.RIGHT, Direc.DOWN]):
+            if not self.map.is_safe(head.adj(direc)):
+                important_state[i] = 1
+
+        return np.hstack((visual_state.flatten(), important_state))
+
     def __choose_action(self, e_greedy=True):
         action_idx = None
 
@@ -291,11 +391,10 @@ class DQNSolver(BaseSolver):
                 if Direc.opposite(self.snake.direc) != self.__SNAKE_ACTIONS[action_idx]:
                     break
         else:
-            state = self.map.state()[np.newaxis, :]
             q_eval_all = self.__sess.run(
                 self.__q_eval_all,
                 feed_dict={
-                    self.__state_eval: state,
+                    self.__state_eval: self.__state()[np.newaxis, :]
                 }
             )
             q_eval_all = q_eval_all[0]
@@ -322,7 +421,7 @@ class DQNSolver(BaseSolver):
         else:
             reward = self.__RWD_DEAD
 
-        state_nxt = self.map.state()
+        state_nxt = self.__state()
         done = self.snake.dead or self.map.is_full()
 
         return reward, state_nxt, done
@@ -334,6 +433,22 @@ class DQNSolver(BaseSolver):
     def __learn(self):
         log_msg = "step %d | mem_cnt: %d | epsilon: %.6f | beta: %.6f" % \
                   (self.__learn_step, self.__mem_cnt, self.__epsilon, self.__beta)
+
+        # Compute average reward
+        avg_reward = self.__max_avg_reward
+        if self.__history_reward:
+            avg_reward = np.mean(self.__history_reward[-self.__NUM_AVG_RWD:])
+        self.__history_avg_reward.append(avg_reward)
+        log_msg += " | avg_reward: %.6f" % avg_reward
+
+        # Save model
+        saved = False
+        if avg_reward > self.__max_avg_reward or self.__learn_step % self.__FREQ_SAVE == 0:
+            if avg_reward > self.__max_avg_reward:
+                self.__max_avg_reward = avg_reward
+            self.__save_model()
+            saved = True
+            log_msg += " | model saved"
 
         # Sample batch from memory
         batch, IS_weights, tree_indices = self.__mem.sample(self.__MEM_BATCH, self.__beta)
@@ -353,7 +468,7 @@ class DQNSolver(BaseSolver):
 
         # Learn
         _, loss, abs_errs = self.__sess.run(
-            [self.__train, self.__loss, self.__abs_errs],
+            [self.__train, self.__loss, self.__td_err_abs],
             feed_dict={
                 self.__state_eval: batch_state_cur,
                 self.__state_target: batch_state_nxt,
@@ -365,14 +480,7 @@ class DQNSolver(BaseSolver):
             }
         )
         self.__history_loss.append(loss)
-        log_msg += " | loss: %.6f" % loss
-
-        # Compute average reward
-        avg_reward = 0
-        if self.__history_reward:
-            avg_reward = np.mean(self.__history_reward[-self.__NUM_AVG_RWD:])
-        self.__history_avg_reward.append(avg_reward)
-        log_msg += " | avg_reward: %.6f" % avg_reward
+        log_msg += " | loss: %.6f | avg_td_err: %.6f" % (loss, np.mean(abs_errs))
 
         # Update sum tree
         self.__mem.update(tree_indices, abs_errs)
@@ -382,12 +490,7 @@ class DQNSolver(BaseSolver):
             self.__sess.run(self.__replace_target)
             log_msg += " | target net replaced"
 
-        # Save model
-        if self.__learn_step % self.__FREQ_SAVE == 0:
-            self.__save_model()
-            log_msg += " | model saved"
-
-        if self.__learn_step == 1 or self.__learn_step % self.__FREQ_LOG == 0:
+        if saved or self.__learn_step == 1 or self.__learn_step % self.__FREQ_LOG == 0:
             log(log_msg)
 
         self.__learn_step += 1

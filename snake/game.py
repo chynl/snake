@@ -7,8 +7,6 @@ import os
 import traceback
 from enum import Enum, unique
 
-import matplotlib.pyplot as plt
-
 from snake.base import Direc, Map, PointType, Pos, Snake
 from snake.gui import GameWindow
 from snake.solver import DQNSolver, GreedySolver, HamiltonSolver
@@ -129,16 +127,14 @@ class Game:
         print("\nMap size: %dx%d" % (self.__conf.map_rows, self.__conf.map_cols))
         print("Solver: %s\n" % self.__conf.solver_name[:-6].lower())
 
-        tot_suc, tot_suc_steps, tot_len = 0, 0, 0
+        tot_len, tot_steps = 0, 0
 
         for _ in range(NUM_EPISODES):
             print("Episode %d - " % self.__episode, end="")
             while True:
                 self.__game_main_normal()
                 if self.__map.is_full():
-                    tot_suc += 1
-                    tot_suc_steps += self.__snake.steps
-                    print("SUC (len: %d | steps: %d)"
+                    print("FULL (len: %d | steps: %d)"
                           % (self.__snake.len(), self.__snake.steps))
                     break
                 elif self.__snake.dead:
@@ -151,13 +147,13 @@ class Game:
                     self.__write_logs()  # Write the last step
                     break
             tot_len += self.__snake.len()
+            tot_steps += self.__snake.steps
             self.__reset()
 
-        suc_rate = 100 * tot_suc / NUM_EPISODES
-        avg_suc_steps = tot_suc_steps / tot_suc if tot_suc != 0 else -1
         avg_len = tot_len / NUM_EPISODES
-        print("\n[Summary]\nSuccess: %d (%.2f%%)\nAverage Steps: %.2f\nAverage Length: %.2f\n"
-              % (tot_suc, suc_rate, avg_suc_steps, avg_len))
+        avg_steps = tot_steps / NUM_EPISODES
+        print("\n[Summary]\nAverage Length: %.2f\nAverage Steps: %.2f\n"
+              % (avg_len, avg_steps))
 
         self.__on_exit()
 
@@ -202,28 +198,7 @@ class Game:
             self.__write_logs()  # Write the last step
 
     def __plot_history(self):
-        plt.figure()
-        steps, history_loss = self.__solver.loss_history()
-        plt.plot(steps, history_loss)
-        plt.xlabel("Learn Step")
-        plt.ylabel("Loss")
-        plt.title("Loss")
-
-        plt.figure()
-        episodes, history_reward = self.__solver.reward_history()
-        plt.plot(episodes, history_reward)
-        plt.xlabel("Episode")
-        plt.ylabel("Reward")
-        plt.title("Total Reward")
-
-        plt.figure()
-        episodes, history_avg_reward = self.__solver.avg_reward_history()
-        plt.plot(episodes, history_avg_reward)
-        plt.xlabel("Learn Step")
-        plt.ylabel("Reward")
-        plt.title("Average Reward")
-
-        plt.show()
+        self.__solver.plot()
 
     def __update_direc(self, new_direc):
         self.__snake.direc_next = new_direc

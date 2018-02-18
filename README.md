@@ -8,18 +8,18 @@ This project focuses on the artificial intelligence of the [Snake][snake-wiki] g
 
 ## Experiments
 
-We use three metrics to evaluate the performance of an AI:
+We use two metrics to evaluate the performance of an AI:
 
-1. **Success Rate:** Rate of success (i.e., the map is filled with the snake's bodies) after playing the game for N times.
-2. **Average Steps:** Average steps the snake has moved to success.
-3. **Average Length:** Average length the snake has grown to (max: 100).
+1. **Average Length:** Average length the snake has grown to (*max:* 64).
+2. **Average Steps:** Average steps the snake has moved.
 
-Test results (N=1000):
+Test results (averaged over 1000 episodes):
 
-| Solver | Demo | Success Rate | Average Steps | Average Length |
-| :----: | :--: | :----------: | :-----------: | :------------: |
-|[Hamilton][hamilton-doc]|![][demo-hamilton]|99.70%|1778.39|99.78|
-|[Greedy][greedy-doc]|![][demo-greedy]|22.90%|1566.29|94.29|
+| Solver | Demo | Average Length | Average Steps |
+| :----: | :--: | :------------: | :-----------: |
+|[Hamilton][hamilton-doc]|![][demo-hamilton]|63.93|717.83|
+|[Greedy][greedy-doc]|![][demo-greedy]|60.15|904.56|
+|[DQN][dqn-doc]|![][demo-dqn]|22.59|119.93|
 
 ## Installation
 
@@ -54,6 +54,8 @@ See the [LICENSE](./LICENSE) file for license rights and limitations.
 [algorithms-doc]: ./docs/algorithms.md
 [greedy-doc]: ./docs/algorithms.md#greedy-solver
 [hamilton-doc]: ./docs/algorithms.md#hamilton-solver
+[dqn-doc]: ./docs/algorithms.md#dqn-solver
 
 [demo-hamilton]: ./docs/images/solver_hamilton.gif
 [demo-greedy]: ./docs/images/solver_greedy.gif
+[demo-dqn]: ./docs/images/solver_dqn.gif

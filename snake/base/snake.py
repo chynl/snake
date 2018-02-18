@@ -6,25 +6,26 @@
 
 import random
 from collections import deque
+
 from snake.base.direc import Direc
-from snake.base.pos import Pos
 from snake.base.point import PointType
+from snake.base.pos import Pos
 
 
 class Snake:
     """Snake of the game."""
 
-    def __init__(self, map_, init_direc=None, init_bodies=None, init_types=None):
+    def __init__(self, game_map, init_direc=None, init_bodies=None, init_types=None):
         """Initialize a Snake object.
 
         Args:
-            map_ (base.map.Map): The map that the snake moves on.
+            game_map (base.map.Map): The map that the snake moves on.
             init_direc (base.direc.Direc): Initial direction.
             init_bodies (list of base.pos.Pos): Initial snake bodies positions.
             init_types (list of base.point.PointType): Types of each position in init_bodies.
 
         """
-        self.__map = map_
+        self.__map = game_map
         self.__init_direc = init_direc
         self.__init_bodies = init_bodies
         self.__init_types = init_types

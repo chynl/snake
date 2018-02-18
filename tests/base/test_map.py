@@ -5,8 +5,8 @@
 """Unit tests for class Map."""
 
 import pytest
-import numpy as np
-from snake.base import Pos, PointType, Map
+
+from snake.base import Map, PointType, Pos
 
 
 def test_init():
@@ -78,11 +78,3 @@ def test_food():
     for i in range(1, m.num_rows - 1):
         for j in range(1, m.num_cols - 1):
             assert m.point(Pos(i, j)).type == PointType.EMPTY
-
-
-def test_state():
-    m = Map(6, 6)
-    for i, t in enumerate(PointType):
-        m.point(Pos(int(i / 4 + 1), i % 4 + 1)).type = t
-    ob = m.state()
-    assert np.array_equal(ob, np.array([0, 4, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 0, 0, 0]))
