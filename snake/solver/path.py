@@ -31,12 +31,12 @@ class PathSolver(BaseSolver):
 
     def __init__(self, snake):
         super().__init__(snake)
-        self.__table = [[_TableCell() for _ in range(snake.map.num_cols)]
-                        for _ in range(snake.map.num_rows)]
+        self._table = [[_TableCell() for _ in range(snake.map.num_cols)]
+                       for _ in range(snake.map.num_rows)]
 
     @property
     def table(self):
-        return self.__table
+        return self._table
 
     def shortest_path_to_food(self):
         return self.path_to(self.map.food, "shortest")
@@ -64,23 +64,23 @@ class PathSolver(BaseSolver):
             A collections.deque of snake.base.direc.Direc indicating the path directions.
 
         """
-        self.__reset_table()
+        self._reset_table()
 
         head = self.snake.head()
-        self.__table[head.x][head.y].dist = 0
+        self._table[head.x][head.y].dist = 0
         queue = deque()
         queue.append(head)
 
         while queue:
             cur = queue.popleft()
             if cur == des:
-                return self.__build_path(head, des)
+                return self._build_path(head, des)
 
             # Arrange the order of traverse to make the path as straight as possible
             if cur == head:
                 first_direc = self.snake.direc
             else:
-                first_direc = self.__table[cur.x][cur.y].parent.direc_to(cur)
+                first_direc = self._table[cur.x][cur.y].parent.direc_to(cur)
             adjs = cur.all_adj()
             random.shuffle(adjs)
             for i, pos in enumerate(adjs):
@@ -90,11 +90,11 @@ class PathSolver(BaseSolver):
 
             # Traverse adjacent positions
             for pos in adjs:
-                if self.__is_valid(pos):
-                    adj_cell = self.__table[pos.x][pos.y]
+                if self._is_valid(pos):
+                    adj_cell = self._table[pos.x][pos.y]
                     if adj_cell.dist == sys.maxsize:
                         adj_cell.parent = cur
-                        adj_cell.dist = self.__table[cur.x][cur.y].dist + 1
+                        adj_cell.dist = self._table[cur.x][cur.y].dist + 1
                         queue.append(pos)
 
         return deque()
@@ -113,14 +113,14 @@ class PathSolver(BaseSolver):
         if not path:
             return deque()
 
-        self.__reset_table()
+        self._reset_table()
         cur = head = self.snake.head()
 
         # Set all positions on the shortest path to 'visited'
-        self.__table[cur.x][cur.y].visit = True
+        self._table[cur.x][cur.y].visit = True
         for direc in path:
             cur = cur.adj(direc)
-            self.__table[cur.x][cur.y].visit = True
+            self._table[cur.x][cur.y].visit = True
 
         # Extend the path between each pair of the positions
         idx, cur = 0, head
@@ -137,9 +137,9 @@ class PathSolver(BaseSolver):
             for test_direc in tests:
                 cur_test = cur.adj(test_direc)
                 nxt_test = nxt.adj(test_direc)
-                if self.__is_valid(cur_test) and self.__is_valid(nxt_test):
-                    self.__table[cur_test.x][cur_test.y].visit = True
-                    self.__table[nxt_test.x][nxt_test.y].visit = True
+                if self._is_valid(cur_test) and self._is_valid(nxt_test):
+                    self._table[cur_test.x][cur_test.y].visit = True
+                    self._table[nxt_test.x][nxt_test.y].visit = True
                     path.insert(idx, test_direc)
                     path.insert(idx + 2, Direc.opposite(test_direc))
                     extended = True
@@ -153,19 +153,19 @@ class PathSolver(BaseSolver):
 
         return path
 
-    def __reset_table(self):
-        for row in self.__table:
+    def _reset_table(self):
+        for row in self._table:
             for col in row:
                 col.reset()
 
-    def __build_path(self, src, des):
+    def _build_path(self, src, des):
         path = deque()
         tmp = des
         while tmp != src:
-            parent = self.__table[tmp.x][tmp.y].parent
+            parent = self._table[tmp.x][tmp.y].parent
             path.appendleft(parent.direc_to(tmp))
             tmp = parent
         return path
 
-    def __is_valid(self, pos):
-        return self.map.is_safe(pos) and not self.__table[pos.x][pos.y].visit
+    def _is_valid(self, pos):
+        return self.map.is_safe(pos) and not self._table[pos.x][pos.y].visit

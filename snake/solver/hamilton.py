@@ -28,57 +28,58 @@ class HamiltonSolver(BaseSolver):
         if snake.map.num_rows % 2 != 0 or snake.map.num_cols % 2 != 0:
             raise ValueError("num_rows and num_cols must be even.")
         super().__init__(snake)
-        self.__shortcuts = shortcuts
-        self.__path_solver = PathSolver(snake)
-        self.__table = [[_TableCell() for _ in range(snake.map.num_cols)]
+
+        self._shortcuts = shortcuts
+        self._path_solver = PathSolver(snake)
+        self._table = [[_TableCell() for _ in range(snake.map.num_cols)]
                         for _ in range(snake.map.num_rows)]
-        self.__build_cycle()
+        self._build_cycle()
 
     @property
     def table(self):
-        return self.__table
+        return self._table
 
     def next_direc(self):
         head = self.snake.head()
-        nxt_direc = self.__table[head.x][head.y].direc
+        nxt_direc = self._table[head.x][head.y].direc
 
         # Take shorcuts when the snake is not too long
-        if self.__shortcuts and self.snake.len() < 0.5 * self.map.capacity:
-            path = self.__path_solver.shortest_path_to_food()
+        if self._shortcuts and self.snake.len() < 0.5 * self.map.capacity:
+            path = self._path_solver.shortest_path_to_food()
             if path:
                 tail, nxt, food = self.snake.tail(), head.adj(path[0]), self.map.food
-                tail_idx = self.__table[tail.x][tail.y].idx
-                head_idx = self.__table[head.x][head.y].idx
-                nxt_idx = self.__table[nxt.x][nxt.y].idx
-                food_idx = self.__table[food.x][food.y].idx
+                tail_idx = self._table[tail.x][tail.y].idx
+                head_idx = self._table[head.x][head.y].idx
+                nxt_idx = self._table[nxt.x][nxt.y].idx
+                food_idx = self._table[food.x][food.y].idx
                 # Exclude one exception
                 if not (len(path) == 1 and abs(food_idx - tail_idx) == 1):
-                    head_idx_rel = self.__relative_dist(tail_idx, head_idx, self.map.capacity)
-                    nxt_idx_rel = self.__relative_dist(tail_idx, nxt_idx, self.map.capacity)
-                    food_idx_rel = self.__relative_dist(tail_idx, food_idx, self.map.capacity)
+                    head_idx_rel = self._relative_dist(tail_idx, head_idx, self.map.capacity)
+                    nxt_idx_rel = self._relative_dist(tail_idx, nxt_idx, self.map.capacity)
+                    food_idx_rel = self._relative_dist(tail_idx, food_idx, self.map.capacity)
                     if nxt_idx_rel > head_idx_rel and nxt_idx_rel <= food_idx_rel:
                         nxt_direc = path[0]
 
         return nxt_direc
 
-    def __build_cycle(self):
+    def _build_cycle(self):
         """Build a hamiltonian cycle on the map."""
-        path = self.__path_solver.longest_path_to_tail()
+        path = self._path_solver.longest_path_to_tail()
         cur, cnt = self.snake.head(), 0
         for direc in path:
-            self.__table[cur.x][cur.y].idx = cnt
-            self.__table[cur.x][cur.y].direc = direc
+            self._table[cur.x][cur.y].idx = cnt
+            self._table[cur.x][cur.y].direc = direc
             cur = cur.adj(direc)
             cnt += 1
         # Process snake bodies
         cur = self.snake.tail()
         for _ in range(self.snake.len() - 1):
-            self.__table[cur.x][cur.y].idx = cnt
-            self.__table[cur.x][cur.y].direc = self.snake.direc
+            self._table[cur.x][cur.y].idx = cnt
+            self._table[cur.x][cur.y].direc = self.snake.direc
             cur = cur.adj(self.snake.direc)
             cnt += 1
 
-    def __relative_dist(self, ori, x, size):
+    def _relative_dist(self, ori, x, size):
         if ori > x:
             x += size
         return x - ori

@@ -15,27 +15,27 @@ class Pos:
 
     """
     def __init__(self, x=0, y=0):
-        self.__x = x
-        self.__y = y
+        self._x = x
+        self._y = y
 
     def __str__(self):
-        return 'Pos(%d,%d)' % (self.__x, self.__y)
+        return 'Pos(%d,%d)' % (self._x, self._y)
     __repr__ = __str__
 
     def __eq__(self, other):
         if isinstance(self, other.__class__):
-            return self.__x == other.x and self.__y == other.y
+            return self._x == other.x and self._y == other.y
         return NotImplemented
 
     def __pos__(self):
-        return Pos(self.__x, self.__y)
+        return Pos(self._x, self._y)
 
     def __neg__(self):
-        return Pos(-self.__x, -self.__y)
+        return Pos(-self._x, -self._y)
 
     def __add__(self, other):
         if isinstance(self, other.__class__):
-            return Pos(self.__x + other.x, self.__y + other.y)
+            return Pos(self._x + other.x, self._y + other.y)
         return NotImplemented
 
     def __sub__(self, other):
@@ -52,14 +52,14 @@ class Pos:
 
     def direc_to(self, adj_pos):
         """Return the direction of an adjacent Pos relative to self."""
-        if self.__x == adj_pos.x:
-            diff = self.__y - adj_pos.y
+        if self._x == adj_pos.x:
+            diff = self._y - adj_pos.y
             if diff == 1:
                 return Direc.LEFT
             elif diff == -1:
                 return Direc.RIGHT
-        elif self.__y == adj_pos.y:
-            diff = self.__x - adj_pos.x
+        elif self._y == adj_pos.y:
+            diff = self._x - adj_pos.x
             if diff == 1:
                 return Direc.UP
             elif diff == -1:
@@ -69,13 +69,13 @@ class Pos:
     def adj(self, direc):
         """Return the adjacent Pos in a given direction."""
         if direc == Direc.LEFT:
-            return Pos(self.__x, self.__y - 1)
+            return Pos(self._x, self._y - 1)
         elif direc == Direc.RIGHT:
-            return Pos(self.__x, self.__y + 1)
+            return Pos(self._x, self._y + 1)
         elif direc == Direc.UP:
-            return Pos(self.__x - 1, self.__y)
+            return Pos(self._x - 1, self._y)
         elif direc == Direc.DOWN:
-            return Pos(self.__x + 1, self.__y)
+            return Pos(self._x + 1, self._y)
         else:
             return None
 
@@ -89,16 +89,16 @@ class Pos:
 
     @property
     def x(self):
-        return self.__x
+        return self._x
 
     @x.setter
     def x(self, val):
-        self.__x = val
+        self._x = val
 
     @property
     def y(self):
-        return self.__y
+        return self._y
 
     @y.setter
     def y(self, val):
-        self.__y = val
+        self._y = val

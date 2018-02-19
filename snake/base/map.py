@@ -19,44 +19,45 @@ class Map:
             raise TypeError("\'num_rows\' and \'num_cols\' must be integers")
         if num_rows < 5 or num_cols < 5:
             raise ValueError("\'num_rows\' and \'num_cols\' must >= 5")
-        self.__num_rows = num_rows
-        self.__num_cols = num_cols
-        self.__capacity = (num_rows - 2) * (num_cols - 2)
-        self.__content = [[Point() for _ in range(num_cols)] for _ in range(num_rows)]
+
+        self._num_rows = num_rows
+        self._num_cols = num_cols
+        self._capacity = (num_rows - 2) * (num_cols - 2)
+        self._content = [[Point() for _ in range(num_cols)] for _ in range(num_rows)]
         self.reset()
 
     def reset(self):
-        self.__food = None
-        for i in range(self.__num_rows):
-            for j in range(self.__num_cols):
-                if i == 0 or i == self.__num_rows - 1 or \
-                   j == 0 or j == self.__num_cols - 1:
-                    self.__content[i][j].type = PointType.WALL
+        self._food = None
+        for i in range(self._num_rows):
+            for j in range(self._num_cols):
+                if i == 0 or i == self._num_rows - 1 or \
+                   j == 0 or j == self._num_cols - 1:
+                    self._content[i][j].type = PointType.WALL
                 else:
-                    self.__content[i][j].type = PointType.EMPTY
+                    self._content[i][j].type = PointType.EMPTY
 
     def copy(self):
-        m_copy = Map(self.__num_rows, self.__num_cols)
-        for i in range(self.__num_rows):
-            for j in range(self.__num_cols):
-                m_copy.__content[i][j].type = self.__content[i][j].type
+        m_copy = Map(self._num_rows, self._num_cols)
+        for i in range(self._num_rows):
+            for j in range(self._num_cols):
+                m_copy._content[i][j].type = self._content[i][j].type
         return m_copy
 
     @property
     def num_rows(self):
-        return self.__num_rows
+        return self._num_rows
 
     @property
     def num_cols(self):
-        return self.__num_cols
+        return self._num_cols
 
     @property
     def capacity(self):
-        return self.__capacity
+        return self._capacity
 
     @property
     def food(self):
-        return self.__food
+        return self._food
 
     def point(self, pos):
         """Return a point on the map.
@@ -71,7 +72,7 @@ class Map:
             snake.point.Point: The point at the given position.
 
         """
-        return self.__content[pos.x][pos.y]
+        return self._content[pos.x][pos.y]
 
     def is_inside(self, pos):
         return pos.x > 0 and pos.x < self.num_rows - 1 \
@@ -88,29 +89,29 @@ class Map:
         """Check if the map is filled with the snake's bodies."""
         for i in range(1, self.num_rows - 1):
             for j in range(1, self.num_cols - 1):
-                t = self.__content[i][j].type
+                t = self._content[i][j].type
                 if t.value < PointType.HEAD_L.value:
                     return False
         return True
 
     def has_food(self):
-        return self.__food is not None
+        return self._food is not None
 
     def rm_food(self):
         if self.has_food():
-            self.point(self.__food).type = PointType.EMPTY
-            self.__food = None
+            self.point(self._food).type = PointType.EMPTY
+            self._food = None
 
     def create_food(self, pos):
         self.point(pos).type = PointType.FOOD
-        self.__food = pos
-        return self.__food
+        self._food = pos
+        return self._food
 
     def create_rand_food(self):
         empty_pos = []
-        for i in range(1, self.__num_rows - 1):
-            for j in range(1, self.__num_cols - 1):
-                t = self.__content[i][j].type
+        for i in range(1, self._num_rows - 1):
+            for j in range(1, self._num_cols - 1):
+                t = self._content[i][j].type
                 if t == PointType.EMPTY:
                     empty_pos.append(Pos(i, j))
                 elif t == PointType.FOOD:

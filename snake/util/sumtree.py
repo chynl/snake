@@ -8,58 +8,58 @@ import numpy as np
 class SumTree:
 
     def __init__(self, capacity):
-        self.__capacity = capacity
-        self.__tree = np.zeros(2 * self.__capacity - 1)
-        self.__data = [None] * self.__capacity
-        self.__data_idx = 0
+        self._capacity = capacity
+        self._tree = np.zeros(2 * self._capacity - 1)
+        self._data = [None] * self._capacity
+        self._data_idx = 0
 
     @property
     def capacity(self):
-        return self.__capacity
+        return self._capacity
 
     @property
     def tree(self):
-        return self.__tree
+        return self._tree
 
     @property
     def data(self):
-        return self.__data
+        return self._data
 
     def sum(self):
-        return self.__tree[0]
+        return self._tree[0]
 
     def insert(self, data, priority):
-        self.__data[self.__data_idx] = data
-        tree_idx = self.__data_idx + self.__capacity - 1
+        self._data[self._data_idx] = data
+        tree_idx = self._data_idx + self._capacity - 1
         self.update(tree_idx, priority)
-        self.__data_idx += 1
-        if self.__data_idx >= self.__capacity:
-            self.__data_idx = 0
+        self._data_idx += 1
+        if self._data_idx >= self._capacity:
+            self._data_idx = 0
 
     def update(self, tree_idx, priority):
-        delta = priority - self.__tree[tree_idx]
-        self.__tree[tree_idx] = priority
+        delta = priority - self._tree[tree_idx]
+        self._tree[tree_idx] = priority
         while tree_idx != 0:
             tree_idx = (tree_idx - 1) // 2  # Get parent
-            self.__tree[tree_idx] += delta
+            self._tree[tree_idx] += delta
 
     def retrieve(self, val):
         tree_idx, parent = None, 0
         while True:
             left = 2 * parent + 1
             right = left + 1
-            if left >= len(self.__tree):  # Leaf
+            if left >= len(self._tree):  # Leaf
                 tree_idx = parent
                 break
             else:
-                if val <= self.__tree[left]:
+                if val <= self._tree[left]:
                     parent = left
                 else:
-                    val -= self.__tree[left]
+                    val -= self._tree[left]
                     parent = right
 
-        priority = self.__tree[tree_idx]
-        data = self.__data[tree_idx - self.__capacity + 1]
+        priority = self._tree[tree_idx]
+        data = self._data[tree_idx - self._capacity + 1]
 
         return tree_idx, priority, data
 
@@ -70,4 +70,4 @@ class SumTree:
         return np.min(self.leaves())
 
     def leaves(self):
-        return self.__tree[-self.__capacity:]
+        return self._tree[-self._capacity:]

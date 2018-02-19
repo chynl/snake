@@ -11,15 +11,15 @@ class GreedySolver(BaseSolver):
 
     def __init__(self, snake):
         super().__init__(snake)
-        self.__path_solver = PathSolver(snake)
+        self._path_solver = PathSolver(snake)
 
     def next_direc(self):
         # Create a virtual snake
         s_copy, m_copy = self.snake.copy()
 
         # Step 1
-        self.__path_solver.snake = self.snake
-        path_to_food = self.__path_solver.shortest_path_to_food()
+        self._path_solver.snake = self.snake
+        path_to_food = self._path_solver.shortest_path_to_food()
 
         if path_to_food:
             # Step 2
@@ -28,14 +28,14 @@ class GreedySolver(BaseSolver):
                 return path_to_food[0]
 
             # Step 3
-            self.__path_solver.snake = s_copy
-            path_to_tail = self.__path_solver.longest_path_to_tail()
+            self._path_solver.snake = s_copy
+            path_to_tail = self._path_solver.longest_path_to_tail()
             if len(path_to_tail) > 1:
                 return path_to_food[0]
 
         # Step 4
-        self.__path_solver.snake = self.snake
-        path_to_tail = self.__path_solver.longest_path_to_tail()
+        self._path_solver.snake = self.snake
+        path_to_tail = self._path_solver.longest_path_to_tail()
         if len(path_to_tail) > 1:
             return path_to_tail[0]
 

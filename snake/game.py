@@ -82,179 +82,179 @@ class GameConf:
 class Game:
 
     def __init__(self, conf):
-        self.__conf = conf
-        self.__map = Map(conf.map_rows + 2, conf.map_cols + 2)
-        self.__snake = Snake(self.__map, conf.init_direc,
-                             conf.init_bodies, conf.init_types)
-        self.__pause = False
-        self.__solver = globals()[self.__conf.solver_name](self.__snake)
-        self.__episode = 1
-        self.__init_log_file()
+        self._conf = conf
+        self._map = Map(conf.map_rows + 2, conf.map_cols + 2)
+        self._snake = Snake(self._map, conf.init_direc,
+                            conf.init_bodies, conf.init_types)
+        self._pause = False
+        self._solver = globals()[self._conf.solver_name](self._snake)
+        self._episode = 1
+        self._init_log_file()
 
     @property
     def snake(self):
-        return self.__snake
+        return self._snake
 
     @property
     def episode(self):
-        return self.__episode
+        return self._episode
 
     def run(self):
-        if self.__conf.mode == GameMode.BENCHMARK:
-            self.__run_benchmarks()
-        elif self.__conf.mode == GameMode.TRAIN_DQN:
-            self.__run_dqn_train()
-            self.__plot_history()
+        if self._conf.mode == GameMode.BENCHMARK:
+            self._run_benchmarks()
+        elif self._conf.mode == GameMode.TRAIN_DQN:
+            self._run_dqn_train()
+            self._plot_history()
         else:
-            window = GameWindow("Snake", self.__conf, self.__map, self, self.__on_exit, (
-                ('<w>', lambda e: self.__update_direc(Direc.UP)),
-                ('<a>', lambda e: self.__update_direc(Direc.LEFT)),
-                ('<s>', lambda e: self.__update_direc(Direc.DOWN)),
-                ('<d>', lambda e: self.__update_direc(Direc.RIGHT)),
-                ('<r>', lambda e: self.__reset()),
-                ('<space>', lambda e: self.__toggle_pause())
+            window = GameWindow("Snake", self._conf, self._map, self, self._on_exit, (
+                ('<w>', lambda e: self._update_direc(Direc.UP)),
+                ('<a>', lambda e: self._update_direc(Direc.LEFT)),
+                ('<s>', lambda e: self._update_direc(Direc.DOWN)),
+                ('<d>', lambda e: self._update_direc(Direc.RIGHT)),
+                ('<r>', lambda e: self._reset()),
+                ('<space>', lambda e: self._toggle_pause())
             ))
-            if self.__conf.mode == GameMode.NORMAL:
-                window.show(self.__game_main_normal)
-            elif self.__conf.mode == GameMode.TRAIN_DQN_GUI:
-                window.show(self.__game_main_dqn_train)
-                self.__plot_history()
+            if self._conf.mode == GameMode.NORMAL:
+                window.show(self._game_main_normal)
+            elif self._conf.mode == GameMode.TRAIN_DQN_GUI:
+                window.show(self._game_main_dqn_train)
+                self._plot_history()
 
-    def __run_benchmarks(self):
+    def _run_benchmarks(self):
         STEPS_LIMIT = 5000
         NUM_EPISODES = int(input("Please input the number of episodes: "))
 
-        print("\nMap size: %dx%d" % (self.__conf.map_rows, self.__conf.map_cols))
-        print("Solver: %s\n" % self.__conf.solver_name[:-6].lower())
+        print("\nMap size: %dx%d" % (self._conf.map_rows, self._conf.map_cols))
+        print("Solver: %s\n" % self._conf.solver_name[:-6].lower())
 
         tot_len, tot_steps = 0, 0
 
         for _ in range(NUM_EPISODES):
-            print("Episode %d - " % self.__episode, end="")
+            print("Episode %d - " % self._episode, end="")
             while True:
-                self.__game_main_normal()
-                if self.__map.is_full():
+                self._game_main_normal()
+                if self._map.is_full():
                     print("FULL (len: %d | steps: %d)"
-                          % (self.__snake.len(), self.__snake.steps))
+                          % (self._snake.len(), self._snake.steps))
                     break
-                elif self.__snake.dead:
+                elif self._snake.dead:
                     print("DEAD (len: %d | steps: %d)"
-                          % (self.__snake.len(), self.__snake.steps))
+                          % (self._snake.len(), self._snake.steps))
                     break
-                elif self.__snake.steps >= STEPS_LIMIT:
+                elif self._snake.steps >= STEPS_LIMIT:
                     print("STEP LIMIT (len: %d | steps: %d)"
-                          % (self.__snake.len(), self.__snake.steps))
-                    self.__write_logs()  # Write the last step
+                          % (self._snake.len(), self._snake.steps))
+                    self._write_logs()  # Write the last step
                     break
-            tot_len += self.__snake.len()
-            tot_steps += self.__snake.steps
-            self.__reset()
+            tot_len += self._snake.len()
+            tot_steps += self._snake.steps
+            self._reset()
 
         avg_len = tot_len / NUM_EPISODES
         avg_steps = tot_steps / NUM_EPISODES
         print("\n[Summary]\nAverage Length: %.2f\nAverage Steps: %.2f\n"
               % (avg_len, avg_steps))
 
-        self.__on_exit()
+        self._on_exit()
 
-    def __run_dqn_train(self):
+    def _run_dqn_train(self):
         try:
             while True:
-                self.__game_main_dqn_train()
+                self._game_main_dqn_train()
         except KeyboardInterrupt:
             pass
         except Exception:
             traceback.print_exc()
         finally:
-            self.__on_exit()
+            self._on_exit()
 
-    def __game_main_dqn_train(self):
-        if not self.__map.has_food():
-            self.__map.create_rand_food()
+    def _game_main_dqn_train(self):
+        if not self._map.has_food():
+            self._map.create_rand_food()
 
-        if self.__pause:
+        if self._pause:
             return
 
-        episode_end = self.__solver.train()
+        episode_end = self._solver.train()
 
         if episode_end:
-            self.__reset()
+            self._reset()
 
-    def __game_main_normal(self):
-        if not self.__map.has_food():
-            self.__map.create_rand_food()
+    def _game_main_normal(self):
+        if not self._map.has_food():
+            self._map.create_rand_food()
 
-        if self.__pause or self.__episode_end():
+        if self._pause or self._is_episode_end():
             return
 
-        self.__update_direc(self.__solver.next_direc())
+        self._update_direc(self._solver.next_direc())
 
-        if self.__conf.mode == GameMode.NORMAL and self.__snake.direc_next != Direc.NONE:
-            self.__write_logs()
+        if self._conf.mode == GameMode.NORMAL and self._snake.direc_next != Direc.NONE:
+            self._write_logs()
 
-        self.__snake.move()
+        self._snake.move()
 
-        if self.__episode_end():
-            self.__write_logs()  # Write the last step
+        if self._is_episode_end():
+            self._write_logs()  # Write the last step
 
-    def __plot_history(self):
-        self.__solver.plot()
+    def _plot_history(self):
+        self._solver.plot()
 
-    def __update_direc(self, new_direc):
-        self.__snake.direc_next = new_direc
-        if self.__pause:
-            self.__snake.move()
+    def _update_direc(self, new_direc):
+        self._snake.direc_next = new_direc
+        if self._pause:
+            self._snake.move()
 
-    def __toggle_pause(self):
-        self.__pause = not self.__pause
+    def _toggle_pause(self):
+        self._pause = not self._pause
 
-    def __episode_end(self):
-        return self.__snake.dead or self.__map.is_full()
+    def _is_episode_end(self):
+        return self._snake.dead or self._map.is_full()
 
-    def __reset(self):
-        self.__snake.reset()
-        self.__episode += 1
+    def _reset(self):
+        self._snake.reset()
+        self._episode += 1
 
-    def __on_exit(self):
-        if self.__log_file:
-            self.__log_file.close()
-        if self.__solver:
-            self.__solver.close()
+    def _on_exit(self):
+        if self._log_file:
+            self._log_file.close()
+        if self._solver:
+            self._solver.close()
 
-    def __init_log_file(self):
+    def _init_log_file(self):
         try:
             os.makedirs("logs")
         except OSError as e:
             if e.errno != errno.EEXIST:
                 raise
         try:
-            self.__log_file = None
-            self.__log_file = open('logs/snake.log', 'w')
+            self._log_file = None
+            self._log_file = open('logs/snake.log', 'w')
         except FileNotFoundError:
-            if self.__log_file:
-                self.__log_file.close()
+            if self._log_file:
+                self._log_file.close()
 
-    def __write_logs(self):
-        self.__log_file.write("[ Episode %d / Step %d ]\n" % \
-                              (self.__episode, self.__snake.steps))
-        for i in range(self.__map.num_rows):
-            for j in range(self.__map.num_cols):
+    def _write_logs(self):
+        self._log_file.write("[ Episode %d / Step %d ]\n" % \
+                              (self._episode, self._snake.steps))
+        for i in range(self._map.num_rows):
+            for j in range(self._map.num_cols):
                 pos = Pos(i, j)
-                t = self.__map.point(pos).type
+                t = self._map.point(pos).type
                 if t == PointType.EMPTY:
-                    self.__log_file.write("  ")
+                    self._log_file.write("  ")
                 elif t == PointType.WALL:
-                    self.__log_file.write("# ")
+                    self._log_file.write("# ")
                 elif t == PointType.FOOD:
-                    self.__log_file.write("F ")
+                    self._log_file.write("F ")
                 elif t == PointType.HEAD_L or t == PointType.HEAD_U or \
                     t == PointType.HEAD_R or t == PointType.HEAD_D:
-                    self.__log_file.write("H ")
-                elif pos == self.__snake.tail():
-                    self.__log_file.write("T ")
+                    self._log_file.write("H ")
+                elif pos == self._snake.tail():
+                    self._log_file.write("T ")
                 else:
-                    self.__log_file.write("B ")
-            self.__log_file.write("\n")
-        self.__log_file.write("[ last/next direc: %s/%s ]\n" % \
-                              (self.__snake.direc, self.__snake.direc_next))
-        self.__log_file.write("\n")
+                    self._log_file.write("B ")
+            self._log_file.write("\n")
+        self._log_file.write("[ last/next direc: %s/%s ]\n" % \
+                              (self._snake.direc, self._snake.direc_next))
+        self._log_file.write("\n")

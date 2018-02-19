@@ -28,12 +28,12 @@ class PointType(Enum):
 class Point:
     """Point on the game map."""
     def __init__(self):
-        self.__type = PointType.EMPTY
+        self._type = PointType.EMPTY
 
     @property
     def type(self):
-        return self.__type
+        return self._type
 
     @type.setter
     def type(self, val):
-        self.__type = val
+        self._type = val
