@@ -16,6 +16,7 @@ from snake.base import Direc, Pos, PointType
 from snake.solver.base import BaseSolver
 from snake.solver.dqn.memory import Memory
 from snake.solver.dqn.logger import log
+from snake.solver.dqn.snakeaction import SnakeAction
 
 _DIR_LOG = "logs"
 
@@ -66,12 +67,12 @@ class DQNSolver(BaseSolver):
 
         self._NUM_AVG_RWD = 50      # How many latest reward history to compute average
 
-        self._SNAKE_ACTIONS = [Direc.LEFT, Direc.UP, Direc.RIGHT, Direc.DOWN]
+        self._SNAKE_ACTIONS = [SnakeAction.LEFT, SnakeAction.FORWARD, SnakeAction.RIGHT]
         self._NUM_ACTIONS = len(self._SNAKE_ACTIONS)
 
         self._SHAPE_VISUAL_STATE = (self.map.num_rows - 2, self.map.num_cols - 2, 4)
         self._NUM_VISUAL_FEATURES = np.prod(self._SHAPE_VISUAL_STATE)
-        self._NUM_IMPORTANT_FEATURES = 4
+        self._NUM_IMPORTANT_FEATURES = 3
         self._NUM_ALL_FEATURES = self._NUM_VISUAL_FEATURES + self._NUM_IMPORTANT_FEATURES
 
         self._mem = Memory(mem_size=self._MEM_SIZE,
@@ -303,7 +304,8 @@ class DQNSolver(BaseSolver):
 
     def next_direc(self):
         """Override super class."""
-        return self._SNAKE_ACTIONS[self._choose_action(e_greedy=False)]
+        action = self._SNAKE_ACTIONS[self._choose_action(e_greedy=False)]
+        return SnakeAction.to_direc(action, self.snake.direc)
 
     def plot(self):
         plt.figure()
@@ -356,10 +358,24 @@ class DQNSolver(BaseSolver):
 
     def _state(self):
         """Return a vector indicating current state."""
+
+        # Visual state
         visual_state = np.zeros(self._SHAPE_VISUAL_STATE, dtype=np.int32)
         for i in range(1, self.map.num_rows - 1):
             for j in range(1, self.map.num_cols - 1):
-                t = self.map.point(Pos(i, j)).type
+
+                # Relative position
+                pos = None
+                if self.snake.direc == Direc.LEFT:
+                    pos = Pos(self.map.num_rows - 1 - j, i)
+                elif self.snake.direc == Direc.UP:
+                    pos = Pos(i, j)
+                elif self.snake.direc == Direc.RIGHT:
+                    pos = Pos(j, self.map.num_cols - 1 - i)
+                elif self.snake.direc == Direc.DOWN:
+                    pos = Pos(self.map.num_rows - 1 - i, self.map.num_cols - 1 - j)
+
+                t = self.map.point(pos).type
                 if t == PointType.EMPTY:
                     visual_state[i - 1][j - 1][0] = 1
                 elif t == PointType.FOOD:
@@ -374,9 +390,13 @@ class DQNSolver(BaseSolver):
                 else:
                     raise ValueError("Unsupported PointType: {}".format(t))
 
+        # return visual_state.flatten()
+
+        # Important state
         important_state = np.zeros(self._NUM_IMPORTANT_FEATURES, dtype=np.int32)
         head = self.snake.head()
-        for i, direc in enumerate([Direc.LEFT, Direc.UP, Direc.RIGHT, Direc.DOWN]):
+        for i, action in enumerate([SnakeAction.LEFT, SnakeAction.FORWARD, SnakeAction.RIGHT]):
+            direc = SnakeAction.to_direc(action, self.snake.direc)
             if not self.map.is_safe(head.adj(direc)):
                 important_state[i] = 1
 
@@ -408,7 +428,8 @@ class DQNSolver(BaseSolver):
         return action_idx
 
     def _step(self, action_idx):
-        direc = self._SNAKE_ACTIONS[action_idx]
+        action = self._SNAKE_ACTIONS[action_idx]
+        direc = SnakeAction.to_direc(action, self.snake.direc)
         nxt_pos = self.snake.head().adj(direc)
         nxt_type = self.map.point(nxt_pos).type
         self.snake.move(direc)
