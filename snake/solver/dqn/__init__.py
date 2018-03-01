@@ -10,13 +10,12 @@ import os
 import numpy as np
 import tensorflow as tf
 
-import matplotlib.pyplot as plt
-
 from snake.base import Direc, Pos, PointType
 from snake.solver.base import BaseSolver
 from snake.solver.dqn.memory import Memory
 from snake.solver.dqn.logger import log
 from snake.solver.dqn.snakeaction import SnakeAction
+from snake.solver.dqn.history import History
 
 _DIR_LOG = "logs"
 
@@ -65,7 +64,7 @@ class DQNSolver(BaseSolver):
         self._FREQ_LOG = 500        # Learning steps
         self._FREQ_SAVE = 20000     # Learning steps
 
-        self._NUM_AVG_RWD = 50      # How many latest reward history to compute average
+        self._HISTORY_NUM_AVG = 50   # How many latest history episodes to compute average
 
         self._SNAKE_ACTIONS = [SnakeAction.LEFT, SnakeAction.FORWARD, SnakeAction.RIGHT]
         self._NUM_ACTIONS = len(self._SNAKE_ACTIONS)
@@ -84,11 +83,7 @@ class DQNSolver(BaseSolver):
         self._epsilon = self._EPSILON_MAX
         self._beta = self._BETA_MIN
 
-        self._tot_reward = 0
-        self._history_loss = []
-        self._history_reward = []
-        self._history_avg_reward = []
-        self._max_avg_reward = -1.0
+        self._history = History(self._HISTORY_NUM_AVG)
 
         eval_params, target_params = self._build_graph()
         self._net_saver = tf.train.Saver(var_list=eval_params + target_params,
@@ -308,27 +303,8 @@ class DQNSolver(BaseSolver):
         return SnakeAction.to_direc(action, self.snake.direc)
 
     def plot(self):
-        plt.figure()
-        plt.plot(range(1, len(self._history_reward) + 1), self._history_reward)
-        plt.xlabel("Episode")
-        plt.ylabel("Reward")
-        plt.title("Total Reward")
-
-        plt.figure()
-        steps = np.arange(len(self._history_loss)) + self._RESTORE_STEP + 1
-        plt.plot(steps, self._history_loss)
-        plt.xlabel("Learn Step")
-        plt.ylabel("Loss")
-        plt.title("Loss")
-
-        plt.figure()
-        steps = np.arange(len(self._history_avg_reward)) + self._RESTORE_STEP + 1
-        plt.plot(steps, self._history_avg_reward)
-        plt.xlabel("Learn Step")
-        plt.ylabel("Reward")
-        plt.title("Average Reward")
-
-        plt.show()
+        self._history.plot(self._RESTORE_STEP + 1)
+        self._history.save(self._RESTORE_STEP + 1, self._learn_step)
 
     def close(self):
         """Override super class."""
@@ -342,11 +318,7 @@ class DQNSolver(BaseSolver):
         action = self._choose_action()
         reward, state_nxt, done = self._step(action)
         self._store_transition(state_cur, action, reward, state_nxt, done)
-
-        self._tot_reward += reward
-        if done:
-            self._history_reward.append(self._tot_reward)
-            self._tot_reward = 0
+        self._history.add_snake_step(done, reward, self.snake)
 
         if self._mem_cnt >= self._MEM_SIZE:
             if self._mem_cnt % self._FREQ_LEARN == 0:
@@ -389,8 +361,6 @@ class DQNSolver(BaseSolver):
                     visual_state[i - 1][j - 1][3] = 1
                 else:
                     raise ValueError("Unsupported PointType: {}".format(t))
-
-        # return visual_state.flatten()
 
         # Important state
         important_state = np.zeros(self._NUM_IMPORTANT_FEATURES, dtype=np.int32)
@@ -455,18 +425,14 @@ class DQNSolver(BaseSolver):
         log_msg = "step %d | mem_cnt: %d | epsilon: %.6f | beta: %.6f" % \
                   (self._learn_step, self._mem_cnt, self._epsilon, self._beta)
 
-        # Compute average reward
-        avg_reward = self._max_avg_reward
-        if self._history_reward:
-            avg_reward = np.mean(self._history_reward[-self._NUM_AVG_RWD:])
-        self._history_avg_reward.append(avg_reward)
-        log_msg += " | avg_reward: %.6f" % avg_reward
+        # Compute average
+        avg_reward, avg_len, avg_steps, new_max_avg = self._history.add_learn_step()
+        log_msg += " | avg_reward: %.6f | avg_len: %.2f | avg_steps: %.2f" \
+                   % (avg_reward, avg_len, avg_steps)
 
         # Save model
         saved = False
-        if avg_reward > self._max_avg_reward or self._learn_step % self._FREQ_SAVE == 0:
-            if avg_reward > self._max_avg_reward:
-                self._max_avg_reward = avg_reward
+        if new_max_avg or self._learn_step % self._FREQ_SAVE == 0:
             self._save_model()
             saved = True
             log_msg += " | model saved"
@@ -500,8 +466,8 @@ class DQNSolver(BaseSolver):
                 self._IS_weights: IS_weights,
             }
         )
-        self._history_loss.append(loss)
-        log_msg += " | loss: %.6f | avg_td_err: %.6f" % (loss, np.mean(abs_errs))
+        self._history.add_loss(loss)
+        log_msg += " | loss: %.6f" % loss
 
         # Update sum tree
         self._mem.update(tree_indices, abs_errs)
