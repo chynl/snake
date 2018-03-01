@@ -8,8 +8,7 @@ import os
 from tensorflow.python.tools import inspect_checkpoint as chkp
 
 parser = argparse.ArgumentParser(description="Print data in tensorflow checkpoint file.")
-parser.add_argument("global_step",
-                    help="global step of the checkpoint file to print")
+parser.add_argument("global_step", help="global step of the checkpoint file to print")
 parser.add_argument("-n", metavar="tensor_name", default="",
                     help="name of the tensor in the checkpoint file to print "
                          "or print all tensors if not provided.")

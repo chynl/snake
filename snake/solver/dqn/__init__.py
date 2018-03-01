@@ -75,8 +75,8 @@ class DQNSolver(BaseSolver):
         self._NUM_ALL_FEATURES = self._NUM_VISUAL_FEATURES + self._NUM_IMPORTANT_FEATURES
 
         self._mem = Memory(mem_size=self._MEM_SIZE,
-                            alpha=self._ALPHA,
-                            epsilon=self._PRI_EPSILON)
+                           alpha=self._ALPHA,
+                           epsilon=self._PRI_EPSILON)
         self._mem_cnt = 0
 
         self._learn_step = 1
@@ -87,7 +87,7 @@ class DQNSolver(BaseSolver):
 
         eval_params, target_params = self._build_graph()
         self._net_saver = tf.train.Saver(var_list=eval_params + target_params,
-                                          max_to_keep=200)
+                                         max_to_keep=200)
 
         self._sess = tf.Session()
         self._sess.run(tf.global_variables_initializer())
@@ -98,7 +98,7 @@ class DQNSolver(BaseSolver):
 
     def _save_model(self):
         self._net_saver.save(self._sess, DQNSolver.PATH_NET % self._learn_step,
-                              write_meta_graph=False)
+                             write_meta_graph=False)
         with open(DQNSolver.PATH_VAR % self._learn_step, "w") as f:
             json.dump({
                 "epsilon": self._epsilon,

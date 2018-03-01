@@ -236,7 +236,7 @@ class Game:
 
     def _write_logs(self):
         self._log_file.write("[ Episode %d / Step %d ]\n" % \
-                              (self._episode, self._snake.steps))
+                             (self._episode, self._snake.steps))
         for i in range(self._map.num_rows):
             for j in range(self._map.num_cols):
                 pos = Pos(i, j)

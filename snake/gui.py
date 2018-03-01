@@ -48,7 +48,7 @@ class GameWindow(tk.Tk):
                                  bg=self._conf.color_bg,
                                  width=self._conf.map_width,
                                  height=self._conf.map_height,
-                                  highlightthickness=0)
+                                 highlightthickness=0)
         self._canvas.pack(side=tk.LEFT)
 
         if self._conf.show_info_panel:
@@ -149,7 +149,7 @@ class GameWindow(tk.Tk):
         for i in range(self._map.num_rows - 2):
             for j in range(self._map.num_cols - 2):
                 self._draw_grid(j * self._grid_width, i * self._grid_height,
-                                 self._map.point(Pos(i + 1, j + 1)).type)
+                                self._map.point(Pos(i + 1, j + 1)).type)
 
     def _draw_grid(self, x, y, t):
         if t == PointType.WALL:
