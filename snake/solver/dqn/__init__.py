@@ -28,7 +28,13 @@ class DQNSolver(BaseSolver):
     def __init__(self, snake):
         super().__init__(snake)
 
-        self._MAX_LEARN_STEP = 1000000   # Expected maximum learning steps
+        self._USE_RELATIVE = True        # Whether to use relative actions
+        self._USE_VISUAL_ONLY = False    # Whether to use visual state only
+        self._USE_DDQN = False           # Whether to use double dqn
+        self._USE_DUELING = False        # Whether to use dueling network
+
+        self._EXPLOIT_STEP = 1000000     # Steps that epsilon decreases
+        self._MAX_LEARN_STEP = 3000000   # Maximum learning steps
         self._RESTORE_STEP = 0           # Which learning step to restore (0 means not restore)
 
         # Rewards
@@ -43,7 +49,7 @@ class DQNSolver(BaseSolver):
         # Epsilon-greedy
         self._EPSILON_MAX = 1.0
         self._EPSILON_MIN = 0.01
-        self._EPSILON_DEC = (self._EPSILON_MAX - self._EPSILON_MIN) / self._MAX_LEARN_STEP
+        self._EPSILON_DEC = (self._EPSILON_MAX - self._EPSILON_MIN) / self._EXPLOIT_STEP
 
         self._LR = 1e-6             # Learning rate
         self._MOMENTUM = 0.95       # SGD momentum
@@ -54,26 +60,33 @@ class DQNSolver(BaseSolver):
         self._TD_LOWER = -1.0       # TD-error clip lower bound
 
         self._PRI_EPSILON = 0.001   # Small positive value to avoid zero priority
-        self._ALPHA = 0.6           # How much prioritization to use
-        self._BETA_MIN = 0.4        # How much to compensate for the non-uniform probabilities
-        self._BETA_INC = (1.0 - self._BETA_MIN) / self._MAX_LEARN_STEP
+        self._ALPHA = 0             # How much prioritization to use
+        self._BETA_MIN = 0          # How much to compensate for the non-uniform probabilities
+        self._BETA_INC = 0
+        # self._BETA_INC = (1.0 - self._BETA_MIN) / self._EXPLOIT_STEP  # paper
 
         # Frequency
-        self._FREQ_LEARN = 4        # Number of new transitions
+        self._FREQ_LEARN = 4        # Number of snake steps
         self._FREQ_REPLACE = 10000  # Learning steps
         self._FREQ_LOG = 500        # Learning steps
         self._FREQ_SAVE = 20000     # Learning steps
 
-        self._HISTORY_NUM_AVG = 50   # How many latest history episodes to compute average
+        self._HISTORY_NUM_AVG = 50  # How many latest history episodes to compute average
 
-        self._SNAKE_ACTIONS = [SnakeAction.LEFT, SnakeAction.FORWARD, SnakeAction.RIGHT]
+        if self._USE_RELATIVE:
+            self._SNAKE_ACTIONS = [SnakeAction.LEFT, SnakeAction.FORWARD, SnakeAction.RIGHT]
+        else:
+            self._SNAKE_ACTIONS = [Direc.LEFT, Direc.UP, Direc.RIGHT, Direc.DOWN]
+
         self._NUM_ACTIONS = len(self._SNAKE_ACTIONS)
 
+        # State features
         self._SHAPE_VISUAL_STATE = (self.map.num_rows - 2, self.map.num_cols - 2, 4)
         self._NUM_VISUAL_FEATURES = np.prod(self._SHAPE_VISUAL_STATE)
-        self._NUM_IMPORTANT_FEATURES = 3
+        self._NUM_IMPORTANT_FEATURES = 0 if self._USE_VISUAL_ONLY else self._NUM_ACTIONS
         self._NUM_ALL_FEATURES = self._NUM_VISUAL_FEATURES + self._NUM_IMPORTANT_FEATURES
 
+        # Replay memory
         self._mem = Memory(mem_size=self._MEM_SIZE,
                            alpha=self._ALPHA,
                            epsilon=self._PRI_EPSILON)
@@ -83,11 +96,12 @@ class DQNSolver(BaseSolver):
         self._epsilon = self._EPSILON_MAX
         self._beta = self._BETA_MIN
 
+        # Learning history
         self._history = History(self._HISTORY_NUM_AVG)
 
         eval_params, target_params = self._build_graph()
         self._net_saver = tf.train.Saver(var_list=eval_params + target_params,
-                                         max_to_keep=200)
+                                         max_to_keep=500)
 
         self._sess = tf.Session()
         self._sess.run(tf.global_variables_initializer())
@@ -163,10 +177,11 @@ class DQNSolver(BaseSolver):
             q_nxt_all = self._build_net(self._state_target, "q_nxt_all", w_init, b_init)
 
         with tf.variable_scope("q_target"):
-            # Natural DQN
-            #max_actions = tf.argmax(q_nxt_all, axis=1, output_type=tf.int32)
-            # Double DQN: choose max reward actions using eval net
-            max_actions = tf.argmax(self._q_eval_all_nxt, axis=1, output_type=tf.int32)
+            max_actions = None
+            if self._USE_DDQN:
+                max_actions = tf.argmax(self._q_eval_all_nxt, axis=1, output_type=tf.int32)
+            else:
+                max_actions = tf.argmax(q_nxt_all, axis=1, output_type=tf.int32)
             q_nxt = self._filter_actions(q_nxt_all, max_actions)
             q_target = self._reward + self._GAMMA * q_nxt * \
                 (1.0 - tf.cast(self._done, tf.float32))
@@ -257,14 +272,22 @@ class DQNSolver(BaseSolver):
                                 shape=[-1, 2 * 2 * 256],
                                 name="conv4_flat")
 
-        important_state = tf.slice(features,
-                                   begin=[0, self._NUM_VISUAL_FEATURES],
-                                   size=[-1, self._NUM_IMPORTANT_FEATURES],
-                                   name="important_state")
+        combined_features = None
 
-        combined_features = tf.concat([conv4_flat, important_state],
-                                      axis=1,
-                                      name="combined_features")
+        if self._USE_VISUAL_ONLY:
+
+            combined_features = conv4_flat
+
+        else:
+
+            important_state = tf.slice(features,
+                                       begin=[0, self._NUM_VISUAL_FEATURES],
+                                       size=[-1, self._NUM_IMPORTANT_FEATURES],
+                                       name="important_state")
+
+            combined_features = tf.concat([conv4_flat, important_state],
+                                          axis=1,
+                                          name="combined_features")
 
         fc1 = tf.layers.dense(inputs=combined_features,
                               units=1024,
@@ -273,18 +296,56 @@ class DQNSolver(BaseSolver):
                               bias_initializer=b_init_,
                               name="fc1")
 
-        fc2 = tf.layers.dense(inputs=fc1,
-                              units=1024,
-                              activation=self._leaky_relu,
-                              kernel_initializer=w_init_,
-                              bias_initializer=b_init_,
-                              name="fc2")
+        q_all = None
 
-        q_all = tf.layers.dense(inputs=fc2,
-                                units=self._NUM_ACTIONS,
+        if self._USE_DUELING:
+
+            fc2_v = tf.layers.dense(inputs=fc1,
+                                    units=512,
+                                    activation=self._leaky_relu,
+                                    kernel_initializer=w_init_,
+                                    bias_initializer=b_init_,
+                                    name="fc2_v")
+
+            fc2_a = tf.layers.dense(inputs=fc1,
+                                    units=512,
+                                    activation=self._leaky_relu,
+                                    kernel_initializer=w_init_,
+                                    bias_initializer=b_init_,
+                                    name="fc2_a")
+
+            v = tf.layers.dense(inputs=fc2_v,
+                                units=1,
+                                activation=self._leaky_relu,
                                 kernel_initializer=w_init_,
                                 bias_initializer=b_init_,
-                                name=output_name)
+                                name="v")
+
+            a = tf.layers.dense(inputs=fc2_a,
+                                units=self._NUM_ACTIONS,
+                                activation=self._leaky_relu,
+                                kernel_initializer=w_init_,
+                                bias_initializer=b_init_,
+                                name="a")
+
+            with tf.variable_scope(output_name):
+                a_mean = tf.reduce_mean(a, axis=1, keep_dims=True, name="a_mean")
+                q_all = v + (a - a_mean)
+
+        else:
+
+            fc2 = tf.layers.dense(inputs=fc1,
+                                  units=1024,
+                                  activation=self._leaky_relu,
+                                  kernel_initializer=w_init_,
+                                  bias_initializer=b_init_,
+                                  name="fc2")
+
+            q_all = tf.layers.dense(inputs=fc2,
+                                    units=self._NUM_ACTIONS,
+                                    kernel_initializer=w_init_,
+                                    bias_initializer=b_init_,
+                                    name=output_name)
 
         return q_all  # Shape: (None, num_actions)
 
@@ -300,11 +361,14 @@ class DQNSolver(BaseSolver):
     def next_direc(self):
         """Override super class."""
         action = self._SNAKE_ACTIONS[self._choose_action(e_greedy=False)]
-        return SnakeAction.to_direc(action, self.snake.direc)
+        if self._USE_RELATIVE:
+            return SnakeAction.to_direc(action, self.snake.direc)
+        else:
+            return action
 
     def plot(self):
+        self._history.save(self._RESTORE_STEP + 1, self._learn_step - 1)
         self._history.plot(self._RESTORE_STEP + 1)
-        self._history.save(self._RESTORE_STEP + 1, self._learn_step)
 
     def close(self):
         """Override super class."""
@@ -326,7 +390,9 @@ class DQNSolver(BaseSolver):
         elif self._mem_cnt % self._FREQ_LOG == 0:
             log("mem_cnt: %d" % self._mem_cnt)
 
-        return done
+        learn_end = self._learn_step > self._MAX_LEARN_STEP
+
+        return done, learn_end
 
     def _state(self):
         """Return a vector indicating current state."""
@@ -336,16 +402,16 @@ class DQNSolver(BaseSolver):
         for i in range(1, self.map.num_rows - 1):
             for j in range(1, self.map.num_cols - 1):
 
-                # Relative position
-                pos = None
-                if self.snake.direc == Direc.LEFT:
-                    pos = Pos(self.map.num_rows - 1 - j, i)
-                elif self.snake.direc == Direc.UP:
-                    pos = Pos(i, j)
-                elif self.snake.direc == Direc.RIGHT:
-                    pos = Pos(j, self.map.num_cols - 1 - i)
-                elif self.snake.direc == Direc.DOWN:
-                    pos = Pos(self.map.num_rows - 1 - i, self.map.num_cols - 1 - j)
+                pos = Pos(i, j)
+                if self._USE_RELATIVE:
+                    if self.snake.direc == Direc.LEFT:
+                        pos = Pos(self.map.num_rows - 1 - j, i)
+                    elif self.snake.direc == Direc.UP:
+                        pos = Pos(i, j)
+                    elif self.snake.direc == Direc.RIGHT:
+                        pos = Pos(j, self.map.num_cols - 1 - i)
+                    elif self.snake.direc == Direc.DOWN:
+                        pos = Pos(self.map.num_rows - 1 - i, self.map.num_cols - 1 - j)
 
                 t = self.map.point(pos).type
                 if t == PointType.EMPTY:
@@ -362,15 +428,24 @@ class DQNSolver(BaseSolver):
                 else:
                     raise ValueError("Unsupported PointType: {}".format(t))
 
-        # Important state
-        important_state = np.zeros(self._NUM_IMPORTANT_FEATURES, dtype=np.int32)
-        head = self.snake.head()
-        for i, action in enumerate([SnakeAction.LEFT, SnakeAction.FORWARD, SnakeAction.RIGHT]):
-            direc = SnakeAction.to_direc(action, self.snake.direc)
-            if not self.map.is_safe(head.adj(direc)):
-                important_state[i] = 1
+        if self._USE_VISUAL_ONLY:
+            return visual_state.flatten()
+        else:
+            # Important state
+            important_state = np.zeros(self._NUM_IMPORTANT_FEATURES, dtype=np.int32)
+            head = self.snake.head()
 
-        return np.hstack((visual_state.flatten(), important_state))
+            if self._USE_RELATIVE:
+                for i, action in enumerate([SnakeAction.LEFT, SnakeAction.FORWARD, SnakeAction.RIGHT]):
+                    direc = SnakeAction.to_direc(action, self.snake.direc)
+                    if not self.map.is_safe(head.adj(direc)):
+                        important_state[i] = 1
+            else:
+                for i, direc in enumerate([Direc.LEFT, Direc.UP, Direc.RIGHT, Direc.DOWN]):
+                    if not self.map.is_safe(head.adj(direc)):
+                        important_state[i] = 1
+
+            return np.hstack((visual_state.flatten(), important_state))
 
     def _choose_action(self, e_greedy=True):
         action_idx = None
@@ -399,7 +474,11 @@ class DQNSolver(BaseSolver):
 
     def _step(self, action_idx):
         action = self._SNAKE_ACTIONS[action_idx]
-        direc = SnakeAction.to_direc(action, self.snake.direc)
+
+        direc = action
+        if self._USE_RELATIVE:
+            direc = SnakeAction.to_direc(action, self.snake.direc)
+
         nxt_pos = self.snake.head().adj(direc)
         nxt_type = self.map.point(nxt_pos).type
         self.snake.move(direc)

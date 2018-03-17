@@ -159,8 +159,8 @@ class Game:
 
     def _run_dqn_train(self):
         try:
-            while True:
-                self._game_main_dqn_train()
+            while not self._game_main_dqn_train():
+                pass
         except KeyboardInterrupt:
             pass
         except Exception:
@@ -175,10 +175,12 @@ class Game:
         if self._pause:
             return
 
-        episode_end = self._solver.train()
+        episode_end, learn_end = self._solver.train()
 
         if episode_end:
             self._reset()
+
+        return learn_end
 
     def _game_main_normal(self):
         if not self._map.has_food():

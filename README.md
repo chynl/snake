@@ -27,7 +27,9 @@ Requirements: Python 3.5+ (64-bit) with [Tkinter][tkinter-doc] installed.
 
 ```
 $ pip3 install -r requirements.txt
-$ python3 run.py
+
+# Use -h for more details
+$ python3 run.py [-h]
 ```
 
 Run unit tests:
