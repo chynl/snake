@@ -31,7 +31,7 @@ class DQNSolver(BaseSolver):
         self._USE_RELATIVE = True        # Whether to use relative actions
         self._USE_VISUAL_ONLY = False    # Whether to use visual state only
         self._USE_DDQN = False           # Whether to use double dqn
-        self._USE_DUELING = False        # Whether to use dueling network
+        self._USE_DUELING = True         # Whether to use dueling network
 
         self._EXPLOIT_STEP = 1000000     # Steps that epsilon decreases
         self._MAX_LEARN_STEP = 3000000   # Maximum learning steps
@@ -60,10 +60,9 @@ class DQNSolver(BaseSolver):
         self._TD_LOWER = -1.0       # TD-error clip lower bound
 
         self._PRI_EPSILON = 0.001   # Small positive value to avoid zero priority
-        self._ALPHA = 0             # How much prioritization to use
-        self._BETA_MIN = 0          # How much to compensate for the non-uniform probabilities
-        self._BETA_INC = 0
-        # self._BETA_INC = (1.0 - self._BETA_MIN) / self._EXPLOIT_STEP  # paper
+        self._ALPHA = 0.6           # How much prioritization to use
+        self._BETA_MIN = 0.4        # How much to compensate for the non-uniform probabilities
+        self._BETA_INC = (1.0 - self._BETA_MIN) / self._EXPLOIT_STEP
 
         # Frequency
         self._FREQ_LEARN = 4        # Number of snake steps
