@@ -93,7 +93,7 @@ Following a fixed cycle path all the time is tedious and time-consuming. Hamilto
 <a id="markdown-dqn-solver" name="dqn-solver"></a>
 ### DQN Solver
 
-[DQN Solver][src-dqnsolver] uses a deep reinforcement learning algorithm named Deep Q-Network[[2]][ref-dqn] (DQN) to solve the problem. DQN has three optimization algorithms-Double DQN[[3]][ref-ddqn], Prioritized Experience Replay[[4]][ref-pri] and Dueling Network Structure[[5]][ref-duel]. We are not going to reiterate these algorithms here. For those who are interested or researching in deep reinforcement learning, DQN Solver provides performance comparisons of different combinations of these algorithms on training an agent for the Snake game.
+[DQN Solver][src-dqnsolver] uses a deep reinforcement learning algorithm named Deep Q-Network[[2]][ref-dqn] (DQN) to solve the problem. DQN has three optimization algorithms-Double DQN[[3]][ref-ddqn], Prioritized Experience Replay[[4]][ref-pri] and Dueling Network Structure[[5]][ref-duel]. We are not going to reiterate these algorithms here. For those who are interested or researching in deep reinforcement learning, DQN Solver provides performance comparisons for different combinations of these algorithms on training an agent for the Snake game.
 
 In DQN, we use a deep neural network to estimated the value function Q. The input for the network is the state of the agent while the output is the expected reward of each action the agent can take. The policy for the agent is epsilon-greedy, which gives the agent chances to exploit its environment.
 
@@ -102,7 +102,7 @@ In DQN, we use a deep neural network to estimated the value function Q. The inpu
 
 The state vector for the Snake game has two parts. The first part is the **global state vector**, which stores the contents of each point on the map. Each point has 4 types of contents-snake head, snake body, empty and food. As this is a discrete feature, we can binarize it so that each point can be represented as an integer vector of length 4. One and only one element in the vector is 1, indicating the corresponding type of the point, while the other three elements are 0. Under our game settings, the global state vector can be thought as an 8\*8\*4 image.
 
-The second part is the **local state vector**, which tells the snakes its surrounding situation. The vector contains 3 values (0 or 1), indicating whether the point in front/left/right of the snake head is dangerous (i.e., wall or body in the direction). 
+The second part is the **local state vector**, which tells the snake its surrounding situation. The vector contains 3 values (0 or 1), indicating whether the point in front/left/right of the snake head is dangerous (i.e., wall or body in the direction).
 
 <a id="markdown-actions" name="actions"></a>
 #### Actions
@@ -120,7 +120,7 @@ From the image above we can figure out that using relative direction is better t
 <a id="markdown-comparisons-of-different-algorithms" name="comparisons-of-different-algorithms"></a>
 #### Comparisons of Different Algorithms
 
-The three optimization algorithms can be combined to optimize DQN since they are from three different perspectives. There are 8 different combinations in total, all trained with global and local state in relative direction. The results are shown below (trained for 3000000 iterations):
+The three optimization algorithms can be combined to optimize DQN since they are from three different perspectives. There are 8 different combinations in total and the performance are shown below (3000000 iterations, all trained with global and local state in relative direction):
 
 ![][img-dqn-8-legends]
 
