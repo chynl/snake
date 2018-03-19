@@ -158,6 +158,7 @@ class History:
         y_max_max = np.max(data_max)
         x_max_avg = (np.argmax(data_avg) + learn_step_beg) * self._X_SCALE
         y_max_avg = np.max(data_avg)
+
         plt.annotate("Max: %.2f" % y_max_max,
                      xy=(x_max_max, y_max_max), xytext=(-50, -25),
                      textcoords="offset points",
