@@ -4,12 +4,6 @@
 
 ***[Algorithms >][doc-algorithms]***
 
-## Experiments
-
-We use two metrics to evaluate the performance of an AI:
-
-1. **Average Length:** Average length the snake has grown to (*max:* 64).
-2. **Average Steps:** Average steps the snake has moved.
 
 Test results (averaged over 1000 episodes):
 
