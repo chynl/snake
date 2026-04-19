@@ -1,15 +1,7 @@
-/build
-/bin
-CMakeCache.txt
-CMakeFiles
-cmake_install.cmake
-Makefile
-
-*.TMP
-*.html
-
+venv/
+__pycache__/
 *.pyc
-__pycache__
-*.cache
 
 logs/
+
+rl_model.pt.tmp.*
