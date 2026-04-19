@@ -2,7 +2,7 @@ import time
 
 from src.agents import init_agent
 from src.cfg import Config
-from src.game import Mode
+from src.mode import Mode
 from src.snake import Snake
 
 
